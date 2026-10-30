@@ -158,6 +158,36 @@ export const designerCSS = /* css */ `
 .gwf-designer[data-gwf-theme='dark'] .djs-palette .separator {
   border-color: var(--gwf-border);
 }
+.gwf-designer .djs-palette .entry {
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: var(--gwf-text);
+}
+.gwf-designer .djs-palette .entry:hover {
+  color: var(--gwf-accent);
+  background: var(--gwf-accent-weak);
+}
+.gwf-designer .djs-context-pad .entry {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--gwf-text);
+  background: var(--gwf-node-bg);
+  border: 1px solid var(--gwf-border);
+  border-radius: 4px;
+  box-shadow: var(--gwf-shadow);
+}
+.gwf-designer .djs-context-pad .entry:hover {
+  color: var(--gwf-accent);
+  border-color: var(--gwf-accent);
+}
 .gwf-designer[data-gwf-theme='dark'] .djs-tooltip,
 .gwf-designer[data-gwf-theme='dark'] .djs-popup {
   background: var(--gwf-node-bg);
