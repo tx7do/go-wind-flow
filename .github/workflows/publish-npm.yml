@@ -1,0 +1,51 @@
+name: publish-npm
+
+# 打 v* tag 时发布前端三个包到 npm；也可在 Actions 页面手动触发。
+# 前置：仓库 Settings → Secrets 配置 NPM_TOKEN（granular token，
+# 具备 @go-wind 范围的 publish 权限；GitHub 上无 npm 组织归属时请用 2FA 绕过选项）。
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test -w @go-wind/flow-designer-core
+
+      # core 必须先发：vue/react 依赖它。
+      - name: Publish core
+        run: npm publish -w @go-wind/flow-designer-core --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish vue
+        run: npm publish -w @go-wind/flow-designer-vue --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish react
+        run: npm publish -w @go-wind/flow-designer-react --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
