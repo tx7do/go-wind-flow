@@ -165,7 +165,41 @@ export const designerCSS = /* css */ `
   stroke: var(--gwf-accent);
 }
 
-/* ---------- properties-panel（上游 CSS 变量映射） ---------- */
+/* ---------- diagram-js 悬停/选中/折点（显式声明，两主题均走 token） ---------- */
+.gwf-designer .djs-outline {
+  visibility: hidden;
+}
+.gwf-designer .djs-element.hover .djs-outline {
+  visibility: visible;
+  stroke: var(--gwf-accent);
+  stroke-width: 1.5px;
+  stroke-dasharray: 4 3;
+}
+.gwf-designer .djs-element.selected .djs-outline {
+  visibility: visible;
+  stroke: var(--gwf-accent);
+  stroke-width: 1.5px;
+}
+.gwf-designer .djs-bendpoints .djs-bendpoint {
+  display: none;
+}
+.gwf-designer .djs-bendpoints.hovering .djs-bendpoint,
+.gwf-designer .djs-bendpoints.selected .djs-bendpoint {
+  display: block;
+}
+.gwf-designer .djs-bendpoints circle {
+  fill: var(--gwf-node-bg);
+  stroke: var(--gwf-accent);
+  stroke-width: 2px;
+}
+.gwf-designer .djs-segment-dragger .djs-dragger {
+  fill: var(--gwf-accent);
+}
+.gwf-designer .djs-hit {
+  stroke: transparent;
+}
+
+
 .gwf-designer .bio-properties-panel {
   --color-grey-225-10-15: var(--gwf-text);
   --color-grey-225-10-35: var(--gwf-text-secondary);
