@@ -159,9 +159,17 @@ same paging protocol as the GoWind family (go-crud `PagingRequest`):
 go get github.com/tx7do/go-wind-flow/api
 ```
 
+The protos are also published to the BSR — non-Go consumers (TS / Dart, …) and
+cross-repo proto imports can depend directly:
+
+```bash
+buf dep buf.build/go-wind/go-wind-flow
+```
+
 Engine domain structs stay plain Go (domain model ≠ transport DTO); the kratos
 service wrapper is on the M1 roadmap — contract first, hosts can wire against the
-generated `flowv1` service interfaces today. Regenerate with `make proto`.
+generated `flowv1` service interfaces today. Regenerate & publish:
+`make proto` + `buf push --label <version>` (aligned with git tags).
 
 ### Run the tests
 

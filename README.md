@@ -144,8 +144,15 @@ FlowDefinition / FlowInstance / FlowTask / FlowHistory 四服务，kratos HTTP �
 go get github.com/tx7do/go-wind-flow/api
 ```
 
+proto 同时发布在 BSR，非 Go 消费方（TS / Dart 等）与跨仓 proto 引用直接依赖：
+
+```bash
+buf dep buf.build/go-wind/go-wind-flow
+```
+
 引擎领域结构保持纯 Go（领域模型 ≠ 传输 DTO）；kratos 服务封装在 M1 路线图上，
-契约先行——宿主可按 `flowv1` 生成的服务接口提前接线。重新生成：`make proto`。
+契约先行——宿主可按 `flowv1` 生成的服务接口提前接线。重新生成与发布：
+`make proto` + `buf push --label <版本>`（对齐 git tag）。
 
 ### 运行测试
 

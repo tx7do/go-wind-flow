@@ -150,9 +150,17 @@ go-wind ファミリーと共通（go-crud `PagingRequest`）：
 go get github.com/tx7do/go-wind-flow/api
 ```
 
+proto は BSR にも公開しています——Go 以外の利用者（TS / Dart など）や他リポジトリ
+からの proto 参照はそのまま依存に追加できます：
+
+```bash
+buf dep buf.build/go-wind/go-wind-flow
+```
+
 エンジンのドメイン構造はプレーンな Go のまま（ドメインモデル ≠ 転送 DTO）。
 kratos サービスラッパーは M1 ロードマップ上——契約先行のため、ホストは生成済みの
-`flowv1` サービスインターフェースに今から接続できます。再生成は `make proto`。
+`flowv1` サービスインターフェースに今から接続できます。再生成と公開：
+`make proto` + `buf push --label <バージョン>`（git tag と対応）。
 
 ### テスト実行
 
