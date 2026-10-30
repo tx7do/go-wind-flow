@@ -8,6 +8,7 @@ import { ApprovalTree as ApprovalTreeVue } from '@go-wind/flow-designer-vue';
 import { injectDemoStyles, leaveApprovalXML, renderToolbar, treeSampleDoc } from './shared';
 
 import 'bpmn-js/dist/assets/diagram-js.css';
+import 'bpmn-js/dist/assets/bpmn-font/css/bpmn.css';
 import 'bpmn-js/dist/assets/bpmn-js.css';
 import '@bpmn-io/properties-panel/dist/assets/properties-panel.css';
 

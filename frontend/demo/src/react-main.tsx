@@ -9,6 +9,7 @@ import { ApprovalTree, FlowDesigner } from '@go-wind/flow-designer-react';
 import { injectDemoStyles, leaveApprovalXML, renderToolbar, treeSampleDoc, type ThemeMode } from './shared';
 
 import 'bpmn-js/dist/assets/diagram-js.css';
+import 'bpmn-js/dist/assets/bpmn-font/css/bpmn.css';
 import 'bpmn-js/dist/assets/bpmn-js.css';
 import '@bpmn-io/properties-panel/dist/assets/properties-panel.css';
 

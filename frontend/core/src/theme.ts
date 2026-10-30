@@ -148,7 +148,12 @@ export const designerCSS = /* css */ `
 }
 .gwf-designer[data-gwf-theme='dark'] .djs-palette .entry,
 .gwf-designer[data-gwf-theme='dark'] .djs-context-pad .entry {
-  background-color: var(--gwf-shape-stroke);
+  color: var(--gwf-text);
+  border-color: var(--gwf-border);
+}
+.gwf-designer[data-gwf-theme='dark'] .djs-palette .entry:hover,
+.gwf-designer[data-gwf-theme='dark'] .djs-context-pad .entry:hover {
+  background: var(--gwf-accent-weak);
 }
 .gwf-designer[data-gwf-theme='dark'] .djs-palette .separator {
   border-color: var(--gwf-border);
