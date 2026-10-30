@@ -192,6 +192,36 @@ make tidy            # 三层 go.mod 依次 tidy（core / contrib/exprlang / con
 | 脚本任务、监听器逻辑 | `contrib/goscripts`（JS/Lua/Python/Go/WASM…） | 图灵完备，沙箱 + context 控时 |
 | 高安全场景 | go-scripts 的 WASM（wazero） | 强隔离 |
 
+## 前端设计器
+
+BPMN 画布 + 属性面板 + 垂直审批树，Vue3 / React 双适配器，已发布 npm：
+
+| 包 | 说明 |
+|---|---|
+| [@go-wind/flow-designer-core](https://www.npmjs.com/package/@go-wind/flow-designer-core) | 框架无关核心：bpmn-js 建模器 + 属性面板扩展 + designer-json-v1 序列化 |
+| [@go-wind/flow-designer-vue](https://www.npmjs.com/package/@go-wind/flow-designer-vue) | Vue 3 适配器：`<FlowDesigner>` / `<ApprovalTree>` |
+| [@go-wind/flow-designer-react](https://www.npmjs.com/package/@go-wind/flow-designer-react) | React 适配器：`<FlowDesigner>` / `<ApprovalTree>` |
+
+```bash
+npm i @go-wind/flow-designer-vue     # 或 -react / -core
+```
+
+```ts
+import { createDesigner } from '@go-wind/flow-designer-core';
+
+const designer = createDesigner({
+  canvas: '#canvas',
+  panel: '#panel',
+  theme: 'auto',       // light | dark | auto（跟随系统）
+  accent: '#00add8',   // 自定义主题色
+});
+await designer.loadXML(bpmnXml);
+const xml = await designer.getXML();       // → BFF → Deploy(format=bpmn-xml)
+```
+
+bpmn-js 的三份样式与属性面板样式由宿主引入一次（`diagram-js.css`、`bpmn.css`、
+`bpmn-js.css`、`properties-panel.css`），详见各包 README。
+
 ## 在 go-wind 家族中的位置
 
 | 项目 | 关系 |
@@ -211,13 +241,14 @@ make tidy            # 三层 go.mod 依次 tidy（core / contrib/exprlang / con
 | [bpmn_compat.md](./docs/bpmn_compat.md) | BPMN 兼容：支持矩阵、办理人扩展约定、与 bpmn-js / Camunda 互通 |
 | [designer_contract.md](./docs/designer_contract.md) | 设计器契约：designer-json-v1 文档结构与设计器↔服务端交互协议 |
 | [oa_im_migration.md](./docs/oa_im_migration.md) | 迁移指南：双引擎对比、绞杀者路径、存量定义兼容、行为差异清单 |
-| [roadmap.md](./docs/roadmap.md) | 路线图：M0 核心骨架（当前）→ M1 生产化 → M2 BPMN 扩充 → M3 生态 → M4 独立部署 |
+| [roadmap.md](./docs/roadmap.md) | 路线图：M0 核心骨架 → M1 生产化 → M2 BPMN 扩充（均已完成）→ M3 生态 → M4 独立部署 |
 
 ## 路线图
 
-当前处于 **M0（核心骨架）**——引擎内核、格式适配、SPI 全集已就绪并通过端到端测试；
-下一站 M1 生产化（ent Store、kratos 服务封装、go-wind-ui 流程设计器契约），
-完整里程碑见 [docs/roadmap.md](./docs/roadmap.md)。
+**v0.2.0** 已发布，覆盖 **M0（核心骨架）+ M1（生产化）+ M2（BPMN 子集扩充）**：
+引擎内核与 SPI 全集、ent/gorm 生产 Store、gRPC 契约（BSR）与服务封装、
+BPMN 子集（边界事件/错误事件/多实例/嵌入子流程）、Vue3/React 双前端设计器与审批树。
+下一站 M3 生态（行业模板库、OPA 授权过滤），完整里程碑见 [docs/roadmap.md](./docs/roadmap.md)。
 
 ## License
 
