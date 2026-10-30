@@ -236,6 +236,21 @@ export const designerCSS = /* css */ `
   align-items: center;
   padding: 20px 24px 32px;
 }
+.gwf-tree-wrap {
+  display: flex;
+  align-items: stretch;
+}
+.gwf-tree-area {
+  flex: 1;
+  min-width: 0;
+}
+.gwf-branch-col .gwf-v2-node {
+  width: 100%;
+  box-sizing: border-box;
+}
+.gwf-editor {
+  flex-shrink: 0;
+}
 .gwf-tree-area .gwf-start-node,
 .gwf-tree-area .gwf-end-node {
   width: 120px;
