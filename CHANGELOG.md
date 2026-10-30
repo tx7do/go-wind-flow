@@ -7,6 +7,11 @@
 
 ### Added
 
+- 设计器契约：`format/designer`（designer-json-v1）——领域字段 + UI 元数据
+  （节点坐标/边拐点），设计器文档可直连 Deploy；契约与交互协议文档
+  `docs/designer_contract.md`（草稿/发布分离、错误回传、坐标保鲜、演进规则）
+- 性能基线：`engine_bench_test.go`（内存存储）——线性流完整审批 ~104µs、
+  网关选路 ~29µs、十人会签全周期 ~6.6ms；真实 DB 压测归 M2
 - 引擎：**定时器节点** `intermediateTimerEvent`——令牌到达即阻塞并打 DueAt 标，
   `ResumeDueTimers`（宿主 cron 驱动）到期续跑并广播 `timer.fired` 事件；
   BPMN 导入导出 `timerEventDefinition/timeDuration`（ISO8601，仅天/时/分/秒，

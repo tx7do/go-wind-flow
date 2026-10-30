@@ -226,6 +226,7 @@ Entry point: [docs/README.md](./docs/README.md)
 |------|------|
 | [architecture_design.md](./docs/architecture_design.md) | Engine architecture: token state machine, transaction boundaries, SPI contracts, fail-closed semantics |
 | [bpmn_compat.md](./docs/bpmn_compat.md) | BPMN compatibility: support matrix, assignee extension convention, bpmn-js / Camunda interop |
+| [designer_contract.md](./docs/designer_contract.md) | Designer contract: designer-json-v1 document shape and designer↔server interaction protocol |
 | [oa_im_migration.md](./docs/oa_im_migration.md) | Migration: engine comparison, strangler path, legacy definition compatibility, behavior diff list |
 | [roadmap.md](./docs/roadmap.md) | Roadmap: M0 core (current) → M1 production → M2 BPMN expansion → M3 ecosystem → M4 standalone |
 

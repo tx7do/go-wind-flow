@@ -19,6 +19,7 @@
 |---|---|---|
 | [architecture_design.md](./architecture_design.md) | 引擎架构：Token 状态机、事务边界、定义与版本、SPI 契约、fail-closed 语义表、目录结构 | 改 `flow/` 内核、为新宿主装配 SPI、排查"为什么没推进"之前 |
 | [bpmn_compat.md](./bpmn_compat.md) | BPMN 兼容：元素支持矩阵、`<flow:assignees>` 扩展约定、UEL 条件映射、bpmn-js / Camunda 互通、格式插件机制 | 接存量 BPMN、接流程设计器、新增 Importer/Exporter 之前 |
+| [designer_contract.md](./designer_contract.md) | 设计器契约：designer-json-v1 文档结构、字段语义、设计器↔服务端交互协议、演进规则 | go-wind-ui 设计器开发、BFF 保存/发布接口、契约升版之前 |
 | [oa_im_migration.md](./oa_im_migration.md) | 迁移：go-wind-oa / go-wind-im 双引擎对比、SPI↔旧仓库适配层清单、绞杀者四阶段、行为差异清单 | 启动宿主迁移工单之前 |
 | [roadmap.md](./roadmap.md) | 路线图：M0 → M4 里程碑口径 | 规划下一个能力、评估当前边界时 |
 

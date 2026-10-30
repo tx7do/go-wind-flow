@@ -209,6 +209,7 @@ make tidy            # 三层 go.mod 依次 tidy（core / contrib/exprlang / con
 |------|------|
 | [architecture_design.md](./docs/architecture_design.md) | 引擎架构：Token 状态机、事务边界、SPI 契约、fail-closed 语义表 |
 | [bpmn_compat.md](./docs/bpmn_compat.md) | BPMN 兼容：支持矩阵、办理人扩展约定、与 bpmn-js / Camunda 互通 |
+| [designer_contract.md](./docs/designer_contract.md) | 设计器契约：designer-json-v1 文档结构与设计器↔服务端交互协议 |
 | [oa_im_migration.md](./docs/oa_im_migration.md) | 迁移指南：双引擎对比、绞杀者路径、存量定义兼容、行为差异清单 |
 | [roadmap.md](./docs/roadmap.md) | 路线图：M0 核心骨架（当前）→ M1 生产化 → M2 BPMN 扩充 → M3 生态 → M4 独立部署 |
 

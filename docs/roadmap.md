@@ -36,8 +36,12 @@
       `ResumeDueTimers` 续跑）+ 调度参考实现 `examples/scheduler`（单 cron 循环
       同时驱动定时器续跑与任务到期扫描，经服务层走生产路径）；契约 v0.1.2
       增补 ResumeDueTimers RPC 与 TIMER_FIRED 事件（已推 BSR）
-- [ ] 设计器协议定型：与 go-wind-ui 流程设计器（BPMN-JS 封装）的 JSON 契约
-- [ ] 性能基线：单实例万级流转压测 + Store 批量化
+- [x] 设计器契约定型：`format/designer`（designer-json-v1，领域字段 + UI
+      坐标/拐点，可直连 Deploy）+ 交互协议文档 [designer_contract.md](./designer_contract.md)
+      （草稿/发布分离、错误回传、坐标保鲜）；go-wind-ui 按此开发
+- [x] 性能基线（内存档）：`engine_bench_test.go`——线性流完整审批 ~104µs
+      （≈9.6k ops/s 单核）、网关选路 ~29µs、十人会签全周期 ~6.6ms；
+      Store 批量化与真实 DB 压测归入 M2
 
 ## M2 —— BPMN 子集扩充（目标：吸引 BPMN 用户）
 

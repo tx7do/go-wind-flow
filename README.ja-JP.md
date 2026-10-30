@@ -217,6 +217,7 @@ make tidy            # 3 つの go.mod を順に tidy
 |------|------|
 | [architecture_design.md](./docs/architecture_design.md) | エンジン設計：トークンステートマシン、トランザクション境界、SPI 契約、fail-closed 意味論 |
 | [bpmn_compat.md](./docs/bpmn_compat.md) | BPMN 互換：対応表、承認者拡張の約定、bpmn-js / Camunda との相互運用 |
+| [designer_contract.md](./docs/designer_contract.md) | デザイナー契約：designer-json-v1 のドキュメント構造とデザイナー↔サーバー連携 |
 | [oa_im_migration.md](./docs/oa_im_migration.md) | 移行：エンジン比較、ストラングラーパス、既存定義の互換、挙動差分 |
 | [roadmap.md](./docs/roadmap.md) | ロードマップ：M0 コア（現在）→ M1 本番化 → M2 BPMN 拡充 → M3 エコシステム → M4 単体配布 |
 
