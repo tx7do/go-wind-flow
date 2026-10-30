@@ -12,6 +12,8 @@ Go 进程（OA/ERP/CRM 服务、独立调度中心），也可被包装成 gRPC 
 四条原则贯穿实现：
 
 1. **积木盒而非全家桶**（与 go-wind 家族一致）——所有外部能力都是 SPI，具体实现按需装配；
+   Protobuf 契约同样隔离在 `api/` 独立子模块，引擎领域结构保持纯 Go
+   （领域模型 ≠ 传输 DTO：服务层做 proto ↔ 领域结构映射，互不绑架）；
 2. **对齐 BPMN**——节点类型、网关语义、条件风格与 BPMN 2.0 互认，降低用户迁移与心智成本；
 3. **持久化驱动**——不做内存态执行，每次流转落库，崩溃可恢复；
 4. **fail-closed**——所有不确定态（条件求值失败、办理人解析为空、子流程异常）一律拒绝/驳回，绝不误放行。
@@ -117,6 +119,9 @@ store/           存储 SPI 的实现（memory 随主模块，生产实现为独
   memory/        进程内实现（嵌入式可用，WithTx 直通占位）
   ent/           ent 实现（WithTx 事务；生成代码已入库，schema 在 ent/schema/）
   gorm/          GORM 实现（MySQL/PostgreSQL/SQLite 等方言通用）
+api/             Protobuf 服务契约（独立子模块）
+  protos/flow/v1/  definition/instance/task/history 四服务 + kratos HTTP 注解
+  gen/go/flow/v1/  生成码入库（go / gRPC / kratos-http 三件套；make proto 重新生成）
 format/bpmn/     BPMN 2.0 XML 双向转换
 format/windjson/ OA/IM node_config 兼容
 contrib/exprlang/  expr-lang 求值器（独立子模块）

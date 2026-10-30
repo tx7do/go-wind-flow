@@ -1,0 +1,150 @@
+syntax = "proto3";
+
+package flow.v1;
+
+option go_package = "github.com/tx7do/go-wind-flow/api/gen/go/flow/v1;flowv1";
+
+import "flow/v1/instance.proto";
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "pagination/v1/pagination.proto";
+
+// 用户任务服务：办结（会签/或签/驳回语义由定义驱动）、转办、待办查询。
+service FlowTaskService {
+  // 办结任务（驳回按定义的 RejectMode：TERMINATE 终结实例 / STAY 停留）
+  rpc CompleteTask(CompleteTaskRequest) returns (CompleteTaskResponse) {
+    option (google.api.http) = {
+      post: "/flow/v1/tasks/{task_id}/complete"
+      body: "*"
+    };
+  }
+
+  // 转办：把待办任务移交他人
+  rpc ForwardTask(ForwardTaskRequest) returns (FlowTask) {
+    option (google.api.http) = {
+      post: "/flow/v1/tasks/{task_id}/forward"
+      body: "*"
+    };
+  }
+
+  // 查询任务详情
+  rpc GetTask(GetTaskRequest) returns (FlowTask) {
+    option (google.api.http) = {
+      get: "/flow/v1/tasks/{id}"
+    };
+  }
+
+  // 查询用户待办
+  rpc ListPendingTasks(ListPendingTasksRequest) returns (ListTasksResponse) {
+    option (google.api.http) = {
+      get: "/flow/v1/tasks/pending"
+    };
+  }
+
+  // 查询实例下全部任务（含已办结）
+  rpc ListInstanceTasks(ListInstanceTasksRequest) returns (ListTasksResponse) {
+    option (google.api.http) = {
+      get: "/flow/v1/instances/{instance_id}/tasks"
+    };
+  }
+
+  // 到期任务扫描（宿主 cron 驱动；到期任务广播 task.due 监听器事件）
+  rpc CheckDueTasks(CheckDueTasksRequest) returns (ListTasksResponse) {
+    option (google.api.http) = {
+      post: "/flow/v1/tasks/check-due"
+      body: "*"
+    };
+  }
+}
+
+// 任务状态。
+enum FlowTaskStatus {
+  FLOW_TASK_STATUS_UNSPECIFIED = 0;
+  // 待办理
+  FLOW_TASK_STATUS_PENDING = 1;
+  // 已通过
+  FLOW_TASK_STATUS_APPROVED = 2;
+  // 已驳回
+  FLOW_TASK_STATUS_REJECTED = 3;
+  // 已取消（或签命中/实例终结）
+  FLOW_TASK_STATUS_CANCELLED = 4;
+  // 已转办
+  FLOW_TASK_STATUS_FORWARDED = 5;
+}
+
+// 办结动作。
+enum FlowTaskOutcome {
+  FLOW_TASK_OUTCOME_UNSPECIFIED = 0;
+  // 通过
+  FLOW_TASK_OUTCOME_APPROVE = 1;
+  // 驳回
+  FLOW_TASK_OUTCOME_REJECT = 2;
+}
+
+// 用户任务。
+message FlowTask {
+  string id = 1;
+  string instance_id = 2;
+  string tenant_id = 3;
+  string node_id = 4;
+  string token_id = 5;
+  string name = 6;
+  string assignee = 7;
+  FlowTaskStatus status = 8;
+  // 办结动作（APPROVE/REJECT，办结后回填）
+  string outcome = 9;
+  string comment = 10;
+  // 超时时刻（定义带 timer 时由引擎打标）
+  optional google.protobuf.Timestamp due_at = 11;
+  google.protobuf.Timestamp created_at = 12;
+  optional google.protobuf.Timestamp ended_at = 13;
+}
+
+message CompleteTaskRequest {
+  string task_id = 1 [(google.api.field_behavior) = REQUIRED];
+  // 操作者（必须是办理人）
+  string actor_id = 2 [(google.api.field_behavior) = REQUIRED];
+  FlowTaskOutcome outcome = 3 [(google.api.field_behavior) = REQUIRED];
+  string comment = 4;
+  // 办结时回写的业务变量（如审批表单字段）
+  google.protobuf.Struct variables = 5;
+}
+
+message CompleteTaskResponse {
+  // 办结后的实例（可能已终结）
+  FlowInstance instance = 1;
+}
+
+message ForwardTaskRequest {
+  string task_id = 1 [(google.api.field_behavior) = REQUIRED];
+  // 操作者（必须是当前办理人；服务端调用可留空）
+  string actor_id = 2;
+  // 移交目标用户
+  string to_user_id = 3 [(google.api.field_behavior) = REQUIRED];
+}
+
+message GetTaskRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message ListPendingTasksRequest {
+  string tenant_id = 1;
+  string assignee = 2;
+  pagination.PagingRequest paging = 3;
+}
+
+message ListInstanceTasksRequest {
+  string instance_id = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message CheckDueTasksRequest {
+  // 判定时刻（缺省 = 服务端当前时间）
+  optional google.protobuf.Timestamp as_of = 1;
+}
+
+message ListTasksResponse {
+  repeated FlowTask items = 1;
+  int64 total = 2;
+}

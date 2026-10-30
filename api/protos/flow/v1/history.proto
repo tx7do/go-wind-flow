@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package flow.v1;
+
+option go_package = "github.com/tx7do/go-wind-flow/api/gen/go/flow/v1;flowv1";
+
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+// 流转历史服务：实例全链路审计（append-only）。
+service FlowHistoryService {
+  // 查询实例历史（按时间升序）
+  rpc ListInstanceHistory(ListInstanceHistoryRequest) returns (ListInstanceHistoryResponse) {
+    option (google.api.http) = {
+      get: "/flow/v1/instances/{instance_id}/history"
+    };
+  }
+}
+
+// 生命周期事件类型。与引擎 EventType 字符串一一对应。
+enum FlowEventType {
+  FLOW_EVENT_TYPE_UNSPECIFIED = 0;
+  // 流程启动
+  FLOW_EVENT_TYPE_PROCESS_STARTED = 1;
+  // 流程终结（status 见实例状态）
+  FLOW_EVENT_TYPE_PROCESS_ENDED = 2;
+  // 令牌迁移
+  FLOW_EVENT_TYPE_TOKEN_MOVED = 3;
+  // 网关选路
+  FLOW_EVENT_TYPE_GATEWAY_DECIDED = 4;
+  // 任务创建
+  FLOW_EVENT_TYPE_TASK_CREATED = 5;
+  // 任务办结
+  FLOW_EVENT_TYPE_TASK_COMPLETED = 6;
+  // 任务转办
+  FLOW_EVENT_TYPE_TASK_FORWARDED = 7;
+  // 任务到期（催办/升级由监听器承接）
+  FLOW_EVENT_TYPE_TASK_DUE = 8;
+  // 实例变量变更
+  FLOW_EVENT_TYPE_VARIABLE_CHANGED = 9;
+}
+
+// 流转历史事件。
+message FlowHistoryEvent {
+  string id = 1;
+  string instance_id = 2;
+  FlowEventType type = 3;
+  string node_id = 4;
+  string task_id = 5;
+  // 操作者（系统动作如子流程传播为 "flow:subprocess" / "flow:system"）
+  string actor_id = 6;
+  // 事件载荷（如 outcome/comment/edge 等，随事件类型不同）
+  google.protobuf.Struct payload = 7;
+  google.protobuf.Timestamp created_at = 8;
+}
+
+message ListInstanceHistoryRequest {
+  string instance_id = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message ListInstanceHistoryResponse {
+  repeated FlowHistoryEvent items = 1;
+}

@@ -7,6 +7,10 @@
 
 ### Added
 
+- `api`：Protobuf 服务契约（独立子模块）——FlowDefinition / FlowInstance /
+  FlowTask / FlowHistory 四服务，gRPC + kratos HTTP 注解，分页复用
+  go-crud `pagination.PagingRequest`；buf 生成码（go / go-grpc / go-http）入库，
+  `make proto` 重新生成
 - `store/ent`：flow.Store 的 ent 生产实现（独立子模块）——definitions/instances/
   tokens/tasks/history 五表 schema、`WithTx` 事务模式（引擎入口包裹，嵌套安全）、
   ent 生成代码入库；codegen 注意：entgo v0.14 loader 与 Go 1.27 不兼容，

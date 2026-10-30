@@ -69,7 +69,7 @@ Java 界の Flowable / Camunda / Activiti の常用サブセットをカバー�
 
 | ツール | バージョン |
 |------|------|
-| Go | 1.25+ |
+| Go | 1.25+（コア / 組込み；`api` サブモジュールは 1.26+） |
 | （任意）go-scripts | スクリプトタスク / CEL·Expr 評価を使う場合に必要 |
 
 ### インストール
@@ -138,6 +138,21 @@ _ = st.WithTx(ctx, func(ctx context.Context) error {
 	return eng.CompleteTask(ctx, req)
 })
 ```
+
+### Protobuf サービス契約
+
+gRPC / REST で統合する場合（サービスの埋め込み or 独立フローセンター）は `api`
+サブモジュールを利用します——FlowDefinition / FlowInstance / FlowTask / FlowHistory
+の 4 サービス、kratos HTTP ルートはアノテーションから生成、ページングは
+go-wind ファミリーと共通（go-crud `PagingRequest`）：
+
+```bash
+go get github.com/tx7do/go-wind-flow/api
+```
+
+エンジンのドメイン構造はプレーンな Go のまま（ドメインモデル ≠ 転送 DTO）。
+kratos サービスラッパーは M1 ロードマップ上——契約先行のため、ホストは生成済みの
+`flowv1` サービスインターフェースに今から接続できます。再生成は `make proto`。
 
 ### テスト実行
 

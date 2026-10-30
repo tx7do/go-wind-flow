@@ -1,0 +1,22 @@
+# go-wind-flow API 生成配置（对齐 go-wind 家族 buf 惯例）。
+# 生成：buf generate    （依赖更新：buf dep update）
+version: v2
+
+clean: true
+
+plugins:
+  # Go 消息
+  - local: protoc-gen-go
+    out: gen/go
+    opt: paths=source_relative
+
+  # gRPC 服务桩
+  - local: protoc-gen-go-grpc
+    out: gen/go
+    opt: paths=source_relative
+
+  # kratos REST 服务（google.api.http 注解 → HTTP 路由）
+  - local: protoc-gen-go-http
+    out: gen/go
+    opt:
+      - paths=source_relative

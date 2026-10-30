@@ -64,7 +64,7 @@ Go 私有部署市场提供审批流 / 业务流底座。
 
 | 工具 | 版本 |
 |------|------|
-| Go | 1.25+ |
+| Go | 1.25+（核心 / 嵌入式；`api` 子模块 1.26+） |
 | （可选）go-scripts | 本地同级目录或 GitHub 拉取，启用脚本任务 / CEL·Expr 求值时需要 |
 
 ### 安装
@@ -133,6 +133,19 @@ _ = st.WithTx(ctx, func(ctx context.Context) error {
 	return eng.CompleteTask(ctx, req)
 })
 ```
+
+### Protobuf 服务契约
+
+宿主以 gRPC / REST 集成（embed 服务或对接独立流程中心）时引入 `api` 子模块——
+FlowDefinition / FlowInstance / FlowTask / FlowHistory 四服务，kratos HTTP 路由
+已由注解生成，分页协议与 go-wind 家族一致（go-crud `PagingRequest`）：
+
+```bash
+go get github.com/tx7do/go-wind-flow/api
+```
+
+引擎领域结构保持纯 Go（领域模型 ≠ 传输 DTO）；kratos 服务封装在 M1 路线图上，
+契约先行——宿主可按 `flowv1` 生成的服务接口提前接线。重新生成：`make proto`。
 
 ### 运行测试
 

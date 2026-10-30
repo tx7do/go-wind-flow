@@ -1,0 +1,103 @@
+syntax = "proto3";
+
+package flow.v1;
+
+option go_package = "github.com/tx7do/go-wind-flow/api/gen/go/flow/v1;flowv1";
+
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/protobuf/timestamp.proto";
+import "pagination/v1/pagination.proto";
+
+// 流程定义服务：部署（不可变升版）、查询、导出。
+// 引擎领域规则见仓库 docs/architecture_design.md；BPMN/JSON 格式见 docs/bpmn_compat.md。
+service FlowDefinitionService {
+  // 部署流程定义（Format 留空时按内容嗅探：'<' → bpmn-xml，否则 wind-json-v2）
+  rpc DeployDefinition(DeployDefinitionRequest) returns (FlowDefinition) {
+    option (google.api.http) = {
+      post: "/flow/v1/definitions"
+      body: "*"
+    };
+  }
+
+  // 查询流程定义（version 缺省取最新）
+  rpc GetDefinition(GetDefinitionRequest) returns (FlowDefinition) {
+    option (google.api.http) = {
+      get: "/flow/v1/definitions/{key}"
+    };
+  }
+
+  // 查询流程定义列表
+  rpc ListDefinitions(ListDefinitionsRequest) returns (ListDefinitionsResponse) {
+    option (google.api.http) = {
+      get: "/flow/v1/definitions"
+    };
+  }
+
+  // 导出流程定义（format：bpmn-xml 等；需引擎注册对应 Exporter）
+  rpc ExportDefinition(ExportDefinitionRequest) returns (ExportDefinitionResponse) {
+    option (google.api.http) = {
+      get: "/flow/v1/definitions/{key}/export"
+    };
+  }
+}
+
+// 流程定义。不可变：每次部署生成新版本，在途实例锁定版本。
+message FlowDefinition {
+  // 定义标识（部署后不可改）
+  string key = 1 [(google.api.field_behavior) = REQUIRED];
+  // 展示名
+  string name = 2;
+  // 版本号（部署自动递增；查询时 0 表示最新）
+  int32 version = 3;
+  // 租户
+  string tenant_id = 4;
+  // 来源格式：bpmn-xml / wind-json-v2 / 自定义
+  string format = 5;
+  // 原始定义文本（审计与导出回放用）
+  string source = 6;
+  // 部署时间
+  google.protobuf.Timestamp created_at = 7;
+}
+
+message DeployDefinitionRequest {
+  string tenant_id = 1 [(google.api.field_behavior) = REQUIRED];
+  string key = 2 [(google.api.field_behavior) = REQUIRED];
+  // 展示名（缺省用 key）
+  string name = 3;
+  // 来源格式（缺省按内容嗅探）
+  string format = 4;
+  // 原始定义文本（BPMN XML 或 wind-json）
+  bytes data = 5 [(google.api.field_behavior) = REQUIRED];
+}
+
+message GetDefinitionRequest {
+  string tenant_id = 1 [(google.api.field_behavior) = REQUIRED];
+  string key = 2 [(google.api.field_behavior) = REQUIRED];
+  // 0 = 最新版本
+  int32 version = 3;
+}
+
+message ListDefinitionsRequest {
+  string tenant_id = 1;
+  pagination.PagingRequest paging = 2;
+}
+
+message ListDefinitionsResponse {
+  repeated FlowDefinition items = 1;
+  int64 total = 2;
+}
+
+message ExportDefinitionRequest {
+  string tenant_id = 1;
+  string key = 2;
+  // 0 = 最新版本
+  int32 version = 3;
+  // 目标格式（如 bpmn-xml）
+  string format = 4;
+}
+
+message ExportDefinitionResponse {
+  bytes data = 1;
+  string format = 2;
+}

@@ -77,7 +77,7 @@ low-code platforms).
 
 | Tool | Version |
 |------|---------|
-| Go | 1.25+ |
+| Go | 1.25+ (core / embedded; `api` submodule 1.26+) |
 | (optional) go-scripts | sibling checkout or fetched from GitHub — needed for script tasks / CEL·Expr evaluation |
 
 ### Install
@@ -147,6 +147,21 @@ _ = st.WithTx(ctx, func(ctx context.Context) error {
 	return eng.CompleteTask(ctx, req)
 })
 ```
+
+### Protobuf service contract
+
+For gRPC / REST integration (embedding the service or talking to a standalone flow
+center), pull in the `api` submodule — four services (FlowDefinition / FlowInstance /
+FlowTask / FlowHistory) with kratos HTTP routes generated from annotations, and the
+same paging protocol as the GoWind family (go-crud `PagingRequest`):
+
+```bash
+go get github.com/tx7do/go-wind-flow/api
+```
+
+Engine domain structs stay plain Go (domain model ≠ transport DTO); the kratos
+service wrapper is on the M1 roadmap — contract first, hosts can wire against the
+generated `flowv1` service interfaces today. Regenerate with `make proto`.
 
 ### Run the tests
 

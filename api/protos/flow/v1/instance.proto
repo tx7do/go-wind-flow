@@ -1,0 +1,134 @@
+syntax = "proto3";
+
+package flow.v1;
+
+option go_package = "github.com/tx7do/go-wind-flow/api/gen/go/flow/v1;flowv1";
+
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "pagination/v1/pagination.proto";
+
+// 流程实例服务：启动、查询、撤回、强制终止。
+// 实例下的任务/历史查询分别在 FlowTaskService / FlowHistoryService。
+service FlowInstanceService {
+  // 启动流程实例（同步推进到首个阻塞点；返回阻塞处新建的用户任务 ID）
+  rpc StartInstance(StartInstanceRequest) returns (StartInstanceResponse) {
+    option (google.api.http) = {
+      post: "/flow/v1/instances"
+      body: "*"
+    };
+  }
+
+  // 查询实例
+  rpc GetInstance(GetInstanceRequest) returns (FlowInstance) {
+    option (google.api.http) = {
+      get: "/flow/v1/instances/{id}"
+    };
+  }
+
+  // 查询实例列表（审批管理视角）
+  rpc ListInstances(ListInstancesRequest) returns (ListInstancesResponse) {
+    option (google.api.http) = {
+      get: "/flow/v1/instances"
+    };
+  }
+
+  // 发起人撤回（仅运行中实例）
+  rpc WithdrawInstance(WithdrawInstanceRequest) returns (FlowInstance) {
+    option (google.api.http) = {
+      post: "/flow/v1/instances/{id}/withdraw"
+      body: "*"
+    };
+  }
+
+  // 管理员强制终止（不向父流程传播）
+  rpc AbortInstance(AbortInstanceRequest) returns (FlowInstance) {
+    option (google.api.http) = {
+      post: "/flow/v1/instances/{id}/abort"
+      body: "*"
+    };
+  }
+}
+
+// 实例状态。
+enum FlowInstanceStatus {
+  FLOW_INSTANCE_STATUS_UNSPECIFIED = 0;
+  // 运行中
+  FLOW_INSTANCE_STATUS_RUNNING = 1;
+  // 正常走完（APPROVED）
+  FLOW_INSTANCE_STATUS_APPROVED = 2;
+  // 驳回终结（fail-closed）
+  FLOW_INSTANCE_STATUS_REJECTED = 3;
+  // 发起人撤回
+  FLOW_INSTANCE_STATUS_WITHDRAWN = 4;
+  // 管理员强制终止
+  FLOW_INSTANCE_STATUS_ABORTED = 5;
+}
+
+// 流程实例。
+message FlowInstance {
+  string id = 1;
+  string tenant_id = 2;
+  string definition_key = 3;
+  // 启动时锁定的定义版本
+  int32 definition_version = 4;
+  string business_key = 5;
+  string business_type = 6;
+  string starter_id = 7;
+  FlowInstanceStatus status = 8;
+  // 实例变量（网关条件/动态办理人/脚本任务的共享环境）
+  google.protobuf.Struct variables = 9;
+  // 子流程链接：本实例由父实例的某令牌在 callActivity 发起
+  string parent_instance_id = 10;
+  string parent_token_id = 11;
+  google.protobuf.Timestamp created_at = 12;
+  optional google.protobuf.Timestamp ended_at = 13;
+}
+
+message StartInstanceRequest {
+  string tenant_id = 1 [(google.api.field_behavior) = REQUIRED];
+  string key = 2 [(google.api.field_behavior) = REQUIRED];
+  // 0 = 最新版本
+  int32 version = 3;
+  string business_key = 4;
+  string business_type = 5;
+  string starter_id = 6;
+  google.protobuf.Struct variables = 7;
+}
+
+message StartInstanceResponse {
+  FlowInstance instance = 1;
+  // 首个阻塞处创建的用户任务 ID
+  repeated string task_ids = 2;
+}
+
+message GetInstanceRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message ListInstancesRequest {
+  string tenant_id = 1;
+  // 缺省 = 全部状态
+  optional FlowInstanceStatus status = 2;
+  string definition_key = 3;
+  string business_key = 4;
+  pagination.PagingRequest paging = 5;
+}
+
+message ListInstancesResponse {
+  repeated FlowInstance items = 1;
+  int64 total = 2;
+}
+
+message WithdrawInstanceRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  // 操作者（必须是发起人）
+  string actor_id = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message AbortInstanceRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  string actor_id = 2;
+}
