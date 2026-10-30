@@ -26,7 +26,7 @@ func ValidateDefinition(def *Definition) error {
 			startCount++
 		case NodeEndEvent:
 			endCount++
-		case NodeUserTask, NodeScriptTask, NodeServiceTask, NodeCallActivity, NodeTimerEvent:
+		case NodeUserTask, NodeScriptTask, NodeServiceTask, NodeCallActivity, NodeTimerEvent, NodeBoundaryEvent:
 		case NodeExclusiveGateway, NodeParallelGateway, NodeInclusiveGateway:
 		default:
 			return fmt.Errorf("%w: unknown node type %q (%s)", ErrInvalidDefinition, n.Type, id)
@@ -74,6 +74,25 @@ func ValidateDefinition(def *Definition) error {
 			}
 			if n.Timer == nil || n.Timer.Duration.Std() <= 0 {
 				return fmt.Errorf("%w: timer event %s missing positive duration", ErrInvalidDefinition, id)
+			}
+		case NodeBoundaryEvent:
+			if in != 0 || len(out) < 1 {
+				return fmt.Errorf("%w: boundary event %s must have 0 in / ≥1 out", ErrInvalidDefinition, id)
+			}
+			if n.AttachedTo == "" {
+				return fmt.Errorf("%w: boundary event %s missing attachedToRef", ErrInvalidDefinition, id)
+			}
+			attached := def.Nodes[n.AttachedTo]
+			if attached == nil {
+				return fmt.Errorf("%w: boundary event %s attached to unknown node %s",
+					ErrInvalidDefinition, id, n.AttachedTo)
+			}
+			if attached.Type != NodeUserTask {
+				return fmt.Errorf("%w: boundary event %s can only attach to userTask, got %s",
+					ErrInvalidDefinition, id, attached.Type)
+			}
+			if n.Timer == nil || n.Timer.Duration.Std() <= 0 {
+				return fmt.Errorf("%w: boundary event %s missing positive timer duration", ErrInvalidDefinition, id)
 			}
 		case NodeExclusiveGateway:
 			if len(out) < 2 {
@@ -142,6 +161,24 @@ func checkReachability(def *Definition) error {
 		}
 		return to
 	})
+	// 边界事件不在主流程上（无入边），以其为种子继续扩散——
+	// 保证升级分支上的节点也在可达集合内。
+	for id, n := range def.Nodes {
+		if n.Type == NodeBoundaryEvent && !reachable[id] {
+			reachable[id] = true
+			queue := []string{id}
+			for len(queue) > 0 {
+				cur := queue[0]
+				queue = queue[1:]
+				for _, e := range def.OutEdges(cur) {
+					if !reachable[e.To] {
+						reachable[e.To] = true
+						queue = append(queue, e.To)
+					}
+				}
+			}
+		}
+	}
 	for id := range def.Nodes {
 		if !reachable[id] {
 			return fmt.Errorf("%w: node %s not reachable from start", ErrInvalidDefinition, id)

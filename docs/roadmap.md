@@ -48,7 +48,10 @@
 
 ## M2 —— BPMN 子集扩充（目标：吸引 BPMN 用户）
 
-- [ ] boundaryEvent（边界定时/消息）+ 事件驱动分支
+- [x] boundaryEvent 边界定时事件（挂接 userTask）：中断型到期取消原任务并接管
+      流程、非中断型派生升级分支（一次性触发）；主任务办结/实例终结时清理未触发
+      边界令牌；BPMN 导入导出 attachedToRef/cancelActivity；可达性校验将边界
+      事件作为扩散种子
 - [ ] 中间捕获/抛出事件（timer/message/signal）
 - [ ] 顺序多实例（isSequential=true）
 - [ ] documentation 透传、BPMN DI 坐标透传（导出保留图形）

@@ -356,6 +356,10 @@ func (e *Engine) CompleteTask(ctx context.Context, req CompleteTaskRequest) erro
 	}
 
 	// 全员通过 / 或签命中：令牌沿唯一出边继续推进（离开任务节点）。
+	// 主任务走完，挂接的未触发边界定时器一并清理。
+	if err := e.cancelBoundaryTimers(ctx, inst, task.NodeID, def); err != nil {
+		return err
+	}
 	tk.Status = TokenRunning
 	if out := def.OutEdges(task.NodeID); len(out) == 1 {
 		tk.NodeID = out[0].To
@@ -673,10 +677,15 @@ func (e *Engine) CheckDueTasks(ctx context.Context, now time.Time) ([]*Task, err
 	return due, nil
 }
 
-// ResumeDueTimers 扫描到期定时器节点并续跑令牌（宿主 cron 驱动）。
-// 与 CheckDueTasks 同一调度习惯：定时器到期是引擎自驱（令牌续走），
-// 任务到期是宿主自决（监听器决定催办/升级）。
-// 返回本次续跑的令牌；单个令牌推进失败立即返回（fail-closed，不静默跳过）。
+// ResumeDueTimers 扫描到期的定时器令牌并触发（宿主 cron 驱动）。
+// 按令牌所在节点类型分派：
+//
+//   - intermediateTimerEvent：令牌沿出边续走（引擎自驱）；
+//   - boundaryEvent：边界定时器触发——中断型取消挂接节点任务并接管流程，
+//     非中断型只派生升级分支（原任务照常）。
+//
+// 任务到期（task.due）走 CheckDueTasks，由监听器自决。
+// 返回本次续跑的令牌；单个令牌推进失败立即返回（fail-closed）。
 func (e *Engine) ResumeDueTimers(ctx context.Context, now time.Time) ([]*Token, error) {
 	due, err := e.store.Tokens().ListDueTimers(ctx, now)
 	if err != nil {
@@ -692,9 +701,9 @@ func (e *Engine) ResumeDueTimers(ctx context.Context, now time.Time) ([]*Token, 
 		if err != nil {
 			return resumed, err
 		}
-		out := def.OutEdges(tk.NodeID)
-		if len(out) != 1 {
-			return resumed, fmt.Errorf("timer node %s has %d out edges", tk.NodeID, len(out))
+		node := def.Nodes[tk.NodeID]
+		if node == nil {
+			continue
 		}
 
 		_ = e.appendHistory(ctx, inst, &Event{Type: EventTimerFired, NodeID: tk.NodeID}, Vars{"dueAt": tk.DueAt.Unix()})
@@ -703,18 +712,127 @@ func (e *Engine) ResumeDueTimers(ctx context.Context, now time.Time) ([]*Token, 
 			NodeID: tk.NodeID, Vars: inst.Variables.Clone(), At: e.clock.Now(),
 		})
 
+		switch node.Type {
+		case NodeBoundaryEvent:
+			done, err := e.fireBoundaryTimer(ctx, inst, tk, def, node)
+			if err != nil {
+				return resumed, err
+			}
+			if done != nil {
+				resumed = append(resumed, done)
+			}
+		default: // NodeTimerEvent
+			out := def.OutEdges(tk.NodeID)
+			if len(out) != 1 {
+				return resumed, fmt.Errorf("timer node %s has %d out edges", tk.NodeID, len(out))
+			}
+			tk.Status = TokenRunning
+			tk.NodeID = out[0].To
+			tk.DueAt = nil
+			if err := e.store.Tokens().Update(ctx, tk); err != nil {
+				return resumed, err
+			}
+			resumed = append(resumed, tk)
+			if err := e.runToken(ctx, inst, tk, def); err != nil {
+				return resumed, err
+			}
+		}
+	}
+	return resumed, nil
+}
+
+// fireBoundaryTimer 边界定时器触发。返回参与续跑的令牌（非中断型返回 nil——
+// 派生分支另起令牌，边界令牌一次性删除）。
+func (e *Engine) fireBoundaryTimer(ctx context.Context, inst *Instance, tk *Token, def *Definition, node *Node) (*Token, error) {
+	out := def.OutEdges(node.ID)
+	if len(out) == 0 {
+		return nil, fmt.Errorf("boundary event %s has no out edge", node.ID)
+	}
+
+	if node.IsInterrupting() {
+		// 中断型：取消挂接节点的全部待办，终结挂接令牌与同挂接点的其它边界令牌。
+		tasks, _ := e.store.Tasks().ListByInstance(ctx, inst.ID)
+		for _, t := range tasks {
+			if t.Status == TaskPending && t.NodeID == node.AttachedTo {
+				now := e.clock.Now()
+				t.Status = TaskCancelled
+				t.EndedAt = &now
+				_ = e.store.Tasks().Update(ctx, t)
+			}
+		}
+		tokens, err := e.store.Tokens().ListByInstance(ctx, inst.ID)
+		if err != nil {
+			return nil, err
+		}
+		for _, t := range tokens {
+			if t.ID == tk.ID || t.Status == TokenEnded {
+				continue
+			}
+			n := def.Nodes[t.NodeID]
+			if n == nil {
+				continue
+			}
+			if t.NodeID == node.AttachedTo ||
+				(n.Type == NodeBoundaryEvent && n.AttachedTo == node.AttachedTo) {
+				t.Status = TokenEnded
+				_ = e.store.Tokens().Update(ctx, t)
+			}
+		}
+
 		tk.Status = TokenRunning
 		tk.NodeID = out[0].To
 		tk.DueAt = nil
 		if err := e.store.Tokens().Update(ctx, tk); err != nil {
-			return resumed, err
+			return nil, err
 		}
-		resumed = append(resumed, tk)
 		if err := e.runToken(ctx, inst, tk, def); err != nil {
-			return resumed, err
+			return nil, err
+		}
+		return tk, nil
+	}
+
+	// 非中断型：派生升级分支令牌（克隆局部变量），原任务与主令牌不动；
+	// 边界令牌一次性（v1 不支持周期触发）。
+	child := &Token{
+		ID:         e.idgen(),
+		InstanceID: inst.ID,
+		NodeID:     out[0].To,
+		Status:     TokenRunning,
+		ParentID:   tk.ID,
+		Locals:     tk.Locals.Clone(),
+		CreatedAt:  e.clock.Now(),
+	}
+	if err := e.store.Tokens().Save(ctx, child); err != nil {
+		return nil, err
+	}
+	if err := e.store.Tokens().Delete(ctx, tk.ID); err != nil {
+		return nil, err
+	}
+	if err := e.runToken(ctx, inst, child, def); err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+
+// cancelBoundaryTimers 清理挂接在某节点上的、尚未触发的边界令牌
+//（主任务办结推进时调用——任务已走完，定时器不再有意义）。
+func (e *Engine) cancelBoundaryTimers(ctx context.Context, inst *Instance, nodeID string, def *Definition) error {
+	tokens, err := e.store.Tokens().ListByInstance(ctx, inst.ID)
+	if err != nil {
+		return err
+	}
+	for _, tk := range tokens {
+		if tk.Status != TokenWaiting {
+			continue
+		}
+		n := def.Nodes[tk.NodeID]
+		if n != nil && n.Type == NodeBoundaryEvent && n.AttachedTo == nodeID {
+			if err := e.store.Tokens().Delete(ctx, tk.ID); err != nil {
+				return err
+			}
 		}
 	}
-	return resumed, nil
+	return nil
 }
 
 // ============================================================

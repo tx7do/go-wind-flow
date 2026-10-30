@@ -7,6 +7,12 @@
 
 ### Added
 
+- 引擎：**边界定时事件**（boundaryEvent，挂接 userTask）——中断型（缺省，
+  cancelActivity=true）到期取消原任务全部待办并沿边界流出边接管流程；
+  非中断型（cancelActivity=false）只派生升级分支（v1 一次性触发），原任务照常；
+  主任务办结推进/实例终结时自动清理未触发的边界令牌。复用 ResumeDueTimers
+  调度（无需新 API）；BPMN 导入导出 attachedToRef / cancelActivity；
+  可达性校验将边界事件作为扩散种子。BPMN 矩阵已更新
 - 引擎：**变量作用域**——令牌级局部变量（Token.Locals）：并行分支 fork 快照
   克隆实现隔离；读侧环境 = 实例 + 局部叠加（局部覆盖），网关条件/动态办理人/
   脚本任务统一生效；写侧经脚本任务 `flow:scope="local"` 或 CompleteTask 的

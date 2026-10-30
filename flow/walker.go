@@ -135,7 +135,8 @@ func mergedEnv(inst *Instance, tk *Token) Vars {
 	return env
 }
 
-// arriveAtUserTask 到达用户任务：解析办理人、创建任务、令牌阻塞。
+// arriveAtUserTask 到达用户任务：解析办理人、创建任务、令牌阻塞，
+// 并为挂接的边界定时器创建边界令牌（到期由 ResumeDueTimers 触发）。
 func (e *Engine) arriveAtUserTask(ctx context.Context, inst *Instance, tk *Token, node *Node, def *Definition) error {
 	assignees, err := e.resolveApprovers(ctx, inst, tk, node)
 	if err != nil {
@@ -177,6 +178,28 @@ func (e *Engine) arriveAtUserTask(ctx context.Context, inst *Instance, tk *Token
 			TokenID: tk.ID, TaskID: task.ID, NodeID: node.ID,
 			ActorID: uid, Vars: inst.Variables.Clone(), At: now,
 		})
+	}
+
+	// 挂接的边界定时器：为每个创建边界令牌（WAITING + DueAt，
+	// 到期由 ResumeDueTimers 触发；主任务办结/终结时清理）。
+	for _, be := range def.Nodes {
+		if be.Type != NodeBoundaryEvent || be.AttachedTo != node.ID || be.Timer == nil {
+			continue
+		}
+		due := now.Add(be.Timer.Duration.Std())
+		btk := &Token{
+			ID:         e.idgen(),
+			InstanceID: inst.ID,
+			NodeID:     be.ID,
+			Status:     TokenWaiting,
+			ParentID:   tk.ID,
+			Locals:     tk.Locals.Clone(),
+			DueAt:      &due,
+			CreatedAt:  now,
+		}
+		if err := e.store.Tokens().Save(ctx, btk); err != nil {
+			return err
+		}
 	}
 	return nil
 }

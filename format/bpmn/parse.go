@@ -56,7 +56,8 @@ type processXML struct {
 	UserTasks   []userTaskXML   `xml:"userTask"`
 	ScriptTasks []scriptTaskXML `xml:"scriptTask"`
 	ServiceTasks []scriptTaskXML `xml:"serviceTask"`
-	TimerEvents []catchEventXML `xml:"intermediateCatchEvent"`
+	TimerEvents    []catchEventXML `xml:"intermediateCatchEvent"`
+	BoundaryEvents []boundaryXML   `xml:"boundaryEvent"`
 
 	ExclusiveGateways []gatewayXML `xml:"exclusiveGateway"`
 	ParallelGateways  []gatewayXML `xml:"parallelGateway"`
@@ -123,6 +124,15 @@ type catchEventXML struct {
 
 type timerDefXML struct {
 	Duration string `xml:"timeDuration"`
+}
+
+// boundaryXML 边界事件（当前支持定时器触发，挂接 userTask）。
+type boundaryXML struct {
+	ID             string       `xml:"id,attr"`
+	Name           string       `xml:"name,attr"`
+	AttachedToRef  string       `xml:"attachedToRef,attr"`
+	CancelActivity *string      `xml:"cancelActivity,attr"` // 缺省 true
+	Timer          *timerDefXML `xml:"timerEventDefinition"`
 }
 
 type gatewayXML struct {
@@ -232,6 +242,21 @@ func Parse(data []byte) (*flow.Definition, error) {
 		d, err := ParseISODuration(ev.Timer.Duration)
 		if err != nil {
 			return nil, fmt.Errorf("intermediateCatchEvent %s: %w", ev.ID, err)
+		}
+		node.Timer = &flow.TimerSpec{Duration: flow.Duration(d)}
+		add(node)
+	}
+	for _, be := range p.BoundaryEvents {
+		node := &flow.Node{ID: be.ID, Name: be.Name, Type: flow.NodeBoundaryEvent, AttachedTo: be.AttachedToRef}
+		interrupting := be.CancelActivity == nil || strings.EqualFold(strings.TrimSpace(*be.CancelActivity), "true")
+		node.Interrupting = &interrupting
+		if be.Timer == nil || strings.TrimSpace(be.Timer.Duration) == "" {
+			return nil, fmt.Errorf("%w: boundaryEvent %s missing timerEventDefinition/timeDuration",
+				flow.ErrInvalidDefinition, be.ID)
+		}
+		d, err := ParseISODuration(be.Timer.Duration)
+		if err != nil {
+			return nil, fmt.Errorf("boundaryEvent %s: %w", be.ID, err)
 		}
 		node.Timer = &flow.TimerSpec{Duration: flow.Duration(d)}
 		add(node)
@@ -425,6 +450,21 @@ func Write(def *flow.Definition) ([]byte, error) {
 			fmt.Fprintf(&b, "        <timeDuration>%s</timeDuration>\n", dur)
 			fmt.Fprintf(&b, "      </timerEventDefinition>\n")
 			fmt.Fprintf(&b, "    </intermediateCatchEvent>\n")
+		case flow.NodeBoundaryEvent:
+			dur := ""
+			if n.Timer != nil {
+				dur = WriteISODuration(n.Timer.Duration.Std())
+			}
+			cancel := "true"
+			if !n.IsInterrupting() {
+				cancel = "false"
+			}
+			fmt.Fprintf(&b, "    <boundaryEvent id=%q name=%q attachedToRef=%q cancelActivity=%q>\n",
+				n.ID, n.Name, n.AttachedTo, cancel)
+			fmt.Fprintf(&b, "      <timerEventDefinition>\n")
+			fmt.Fprintf(&b, "        <timeDuration>%s</timeDuration>\n", dur)
+			fmt.Fprintf(&b, "      </timerEventDefinition>\n")
+			fmt.Fprintf(&b, "    </boundaryEvent>\n")
 		case flow.NodeCallActivity:
 			ref := n.SubprocessKey
 			if n.SubprocessVersion > 0 {

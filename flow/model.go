@@ -15,6 +15,7 @@ const (
 	NodeScriptTask       NodeType = "scriptTask"
 	NodeServiceTask      NodeType = "serviceTask" // v0 与 ScriptTask 同语义（回调由宿主监听器承接）
 	NodeTimerEvent       NodeType = "intermediateTimerEvent" // 中间定时器：令牌阻塞至到期，宿主 cron 驱动续跑
+	NodeBoundaryEvent    NodeType = "boundaryEvent"          // 边界事件：挂接在 userTask 上，到期触发升级/接管分支
 	NodeExclusiveGateway NodeType = "exclusiveGateway"
 	NodeParallelGateway  NodeType = "parallelGateway" // 分叉/汇合同型，按出入度区分（BPMN 惯例）
 	NodeInclusiveGateway NodeType = "inclusiveGateway"
@@ -126,6 +127,11 @@ type Node struct {
 	// ExclusiveGateway 默认出边 ID（无条件命中时兜底，fail-closed：必须存在）。
 	DefaultEdge string `json:"defaultEdge,omitempty"`
 
+	// BoundaryEvent 专用：挂接的目标 userTask；Interrupting 缺省 true
+	//（到期取消原任务并接管流程），false = 非中断（只派生升级分支，原任务照常）。
+	AttachedTo   string `json:"attachedTo,omitempty"`
+	Interrupting *bool  `json:"interrupting,omitempty"`
+
 	Documentation string `json:"documentation,omitempty"`
 }
 
@@ -189,6 +195,14 @@ func (d *Definition) Edge(id string) *Edge {
 		}
 	}
 	return nil
+}
+
+// IsInterrupting 边界事件是否中断型（缺省 true，BPMN cancelActivity 默认语义）。
+func (n *Node) IsInterrupting() bool {
+	if n.Interrupting == nil {
+		return true
+	}
+	return *n.Interrupting
 }
 
 // Clone 深拷贝（部署侧内存复用需隔离时使用）。
