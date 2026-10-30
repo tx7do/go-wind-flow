@@ -30,6 +30,12 @@ func New() *Store {
 	}
 }
 
+// WithTx 事务占位：内存实现无真实事务，fn 直接执行。
+// 与 ent/gorm 实现同名同签名，宿主切换存储时无需改动引擎入口包装。
+func (s *Store) WithTx(ctx context.Context, fn func(context.Context) error) error {
+	return fn(ctx)
+}
+
 func defID(tenant, key string, version int) string {
 	return tenant + "|" + key + "|" + itoa(version)
 }

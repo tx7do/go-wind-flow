@@ -119,6 +119,26 @@ func main() {
 }
 ```
 
+### 本番用ストレージ
+
+エンジンには `store/memory`（組込み / テスト用）が付属します。本番は ent または
+GORM 実装を利用します（独立サブモジュール、必要な時だけ依存に追加）：
+
+```bash
+go get github.com/tx7do/go-wind-flow/store/ent    # ent（GoWind ファミリーの慣例）
+go get github.com/tx7do/go-wind-flow/store/gorm   # GORM（MySQL/PostgreSQL/SQLite）
+```
+
+```go
+st := entstore.New(client) // テーブル作成：client.Schema.Create(ctx) またはホスト側マイグレーション
+eng := flow.New(flow.WithStore(st), flow.WithImporters(bpmn.Importer{}))
+
+// エンジン入口をトランザクションで包む（WithTx パターン、nest 安全）
+_ = st.WithTx(ctx, func(ctx context.Context) error {
+	return eng.CompleteTask(ctx, req)
+})
+```
+
 ### テスト実行
 
 ```bash
@@ -142,9 +162,9 @@ make tidy            # 3 つの go.mod を順に tidy
 │  Importer/Exporter  Listener  Clock/IDGen                    │
 └──────▲──────────▲──────────▲──────────▲──────────────────────┘
        │          │          │          │
- store/memory  contrib/   contrib/   format/
- （組込み用）   exprlang   goscripts  bpmn · windjson
-               (expr-lang) (9 種類)   (BPMN XML · 既存 JSON)
+ store/           contrib/   contrib/   format/
+ memory·ent·gorm  exprlang   goscripts  bpmn · windjson
+ （組込み/本番）  (expr-lang) (9 種類)   (BPMN XML · 既存 JSON)
 ```
 
 ## go-scripts との分担

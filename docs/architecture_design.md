@@ -48,8 +48,18 @@ Instance (1) ──< Token (n)          Token：实例在图中的游标
 
 - **进程内**：宿主对同一实例的引擎入口（Start / CompleteTask / Withdraw / Abort）
   按 instanceID 串行化。子流程经父实例调用链天然串行。
-- **生产 Store（ent）**：建议在每个引擎入口包一层事务（单实例单事务），
-  行级锁兜底并发。内存实现用 RWMutex。
+- **事务（WithTx 模式）**：`WithTx` 不在 `flow.Store` 接口上，是各生产 Store
+  实现的具体方法——宿主在引擎入口包裹，一次引擎调用内的全部落库共享一个事务，
+  核心引擎对此无感知（ctx 中已有事务时自动复用，嵌套安全）：
+
+  ```go
+  _ = store.WithTx(ctx, func(ctx context.Context) error {
+      return eng.CompleteTask(ctx, req)
+  })
+  ```
+
+  `store/ent` 与 `store/gorm` 均实现此模式；`store/memory` 提供直通占位，
+  宿主切换存储时入口包装代码不变。分布式部署时以存储层行锁兜底同实例并发。
 
 引擎入口少而清晰，这是刻意设计：事务边界只出现在入口，内部推进不跨事务。
 
@@ -103,7 +113,10 @@ flow/            核心引擎（零依赖）
   engine.go      引擎入口 API + 实例终结
   walker.go      Token 推进内核（网关/任务/脚本/子流程）
   importer.go    Importer/Exporter + 注册表
-store/memory/    内存实现
+store/           存储 SPI 的实现（memory 随主模块，生产实现为独立子模块）
+  memory/        进程内实现（嵌入式可用，WithTx 直通占位）
+  ent/           ent 实现（WithTx 事务；生成代码已入库，schema 在 ent/schema/）
+  gorm/          GORM 实现（MySQL/PostgreSQL/SQLite 等方言通用）
 format/bpmn/     BPMN 2.0 XML 双向转换
 format/windjson/ OA/IM node_config 兼容
 contrib/exprlang/  expr-lang 求值器（独立子模块）

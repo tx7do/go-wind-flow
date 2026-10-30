@@ -17,7 +17,9 @@
 
 ## M1 —— 生产化（目标：接入 go-wind-oa/im）
 
-- [ ] ent Store 实现（definitions/instances/tokens/variables/history 五表 + Token 新表）
+- [x] 生产 Store：`store/ent`（五表 schema + WithTx 事务，生成代码入库）
+      与 `store/gorm`（多方言，MySQL/PostgreSQL/SQLite）——均已内置提供，
+      独立子模块，主模块 go.sum 保持零负担
 - [ ] kratos 服务封装（Deploy/Start/CompleteTask/查询 gRPC+REST，Protobuf 契约）
 - [ ] 加签（动态增加办理人）、驳回指定节点（ReturnTo）
 - [ ] 变量作用域（实例级 → 节点级局部变量）

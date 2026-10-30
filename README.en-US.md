@@ -127,6 +127,27 @@ func main() {
 }
 ```
 
+### Production storage
+
+The engine ships with `store/memory` (embedded / for tests). For production, use the
+ent or GORM store — separate submodules, pulled in only when needed:
+
+```bash
+go get github.com/tx7do/go-wind-flow/store/ent    # ent (GoWind family convention)
+go get github.com/tx7do/go-wind-flow/store/gorm   # GORM (MySQL/PostgreSQL/SQLite)
+```
+
+```go
+st := entstore.New(client) // schema: client.Schema.Create(ctx) or your migrations
+eng := flow.New(flow.WithStore(st), flow.WithImporters(bpmn.Importer{}))
+
+// Wrap engine entry points in a transaction (WithTx pattern; the GORM store
+// exposes the same method with the same signature)
+_ = st.WithTx(ctx, func(ctx context.Context) error {
+	return eng.CompleteTask(ctx, req)
+})
+```
+
 ### Run the tests
 
 ```bash
@@ -150,9 +171,9 @@ make tidy            # tidy all three go.mod files (core / contrib/exprlang / co
 │  Importer/Exporter  Listener  Clock/IDGen                    │
 └──────▲──────────▲──────────▲──────────▲──────────────────────┘
        │          │          │          │
- store/memory  contrib/   contrib/   format/
- (embedded)    exprlang   goscripts  bpmn · windjson
-               (expr-lang) (9 engines) (BPMN XML · legacy JSON)
+ store/           contrib/   contrib/   format/
+ memory·ent·gorm  exprlang   goscripts  bpmn · windjson
+ (embedded/prod)  (expr-lang) (9 engines) (BPMN XML · legacy JSON)
 ```
 
 ## Division of labor with go-scripts

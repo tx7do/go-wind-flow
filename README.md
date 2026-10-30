@@ -114,6 +114,26 @@ func main() {
 }
 ```
 
+### 生产存储
+
+引擎内置 `store/memory`（嵌入式 / 测试用）；生产存储用 ent 或 GORM 实现
+（独立子模块，按需引入，不污染主模块依赖）：
+
+```bash
+go get github.com/tx7do/go-wind-flow/store/ent    # ent（go-wind 家族惯例）
+go get github.com/tx7do/go-wind-flow/store/gorm   # GORM（MySQL/PostgreSQL/SQLite 多方言）
+```
+
+```go
+st := entstore.New(client) // 建表：client.Schema.Create(ctx) 或宿主版本化迁移
+eng := flow.New(flow.WithStore(st), flow.WithImporters(bpmn.Importer{}))
+
+// 引擎入口包事务（WithTx 模式，嵌套安全；gorm 实现同名同签名）
+_ = st.WithTx(ctx, func(ctx context.Context) error {
+	return eng.CompleteTask(ctx, req)
+})
+```
+
 ### 运行测试
 
 ```bash
@@ -137,9 +157,9 @@ make tidy            # 三层 go.mod 依次 tidy（core / contrib/exprlang / con
 │  Importer/Exporter  Listener  Clock/IDGen                    │
 └──────▲──────────▲──────────▲──────────▲──────────────────────┘
        │          │          │          │
- store/memory  contrib/   contrib/   format/
- （嵌入式）     exprlang   goscripts  bpmn · windjson
-               (expr-lang) (9 种脚本)  (BPMN XML · 存量 JSON)
+ store/          contrib/   contrib/   format/
+ memory·ent·gorm exprlang   goscripts  bpmn · windjson
+ （嵌入式/生产）  (expr-lang) (9 种脚本) (BPMN XML · 存量 JSON)
 ```
 
 ## 与 go-scripts 的分工

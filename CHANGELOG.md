@@ -5,9 +5,18 @@
 
 ## [Unreleased]
 
-### 计划（M1 生产化）
+### Added
 
-- ent Store 实现（definitions / instances / tokens / tasks / history 五表）
+- `store/ent`：flow.Store 的 ent 生产实现（独立子模块）——definitions/instances/
+  tokens/tasks/history 五表 schema、`WithTx` 事务模式（引擎入口包裹，嵌套安全）、
+  ent 生成代码入库；codegen 注意：entgo v0.14 loader 与 Go 1.27 不兼容，
+  需 `GOTOOLCHAIN=go1.25.0` 生成
+- `store/gorm`：flow.Store 的 GORM 生产实现（独立子模块）——MySQL/PostgreSQL/
+  SQLite 多方言通用，JSON 字段经 gorm serializer 落库，同样的 `WithTx` 事务模式
+- `store/memory`：补 `WithTx` 直通占位，宿主切换存储时引擎入口包装代码不变
+
+### 计划（M1 生产化剩余）
+
 - kratos 服务封装（gRPC + REST，Protobuf 契约）
 - 加签（动态增加办理人）、驳回指定节点（ReturnTo）
 - 定时器节点与宿主调度器参考实现
