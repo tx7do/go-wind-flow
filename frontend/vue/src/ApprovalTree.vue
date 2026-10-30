@@ -4,7 +4,7 @@
  * 左侧树渲染（TreeLevel 递归）+ 右侧选中节点编辑器。
  * 保存导出 designer-json-v1；子集外文档抛 UnsupportedError 时回退画布。
  */
-import { computed, provide, ref } from 'vue';
+import { computed, provide, ref, shallowRef, watch } from "vue";
 import {
   documentToTree,
   treeAddBranch,
@@ -40,13 +40,13 @@ const emit = defineEmits<{
 ensureStyles();
 
 const unsupported = ref('');
-let tree: ApprovalTree | null = null;
+const tree = shallowRef<ApprovalTree | null>(null);
 try {
-  tree = documentToTree(props.document);
+  tree.value = documentToTree(props.document);
 } catch (err) {
   if (err instanceof UnsupportedError) {
     unsupported.value = err.message;
-    tree = null;
+    tree.value = null;
   } else {
     throw err;
   }
@@ -65,33 +65,33 @@ const api = {
     formOpenId.value = formOpenId.value === id ? '' : id;
   },
   addAfter(id: string) {
-    if (tree) commit(treeAddTaskAfter(tree, id));
+    if (tree.value) commit(treeAddTaskAfter(tree.value, id));
   },
   addFirst() {
-    if (tree) commit(treeAddTaskFirst(tree));
+    if (tree.value) commit(treeAddTaskFirst(tree.value));
   },
   appendBranch(branchId: string) {
-    if (tree) commit(treeAppendTaskToBranch(tree, branchId));
+    if (tree.value) commit(treeAppendTaskToBranch(tree.value, branchId));
   },
   addBranch(gateId: string) {
-    if (tree) commit(treeAddBranch(tree, gateId));
+    if (tree.value) commit(treeAddBranch(tree.value, gateId));
   },
   addAfterBranches(gateId: string) {
-    if (tree) commit(treeAddTaskAfterBranches(tree, gateId));
+    if (tree.value) commit(treeAddTaskAfterBranches(tree.value, gateId));
   },
   remove(id: string) {
-    if (tree) commit(treeRemoveNode(tree, id));
+    if (tree.value) commit(treeRemoveNode(tree.value, id));
     if (selectedId.value === id) selectedId.value = '';
   },
   removeBranch(gateId: string, branchId: string) {
-    if (tree) commit(treeRemoveBranch(tree, gateId, branchId));
+    if (tree.value) commit(treeRemoveBranch(tree.value, gateId, branchId));
   },
   update(id: string, patch: Record<string, unknown>) {
-    if (tree) commit(treeUpdateNode(tree, id, patch));
+    if (tree.value) commit(treeUpdateNode(tree.value, id, patch));
   },
   updateBranch(branchId: string, patch: Record<string, unknown>) {
-    if (!tree) return;
-    const d = treeToDocument(tree);
+    if (!tree.value) return;
+    const d = treeToDocument(tree.value);
     const edge = d.edges.find((e) => e.id === branchId);
     if (!edge) return;
     if ('name' in patch) edge.name = patch.name as string | undefined;
@@ -105,8 +105,8 @@ const api = {
       if (gw) gw.defaultEdge = branchId;
     }
     try {
-      tree = documentToTree(d);
-      commit(tree);
+      tree.value = documentToTree(d);
+      commit(tree.value);
     } catch (err) {
       if (err instanceof UnsupportedError) unsupported.value = err.message;
     }
@@ -118,11 +118,12 @@ const api = {
 provide(Symbol.for('gwf-tree-api'), api);
 
 function commit(t: ApprovalTree) {
-  emit('change', treeToDocument(t));
+  tree.value = t;
+  emit("change", treeToDocument(t));
 }
 
 function findNode(id: string): DesignerNode | null {
-  let cur: ApprovalTreeNode | null = tree?.root ?? null;
+  let cur: ApprovalTreeNode | null = tree.value?.root ?? null;
   while (cur) {
     if (cur.kind === 'task') {
       if (cur.node.id === id) return cur.node;
