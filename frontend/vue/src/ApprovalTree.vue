@@ -155,8 +155,6 @@ function findDeep(node: ApprovalTreeNode | null, id: string): DesignerNode | nul
   return null;
 }
 
-const selected = computed<DesignerNode | null>(() => (selectedId.value ? findNode(selectedId.value) : null));
-
 const themeAttrs = computed(() => ({
   'data-gwf-theme': props.theme ?? 'auto',
   style: props.accent ? { '--gwf-accent': props.accent } : undefined,
@@ -175,47 +173,6 @@ const themeAttrs = computed(() => ({
         <TreeLevel v-if="tree?.root" :node="tree.root" />
         <div class="gwf-connector"><div class="gwf-line" /></div>
         <div class="gwf-end-node">结束</div>
-      </div>
-      <div v-if="selected" class="gwf-editor">
-        <h4>节点配置</h4>
-        <label>节点名称</label>
-        <input :value="selected.name" @input="api.update(selected.id, { name: ($event.target as HTMLInputElement).value })" />
-        <label>办理人规则</label>
-        <div v-for="(r, i) in selected.approver?.rules ?? []" :key="i" class="gwf-row">
-          <select :value="r.kind" @change="api.update(selected.id, { approver: { ...selected.approver, rules: (selected.approver?.rules ?? []).map((x, j) => j === i ? { ...x, kind: ($event.target as HTMLSelectElement).value } : x) } })">
-            <option value="USER">USER</option>
-            <option value="STARTER">STARTER</option>
-            <option value="LEADER">LEADER</option>
-            <option value="POSITION">POSITION</option>
-            <option value="ROLE">ROLE</option>
-            <option value="GROUP">GROUP</option>
-            <option value="EXPR">EXPR</option>
-          </select>
-          <input :value="r.value" placeholder="编码 / 留空" @input="api.update(selected.id, { approver: { ...selected.approver, rules: (selected.approver?.rules ?? []).map((x, j) => j === i ? { ...x, value: ($event.target as HTMLInputElement).value } : x) } })" />
-          <button class="gwf-btn danger" @click="api.update(selected.id, { approver: { ...selected.approver, rules: (selected.approver?.rules ?? []).filter((_, j) => j !== i) } })">×</button>
-        </div>
-        <button class="gwf-btn" @click="api.update(selected.id, { approver: { ...selected.approver, rules: [...(selected.approver?.rules ?? []), { kind: 'USER', value: '' }] } })">+ 规则</button>
-        <label>审批策略</label>
-        <select :value="selected.approver?.strategy ?? 'ALL'" @change="api.update(selected.id, { approver: { ...selected.approver, strategy: ($event.target as HTMLSelectElement).value } })">
-          <option value="ALL">会签</option>
-          <option value="ANY">或签</option>
-        </select>
-        <label>
-          <input type="checkbox" :checked="selected.approver?.sequential" @change="api.update(selected.id, { approver: { ...selected.approver, sequential: ($event.target as HTMLInputElement).checked } })" />
-          顺序多实例（逐个审批）
-        </label>
-        <label>集合表达式（多实例）</label>
-        <input :value="selected.approver?.collection ?? ''" placeholder="如 items" @input="api.update(selected.id, { approver: { ...selected.approver, collection: ($event.target as HTMLInputElement).value } })" />
-        <label>项变量名</label>
-        <input :value="selected.approver?.elementVar ?? ''" placeholder="缺省 item" @input="api.update(selected.id, { approver: { ...selected.approver, elementVar: ($event.target as HTMLInputElement).value } })" />
-        <label>任务超时</label>
-        <input :value="selected.timer?.duration ?? ''" placeholder="如 24h" @input="api.update(selected.id, { timer: { ...selected.timer, duration: ($event.target as HTMLInputElement).value } })" />
-        <label>超时动作</label>
-        <select :value="selected.timer?.action ?? ''" @change="api.update(selected.id, { timer: { ...selected.timer, action: ($event.target as HTMLSelectElement).value } })">
-          <option value="">仅广播事件</option>
-          <option value="auto_approve">自动通过</option>
-          <option value="auto_reject">自动驳回</option>
-        </select>
       </div>
     </div>
   </div>
