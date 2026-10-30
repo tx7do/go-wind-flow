@@ -106,9 +106,9 @@ export const designerCSS = /* css */ `
   .gwf-designer[data-gwf-theme='auto'] .djs-container {
     background: var(--gwf-canvas-bg);
   }
-  .gwf-designer[data-gwf-theme='auto'] .djs-visual > :nth-child(1),
   .gwf-designer[data-gwf-theme='auto'] .djs-visual rect,
   .gwf-designer[data-gwf-theme='auto'] .djs-visual circle,
+  .gwf-designer[data-gwf-theme='auto'] .djs-visual ellipse,
   .gwf-designer[data-gwf-theme='auto'] .djs-visual polygon {
     fill: var(--gwf-shape-fill) !important;
   }
@@ -127,7 +127,6 @@ export const designerCSS = /* css */ `
 .gwf-designer .djs-container {
   background: var(--gwf-canvas-bg);
 }
-.gwf-designer[data-gwf-theme='dark'] .djs-visual > :nth-child(1),
 .gwf-designer[data-gwf-theme='dark'] .djs-visual rect,
 .gwf-designer[data-gwf-theme='dark'] .djs-visual circle,
 .gwf-designer[data-gwf-theme='dark'] .djs-visual polygon {

@@ -7,6 +7,7 @@ import {
 import { ApprovalTree as ApprovalTreeVue } from '@go-wind/flow-designer-vue';
 import { injectDemoStyles, leaveApprovalXML, renderToolbar, treeSampleDoc } from './shared';
 
+import 'bpmn-js/dist/assets/bpmn-js.css';
 import '@bpmn-io/properties-panel/dist/assets/properties-panel.css';
 
 ensureStyles();
@@ -87,19 +88,21 @@ const app = createApp({
             '审批树（业务模式）',
           ),
         ]),
-        tab.value === 'canvas'
-          ? h('div', { class: 'demo-canvas-wrap' }, [
-              h('div', { class: 'gwf-canvas', ref: canvasRef }),
-              h('div', { class: 'gwf-panel' }),
-            ])
-          : h(ApprovalTreeVue, {
-              document: treeDoc,
-              theme: theme.value,
-              accent: accent.value,
-              onChange: (d: DesignerDocument) => {
-                treeDoc = d;
-              },
-            }),
+        // 两个视图都保持挂载（display 切换），bpmn-js 实例不随 Tab 卸载。
+        h('div', { class: 'demo-canvas-wrap', style: { display: tab.value === 'canvas' ? 'flex' : 'none' } }, [
+          h('div', { class: 'gwf-canvas', ref: canvasRef }),
+          h('div', { class: 'gwf-panel' }),
+        ]),
+        h('div', { style: { display: tab.value === 'canvas' ? 'none' : 'block' } }, [
+          h(ApprovalTreeVue, {
+            document: treeDoc,
+            theme: theme.value,
+            accent: accent.value,
+            onChange: (d: DesignerDocument) => {
+              treeDoc = d;
+            },
+          }),
+        ]),
         h('textarea', {
           class: 'demo-output',
           readonly: true,

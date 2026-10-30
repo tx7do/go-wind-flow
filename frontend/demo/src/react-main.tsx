@@ -8,6 +8,7 @@ import {
 import { ApprovalTree, FlowDesigner } from '@go-wind/flow-designer-react';
 import { injectDemoStyles, leaveApprovalXML, renderToolbar, treeSampleDoc, type ThemeMode } from './shared';
 
+import 'bpmn-js/dist/assets/bpmn-js.css';
 import '@bpmn-io/properties-panel/dist/assets/properties-panel.css';
 
 ensureStyles();
@@ -88,19 +89,21 @@ function App() {
         '审批树（业务模式）',
       ),
     ),
-    tab === 'canvas'
-      ? createElement(
-          'div',
-          { className: 'demo-canvas-wrap' },
-          createElement('div', { className: 'gwf-canvas', ref: onCanvasMount }),
-          createElement('div', { className: 'gwf-panel' }),
-        )
-      : createElement(ApprovalTree, {
-          document: treeDoc,
-          theme,
-          accent,
-          onChange: setTreeDoc,
-        }),
+    // 两个视图都保持挂载（display 切换），bpmn-js 实例不随 Tab 卸载。
+    createElement(
+      'div',
+      { className: 'demo-canvas-wrap', style: { display: tab === 'canvas' ? 'flex' : 'none' } },
+      createElement('div', { className: 'gwf-canvas', ref: onCanvasMount }),
+      createElement('div', { className: 'gwf-panel' }),
+    ),
+    createElement('div', { style: { display: tab === 'canvas' ? 'none' : 'block' } },
+      createElement(ApprovalTree, {
+        document: treeDoc,
+        theme,
+        accent,
+        onChange: setTreeDoc,
+      }),
+    ),
     createElement('textarea', {
       className: 'demo-output',
       readOnly: true,
