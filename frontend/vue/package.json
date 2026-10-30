@@ -13,13 +13,16 @@
     },
     "./style.css": "./dist/style.css"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "vite build",
-    "typecheck": "vue-tsc --noEmit"
+    "build": "vite build && vue-tsc -p tsconfig.build.json",
+    "typecheck": "vue-tsc --noEmit",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@go-wind/flow-designer-core": "0.1.0"
+    "@go-wind/flow-designer-core": "^0.2.0"
   },
   "peerDependencies": {
     "vue": "^3.4.0"
@@ -30,5 +33,36 @@
     "vite": "^5.4.0",
     "vue": "^3.4.0",
     "vue-tsc": "^2.1.0"
+  },
+  "license": "MIT",
+  "author": "Bobo <yanglinbo@gmail.com>",
+  "homepage": "https://github.com/tx7do/go-wind-flow#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tx7do/go-wind-flow.git",
+    "directory": "frontend/vue"
+  },
+  "bugs": {
+    "url": "https://github.com/tx7do/go-wind-flow/issues"
+  },
+  "keywords": [
+    "bpmn",
+    "bpmn-js",
+    "workflow",
+    "workflow-engine",
+    "approval",
+    "go-wind",
+    "流程引擎",
+    "审批流",
+    "vue",
+    "vue3",
+    "designer"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
   }
 }

@@ -8,9 +8,9 @@
     "build": "vite build"
   },
   "dependencies": {
-    "@go-wind/flow-designer-core": "0.1.0",
-    "@go-wind/flow-designer-react": "0.1.0",
-    "@go-wind/flow-designer-vue": "0.1.0",
+    "@go-wind/flow-designer-core": "^0.2.0",
+    "@go-wind/flow-designer-react": "^0.2.0",
+    "@go-wind/flow-designer-vue": "^0.2.0",
     "bpmn-js-properties-panel": "^5.24.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",

@@ -16,9 +16,10 @@
     "dist"
   ],
   "scripts": {
-    "build": "vite build && tsc --emitDeclarationOnly --declaration --outDir dist",
+    "build": "vite build && tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@bpmn-io/properties-panel": "^3.42.0",
@@ -31,5 +32,35 @@
     "vite": "^5.4.0",
     "vitest": "^2.1.9"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "license": "MIT",
+  "author": "Bobo <yanglinbo@gmail.com>",
+  "homepage": "https://github.com/tx7do/go-wind-flow#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tx7do/go-wind-flow.git",
+    "directory": "frontend/core"
+  },
+  "bugs": {
+    "url": "https://github.com/tx7do/go-wind-flow/issues"
+  },
+  "keywords": [
+    "bpmn",
+    "bpmn-js",
+    "workflow",
+    "workflow-engine",
+    "approval",
+    "go-wind",
+    "流程引擎",
+    "审批流",
+    "designer",
+    "bpmn-designer"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  }
 }

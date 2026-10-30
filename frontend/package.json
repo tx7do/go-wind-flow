@@ -1,7 +1,7 @@
 {
   "name": "go-wind-flow-frontend",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "workspaces": [
     "core",
     "vue",
@@ -11,6 +11,7 @@
   "scripts": {
     "build": "npm run build -w @go-wind/flow-designer-core && npm run build -w @go-wind/flow-designer-vue && npm run build -w @go-wind/flow-designer-react",
     "typecheck": "npm run typecheck -w @go-wind/flow-designer-core && npm run typecheck -w @go-wind/flow-designer-vue && npm run typecheck -w @go-wind/flow-designer-react",
-    "demo": "npm run build -w @go-wind/flow-designer-core && npm run build -w @go-wind/flow-designer-vue && npm run build -w @go-wind/flow-designer-react && npm run dev -w @go-wind/flow-designer-demo"
+    "demo": "npm run build -w @go-wind/flow-designer-core && npm run build -w @go-wind/flow-designer-vue && npm run build -w @go-wind/flow-designer-react && npm run dev -w @go-wind/flow-designer-demo",
+    "publish:all": "npm run build && npm publish -w @go-wind/flow-designer-core --access public && npm publish -w @go-wind/flow-designer-vue --access public && npm publish -w @go-wind/flow-designer-react --access public"
   }
 }

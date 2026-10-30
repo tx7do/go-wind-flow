@@ -41,7 +41,8 @@ export function applyAccent(root: HTMLElement, accent: string): void {
  * createDesigner 会自动注入一次；宿主也可自行引入 `styles.css` 并通过
  * THEME_ATTR 手动控主题。
  */
-export const designerCSS = /* css */ `
+// 显式标注为 string：否则 TS 会把整段 CSS 推断成字面量类型，声明文件膨胀到 20KB。
+export const designerCSS: string = /* css */ `
 .gwf-designer {
   --gwf-bg: #ffffff;
   --gwf-canvas-bg: #f7f8fa;
