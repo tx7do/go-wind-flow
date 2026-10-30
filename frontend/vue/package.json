@@ -1,6 +1,6 @@
 {
   "name": "@go-wind/flow-designer-vue",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "go-wind-flow 流程设计器 Vue3 适配器（<FlowDesigner>）",
   "type": "module",
   "main": "./dist/index.js",

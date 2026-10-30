@@ -1,6 +1,6 @@
 {
   "name": "@go-wind/flow-designer-core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "go-wind-flow 流程设计器核心（框架无关）：bpmn-js 建模器 + go-wind-flow 属性面板 + designer-json-v1 序列化",
   "type": "module",
   "main": "./dist/index.js",
