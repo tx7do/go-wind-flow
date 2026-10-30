@@ -53,11 +53,16 @@ try {
 }
 
 const selectedId = ref('');
+const formOpenId = ref('');
 
 const api = {
   selectedId,
+  formOpenId,
   select(id: string) {
     selectedId.value = selectedId.value === id ? '' : id;
+  },
+  toggleForm(id: string) {
+    formOpenId.value = formOpenId.value === id ? '' : id;
   },
   addAfter(id: string) {
     if (tree) commit(treeAddTaskAfter(tree, id));
