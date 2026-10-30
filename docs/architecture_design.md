@@ -1,4 +1,9 @@
-# 架构设计
+# 引擎架构设计（Architecture）参考文档
+
+> **定位**：本仓引擎内核的唯一权威说明——执行模型（Token 状态机）、事务边界、
+> 定义与版本、SPI 契约、fail-closed 语义与目录结构。动手改 `flow/` 内核、或为新宿主
+> 装配 SPI 之前先读它。BPMN 互通细节见 [bpmn_compat.md](./bpmn_compat.md)，
+> OA/IM 迁移见 [oa_im_migration.md](./oa_im_migration.md)。
 
 ## 1. 定位与设计原则
 

@@ -1,4 +1,9 @@
-# BPMN 兼容策略
+# BPMN 兼容策略（BPMN Compatibility）参考文档
+
+> **定位**：本仓与 BPMN 2.0 生态互通的唯一权威说明——元素支持矩阵、
+> `<flow:assignees>` 办理人扩展约定、UEL 条件映射、bpmn-js / Camunda Modeler
+> 互通路径与格式插件机制。接存量 BPMN 文件、接流程设计器、或新增
+> Importer/Exporter 之前先读它。
 
 目标：**无缝吸引 BPMN 用户**——存量 BPMN 文件可直接部署，go-wind-flow 的定义
 可导出为 BPMN 交由主流建模工具打开，BPMN 生态的建模习惯（元素命名、UEL 条件、

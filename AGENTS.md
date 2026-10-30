@@ -27,6 +27,14 @@ go-wind-flow：go-wind 家族的流程引擎。本文件给 AI 编码代理与�
   （BPMN 部署 → 启动 → 网关 → 会签 → 完成 全链路）。
 - 格式适配器用 `examples/` 下的样例文件做回环测试（Parse → Write → Parse）。
 
+## 文档
+
+- 三语 README（`README.md` 中文主文档 / `README.en-US.md` / `README.ja-JP.md`）
+  结构保持一致，改主文档后同步另两份。
+- `docs/README.md` 是文档索引；参考层每篇是一个主题的唯一权威说明，
+  对外行为变更必须同步对应参考文档与 `CHANGELOG.md`（Unreleased）。
+- 专题文档命名用 snake_case（家族约定），文首用 `> **定位**` 引导块。
+
 ## 常用命令
 
 ```bash
