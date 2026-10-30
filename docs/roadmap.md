@@ -32,7 +32,10 @@
       （ReturnTo，userTask 祖先、并行在途 fail-closed）；契约 v0.1.1 增补
       AddSigners / ReturnTo RPC（已推 BSR），server 层 RPC 级测试覆盖
 - [ ] 变量作用域（实例级 → 节点级局部变量）
-- [ ] 定时器节点（`intermediateTimerEvent`）+ 宿主调度器参考实现
+- [x] 定时器节点（`intermediateTimerEvent`，ISO8601 时长；令牌阻塞 + DueAt 打标，
+      `ResumeDueTimers` 续跑）+ 调度参考实现 `examples/scheduler`（单 cron 循环
+      同时驱动定时器续跑与任务到期扫描，经服务层走生产路径）；契约 v0.1.2
+      增补 ResumeDueTimers RPC 与 TIMER_FIRED 事件（已推 BSR）
 - [ ] 设计器协议定型：与 go-wind-ui 流程设计器（BPMN-JS 封装）的 JSON 契约
 - [ ] 性能基线：单实例万级流转压测 + Store 批量化
 

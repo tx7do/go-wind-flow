@@ -26,7 +26,7 @@ func ValidateDefinition(def *Definition) error {
 			startCount++
 		case NodeEndEvent:
 			endCount++
-		case NodeUserTask, NodeScriptTask, NodeServiceTask, NodeCallActivity:
+		case NodeUserTask, NodeScriptTask, NodeServiceTask, NodeCallActivity, NodeTimerEvent:
 		case NodeExclusiveGateway, NodeParallelGateway, NodeInclusiveGateway:
 		default:
 			return fmt.Errorf("%w: unknown node type %q (%s)", ErrInvalidDefinition, n.Type, id)
@@ -67,6 +67,13 @@ func ValidateDefinition(def *Definition) error {
 			}
 			if n.Type == NodeCallActivity && n.SubprocessKey == "" {
 				return fmt.Errorf("%w: callActivity %s missing subprocess key", ErrInvalidDefinition, id)
+			}
+		case NodeTimerEvent:
+			if in != 1 || len(out) != 1 {
+				return fmt.Errorf("%w: timer event %s must have 1 in / 1 out", ErrInvalidDefinition, id)
+			}
+			if n.Timer == nil || n.Timer.Duration.Std() <= 0 {
+				return fmt.Errorf("%w: timer event %s missing positive duration", ErrInvalidDefinition, id)
 			}
 		case NodeExclusiveGateway:
 			if len(out) < 2 {

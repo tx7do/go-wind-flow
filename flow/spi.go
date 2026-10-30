@@ -88,6 +88,8 @@ type TokenStore interface {
 	Delete(ctx context.Context, id string) error
 	Get(ctx context.Context, id string) (*Token, error)
 	ListByInstance(ctx context.Context, instanceID string) ([]*Token, error)
+	// ListDueTimers 列出到期的定时器令牌（WAITING 且 DueAt <= now）。
+	ListDueTimers(ctx context.Context, now time.Time) ([]*Token, error)
 }
 
 // TaskStore 任务存储。

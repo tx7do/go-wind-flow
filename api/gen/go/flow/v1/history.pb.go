@@ -50,6 +50,8 @@ const (
 	FlowEventType_FLOW_EVENT_TYPE_TASK_APPROVER_ADDED FlowEventType = 10
 	// 实例退回指定节点
 	FlowEventType_FLOW_EVENT_TYPE_INSTANCE_RETURNED FlowEventType = 11
+	// 定时器节点到期续跑
+	FlowEventType_FLOW_EVENT_TYPE_TIMER_FIRED FlowEventType = 12
 )
 
 // Enum value maps for FlowEventType.
@@ -67,6 +69,7 @@ var (
 		9:  "FLOW_EVENT_TYPE_VARIABLE_CHANGED",
 		10: "FLOW_EVENT_TYPE_TASK_APPROVER_ADDED",
 		11: "FLOW_EVENT_TYPE_INSTANCE_RETURNED",
+		12: "FLOW_EVENT_TYPE_TIMER_FIRED",
 	}
 	FlowEventType_value = map[string]int32{
 		"FLOW_EVENT_TYPE_UNSPECIFIED":         0,
@@ -81,6 +84,7 @@ var (
 		"FLOW_EVENT_TYPE_VARIABLE_CHANGED":    9,
 		"FLOW_EVENT_TYPE_TASK_APPROVER_ADDED": 10,
 		"FLOW_EVENT_TYPE_INSTANCE_RETURNED":   11,
+		"FLOW_EVENT_TYPE_TIMER_FIRED":         12,
 	}
 )
 
@@ -322,7 +326,7 @@ const file_flow_v1_history_proto_rawDesc = "" +
 	"\vinstance_id\x18\x01 \x01(\tR\n" +
 	"instanceId\"N\n" +
 	"\x1bListInstanceHistoryResponse\x12/\n" +
-	"\x05items\x18\x01 \x03(\v2\x19.flow.v1.FlowHistoryEventR\x05items*\xbc\x03\n" +
+	"\x05items\x18\x01 \x03(\v2\x19.flow.v1.FlowHistoryEventR\x05items*\xdd\x03\n" +
 	"\rFlowEventType\x12\x1f\n" +
 	"\x1bFLOW_EVENT_TYPE_UNSPECIFIED\x10\x00\x12#\n" +
 	"\x1fFLOW_EVENT_TYPE_PROCESS_STARTED\x10\x01\x12!\n" +
@@ -336,7 +340,8 @@ const file_flow_v1_history_proto_rawDesc = "" +
 	" FLOW_EVENT_TYPE_VARIABLE_CHANGED\x10\t\x12'\n" +
 	"#FLOW_EVENT_TYPE_TASK_APPROVER_ADDED\x10\n" +
 	"\x12%\n" +
-	"!FLOW_EVENT_TYPE_INSTANCE_RETURNED\x10\v2x\n" +
+	"!FLOW_EVENT_TYPE_INSTANCE_RETURNED\x10\v\x12\x1f\n" +
+	"\x1bFLOW_EVENT_TYPE_TIMER_FIRED\x10\f2x\n" +
 	"\x12FlowHistoryService\x12b\n" +
 	"\x13ListInstanceHistory\x12#.flow.v1.ListInstanceHistoryRequest\x1a$.flow.v1.ListInstanceHistoryResponse\"\x00B9Z7github.com/tx7do/go-wind-flow/api/gen/go/flow/v1;flowv1b\x06proto3"
 

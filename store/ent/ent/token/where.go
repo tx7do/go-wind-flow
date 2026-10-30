@@ -89,6 +89,11 @@ func ChildInstID(v string) predicate.Token {
 	return predicate.Token(sql.FieldEQ(FieldChildInstID, v))
 }
 
+// DueAt applies equality check predicate on the "due_at" field. It's identical to DueAtEQ.
+func DueAt(v time.Time) predicate.Token {
+	return predicate.Token(sql.FieldEQ(FieldDueAt, v))
+}
+
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.Token {
 	return predicate.Token(sql.FieldEQ(FieldCreatedAt, v))
@@ -417,6 +422,56 @@ func ChildInstIDEqualFold(v string) predicate.Token {
 // ChildInstIDContainsFold applies the ContainsFold predicate on the "child_inst_id" field.
 func ChildInstIDContainsFold(v string) predicate.Token {
 	return predicate.Token(sql.FieldContainsFold(FieldChildInstID, v))
+}
+
+// DueAtEQ applies the EQ predicate on the "due_at" field.
+func DueAtEQ(v time.Time) predicate.Token {
+	return predicate.Token(sql.FieldEQ(FieldDueAt, v))
+}
+
+// DueAtNEQ applies the NEQ predicate on the "due_at" field.
+func DueAtNEQ(v time.Time) predicate.Token {
+	return predicate.Token(sql.FieldNEQ(FieldDueAt, v))
+}
+
+// DueAtIn applies the In predicate on the "due_at" field.
+func DueAtIn(vs ...time.Time) predicate.Token {
+	return predicate.Token(sql.FieldIn(FieldDueAt, vs...))
+}
+
+// DueAtNotIn applies the NotIn predicate on the "due_at" field.
+func DueAtNotIn(vs ...time.Time) predicate.Token {
+	return predicate.Token(sql.FieldNotIn(FieldDueAt, vs...))
+}
+
+// DueAtGT applies the GT predicate on the "due_at" field.
+func DueAtGT(v time.Time) predicate.Token {
+	return predicate.Token(sql.FieldGT(FieldDueAt, v))
+}
+
+// DueAtGTE applies the GTE predicate on the "due_at" field.
+func DueAtGTE(v time.Time) predicate.Token {
+	return predicate.Token(sql.FieldGTE(FieldDueAt, v))
+}
+
+// DueAtLT applies the LT predicate on the "due_at" field.
+func DueAtLT(v time.Time) predicate.Token {
+	return predicate.Token(sql.FieldLT(FieldDueAt, v))
+}
+
+// DueAtLTE applies the LTE predicate on the "due_at" field.
+func DueAtLTE(v time.Time) predicate.Token {
+	return predicate.Token(sql.FieldLTE(FieldDueAt, v))
+}
+
+// DueAtIsNil applies the IsNil predicate on the "due_at" field.
+func DueAtIsNil() predicate.Token {
+	return predicate.Token(sql.FieldIsNull(FieldDueAt))
+}
+
+// DueAtNotNil applies the NotNil predicate on the "due_at" field.
+func DueAtNotNil() predicate.Token {
+	return predicate.Token(sql.FieldNotNull(FieldDueAt))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.

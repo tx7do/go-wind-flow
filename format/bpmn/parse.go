@@ -56,6 +56,7 @@ type processXML struct {
 	UserTasks   []userTaskXML   `xml:"userTask"`
 	ScriptTasks []scriptTaskXML `xml:"scriptTask"`
 	ServiceTasks []scriptTaskXML `xml:"serviceTask"`
+	TimerEvents []catchEventXML `xml:"intermediateCatchEvent"`
 
 	ExclusiveGateways []gatewayXML `xml:"exclusiveGateway"`
 	ParallelGateways  []gatewayXML `xml:"parallelGateway"`
@@ -98,6 +99,17 @@ type scriptTaskXML struct {
 
 type scriptBodyXML struct {
 	Inner string `xml:",innerxml"`
+}
+
+// catchEventXML 中间捕获事件（当前仅支持定时器定义）。
+type catchEventXML struct {
+	ID    string       `xml:"id,attr"`
+	Name  string       `xml:"name,attr"`
+	Timer *timerDefXML `xml:"timerEventDefinition"`
+}
+
+type timerDefXML struct {
+	Duration string `xml:"timeDuration"`
 }
 
 type gatewayXML struct {
@@ -196,6 +208,19 @@ func Parse(data []byte) (*flow.Definition, error) {
 		if t.Script != nil {
 			node.Script = &flow.ScriptSpec{Lang: t.ScriptFormat, Code: strings.TrimSpace(t.Script.Inner)}
 		}
+		add(node)
+	}
+	for _, ev := range p.TimerEvents {
+		node := &flow.Node{ID: ev.ID, Name: ev.Name, Type: flow.NodeTimerEvent}
+		if ev.Timer == nil || strings.TrimSpace(ev.Timer.Duration) == "" {
+			return nil, fmt.Errorf("%w: intermediateCatchEvent %s missing timerEventDefinition/timeDuration",
+				flow.ErrInvalidDefinition, ev.ID)
+		}
+		d, err := ParseISODuration(ev.Timer.Duration)
+		if err != nil {
+			return nil, fmt.Errorf("intermediateCatchEvent %s: %w", ev.ID, err)
+		}
+		node.Timer = &flow.TimerSpec{Duration: flow.Duration(d)}
 		add(node)
 	}
 	for _, g := range p.ExclusiveGateways {
@@ -374,6 +399,16 @@ func Write(def *flow.Definition) ([]byte, error) {
 			fmt.Fprintf(&b, "    <parallelGateway id=%q name=%q/>\n", n.ID, n.Name)
 		case flow.NodeInclusiveGateway:
 			fmt.Fprintf(&b, "    <inclusiveGateway id=%q name=%q/>\n", n.ID, n.Name)
+		case flow.NodeTimerEvent:
+			dur := ""
+			if n.Timer != nil {
+				dur = WriteISODuration(n.Timer.Duration.Std())
+			}
+			fmt.Fprintf(&b, "    <intermediateCatchEvent id=%q name=%q>\n", n.ID, n.Name)
+			fmt.Fprintf(&b, "      <timerEventDefinition>\n")
+			fmt.Fprintf(&b, "        <timeDuration>%s</timeDuration>\n", dur)
+			fmt.Fprintf(&b, "      </timerEventDefinition>\n")
+			fmt.Fprintf(&b, "    </intermediateCatchEvent>\n")
 		case flow.NodeCallActivity:
 			ref := n.SubprocessKey
 			if n.SubprocessVersion > 0 {

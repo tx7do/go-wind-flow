@@ -27,6 +27,8 @@ type Token struct {
 	ParentID string `json:"parent_id,omitempty"`
 	// ChildInstID holds the value of the "child_inst_id" field.
 	ChildInstID string `json:"child_inst_id,omitempty"`
+	// DueAt holds the value of the "due_at" field.
+	DueAt *time.Time `json:"due_at,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt    time.Time `json:"created_at,omitempty"`
 	selectValues sql.SelectValues
@@ -39,7 +41,7 @@ func (*Token) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case token.FieldID, token.FieldInstanceID, token.FieldNodeID, token.FieldStatus, token.FieldParentID, token.FieldChildInstID:
 			values[i] = new(sql.NullString)
-		case token.FieldCreatedAt:
+		case token.FieldDueAt, token.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -91,6 +93,13 @@ func (_m *Token) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field child_inst_id", values[i])
 			} else if value.Valid {
 				_m.ChildInstID = value.String
+			}
+		case token.FieldDueAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field due_at", values[i])
+			} else if value.Valid {
+				_m.DueAt = new(time.Time)
+				*_m.DueAt = value.Time
 			}
 		case token.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -148,6 +157,11 @@ func (_m *Token) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("child_inst_id=")
 	builder.WriteString(_m.ChildInstID)
+	builder.WriteString(", ")
+	if v := _m.DueAt; v != nil {
+		builder.WriteString("due_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

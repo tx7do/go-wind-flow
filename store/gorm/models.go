@@ -43,13 +43,14 @@ type Instance struct {
 func (Instance) TableName() string { return "flow_instances" }
 
 type Token struct {
-	ID          string    `gorm:"primaryKey;size:64"`
-	InstanceID  string    `gorm:"size:64;index:ix_token_inst"`
-	NodeID      string    `gorm:"size:128"`
-	Status      string    `gorm:"size:32"`
-	ParentID    string    `gorm:"size:64"`
-	ChildInstID string    `gorm:"size:64"`
-	CreatedAt   time.Time `gorm:"index:ix_token_inst,priority:2"`
+	ID          string     `gorm:"primaryKey;size:64"`
+	InstanceID  string     `gorm:"size:64;index:ix_token_inst"`
+	NodeID      string     `gorm:"size:128"`
+	Status      string     `gorm:"size:32;index:ix_token_due,priority:1"`
+	ParentID    string     `gorm:"size:64"`
+	ChildInstID string     `gorm:"size:64"`
+	DueAt       *time.Time `gorm:"index:ix_token_due,priority:2"`
+	CreatedAt   time.Time  `gorm:"index:ix_token_inst,priority:2"`
 }
 
 func (Token) TableName() string { return "flow_tokens" }

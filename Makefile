@@ -17,6 +17,7 @@ tidy:
 	cd contrib/goscripts && go mod tidy
 	cd store/ent && go mod tidy
 	cd store/gorm && go mod tidy
+	cd examples/scheduler && go mod tidy
 
 # 生成 api/gen/go（需要 buf + protoc-gen-go / protoc-gen-go-grpc / protoc-gen-go-http）
 proto:

@@ -38,6 +38,8 @@ enum FlowEventType {
   FLOW_EVENT_TYPE_TASK_APPROVER_ADDED = 10;
   // 实例退回指定节点
   FLOW_EVENT_TYPE_INSTANCE_RETURNED = 11;
+  // 定时器节点到期续跑
+  FLOW_EVENT_TYPE_TIMER_FIRED = 12;
 }
 
 // 流转历史事件。

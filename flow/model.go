@@ -14,6 +14,7 @@ const (
 	NodeUserTask         NodeType = "userTask"
 	NodeScriptTask       NodeType = "scriptTask"
 	NodeServiceTask      NodeType = "serviceTask" // v0 与 ScriptTask 同语义（回调由宿主监听器承接）
+	NodeTimerEvent       NodeType = "intermediateTimerEvent" // 中间定时器：令牌阻塞至到期，宿主 cron 驱动续跑
 	NodeExclusiveGateway NodeType = "exclusiveGateway"
 	NodeParallelGateway  NodeType = "parallelGateway" // 分叉/汇合同型，按出入度区分（BPMN 惯例）
 	NodeInclusiveGateway NodeType = "inclusiveGateway"

@@ -21,6 +21,8 @@ const (
 	FieldParentID = "parent_id"
 	// FieldChildInstID holds the string denoting the child_inst_id field in the database.
 	FieldChildInstID = "child_inst_id"
+	// FieldDueAt holds the string denoting the due_at field in the database.
+	FieldDueAt = "due_at"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// Table holds the table name of the token in the database.
@@ -35,6 +37,7 @@ var Columns = []string{
 	FieldStatus,
 	FieldParentID,
 	FieldChildInstID,
+	FieldDueAt,
 	FieldCreatedAt,
 }
 
@@ -86,6 +89,11 @@ func ByParentID(opts ...sql.OrderTermOption) OrderOption {
 // ByChildInstID orders the results by the child_inst_id field.
 func ByChildInstID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldChildInstID, opts...).ToFunc()
+}
+
+// ByDueAt orders the results by the due_at field.
+func ByDueAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDueAt, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.

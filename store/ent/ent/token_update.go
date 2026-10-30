@@ -98,6 +98,26 @@ func (_u *TokenUpdate) SetNillableChildInstID(v *string) *TokenUpdate {
 	return _u
 }
 
+// SetDueAt sets the "due_at" field.
+func (_u *TokenUpdate) SetDueAt(v time.Time) *TokenUpdate {
+	_u.mutation.SetDueAt(v)
+	return _u
+}
+
+// SetNillableDueAt sets the "due_at" field if the given value is not nil.
+func (_u *TokenUpdate) SetNillableDueAt(v *time.Time) *TokenUpdate {
+	if v != nil {
+		_u.SetDueAt(*v)
+	}
+	return _u
+}
+
+// ClearDueAt clears the value of the "due_at" field.
+func (_u *TokenUpdate) ClearDueAt() *TokenUpdate {
+	_u.mutation.ClearDueAt()
+	return _u
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_u *TokenUpdate) SetCreatedAt(v time.Time) *TokenUpdate {
 	_u.mutation.SetCreatedAt(v)
@@ -167,6 +187,12 @@ func (_u *TokenUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.ChildInstID(); ok {
 		_spec.SetField(token.FieldChildInstID, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.DueAt(); ok {
+		_spec.SetField(token.FieldDueAt, field.TypeTime, value)
+	}
+	if _u.mutation.DueAtCleared() {
+		_spec.ClearField(token.FieldDueAt, field.TypeTime)
 	}
 	if value, ok := _u.mutation.CreatedAt(); ok {
 		_spec.SetField(token.FieldCreatedAt, field.TypeTime, value)
@@ -258,6 +284,26 @@ func (_u *TokenUpdateOne) SetNillableChildInstID(v *string) *TokenUpdateOne {
 	if v != nil {
 		_u.SetChildInstID(*v)
 	}
+	return _u
+}
+
+// SetDueAt sets the "due_at" field.
+func (_u *TokenUpdateOne) SetDueAt(v time.Time) *TokenUpdateOne {
+	_u.mutation.SetDueAt(v)
+	return _u
+}
+
+// SetNillableDueAt sets the "due_at" field if the given value is not nil.
+func (_u *TokenUpdateOne) SetNillableDueAt(v *time.Time) *TokenUpdateOne {
+	if v != nil {
+		_u.SetDueAt(*v)
+	}
+	return _u
+}
+
+// ClearDueAt clears the value of the "due_at" field.
+func (_u *TokenUpdateOne) ClearDueAt() *TokenUpdateOne {
+	_u.mutation.ClearDueAt()
 	return _u
 }
 
@@ -360,6 +406,12 @@ func (_u *TokenUpdateOne) sqlSave(ctx context.Context) (_node *Token, err error)
 	}
 	if value, ok := _u.mutation.ChildInstID(); ok {
 		_spec.SetField(token.FieldChildInstID, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.DueAt(); ok {
+		_spec.SetField(token.FieldDueAt, field.TypeTime, value)
+	}
+	if _u.mutation.DueAtCleared() {
+		_spec.ClearField(token.FieldDueAt, field.TypeTime)
 	}
 	if value, ok := _u.mutation.CreatedAt(); ok {
 		_spec.SetField(token.FieldCreatedAt, field.TypeTime, value)

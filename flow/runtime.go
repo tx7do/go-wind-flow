@@ -90,8 +90,9 @@ type Token struct {
 	InstanceID  string
 	NodeID      string
 	Status      TokenStatus
-	ParentID    string // fork 产生的子令牌指向分叉源令牌
-	ChildInstID string // 阻塞于 callActivity 时记录子流程实例
+	ParentID    string     // fork 产生的子令牌指向分叉源令牌
+	ChildInstID string     // 阻塞于 callActivity 时记录子流程实例
+	DueAt       *time.Time // 阻塞于定时器节点时的到期时刻
 	CreatedAt   time.Time
 }
 
@@ -137,6 +138,7 @@ const (
 	EventTaskForwarded     EventType = "task.forwarded"
 	EventTaskApproverAdded EventType = "task.approver_added" // 加签
 	EventTaskDue           EventType = "task.due"
+	EventTimerFired        EventType = "timer.fired"       // 定时器节点到期续跑
 	EventInstanceReturned  EventType = "instance.returned" // 退回指定节点
 	EventVariableChanged   EventType = "variable.changed"
 )

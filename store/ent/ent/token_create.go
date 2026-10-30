@@ -66,6 +66,20 @@ func (_c *TokenCreate) SetNillableChildInstID(v *string) *TokenCreate {
 	return _c
 }
 
+// SetDueAt sets the "due_at" field.
+func (_c *TokenCreate) SetDueAt(v time.Time) *TokenCreate {
+	_c.mutation.SetDueAt(v)
+	return _c
+}
+
+// SetNillableDueAt sets the "due_at" field if the given value is not nil.
+func (_c *TokenCreate) SetNillableDueAt(v *time.Time) *TokenCreate {
+	if v != nil {
+		_c.SetDueAt(*v)
+	}
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *TokenCreate) SetCreatedAt(v time.Time) *TokenCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -197,6 +211,10 @@ func (_c *TokenCreate) createSpec() (*Token, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.ChildInstID(); ok {
 		_spec.SetField(token.FieldChildInstID, field.TypeString, value)
 		_node.ChildInstID = value
+	}
+	if value, ok := _c.mutation.DueAt(); ok {
+		_spec.SetField(token.FieldDueAt, field.TypeTime, value)
+		_node.DueAt = &value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(token.FieldCreatedAt, field.TypeTime, value)

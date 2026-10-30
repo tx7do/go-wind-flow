@@ -7,6 +7,14 @@
 
 ### Added
 
+- 引擎：**定时器节点** `intermediateTimerEvent`——令牌到达即阻塞并打 DueAt 标，
+  `ResumeDueTimers`（宿主 cron 驱动）到期续跑并广播 `timer.fired` 事件；
+  BPMN 导入导出 `timerEventDefinition/timeDuration`（ISO8601，仅天/时/分/秒，
+  年月周日历单位显式拒绝）；Token 实体新增 due_at（三处 store 同步）
+- 调度参考实现 `examples/scheduler`：单 cron 循环驱动两条时间线
+  （定时器续跑 + 任务到期扫描），经 flowserver 服务层走生产路径
+- `api` 契约 v0.1.2：`FlowInstanceService` 新增 `ResumeDueTimers` RPC 与
+  `TIMER_FIRED` 事件枚举（已推 BSR）；`server` 实现对应 RPC
 - 引擎：**加签** `AddTaskApprovers`（向待办节点动态追加办理人，会签式、委托叠加、
   自动去重）与 **退回指定节点** `ReturnTo`（退回 userTask 祖先重走，动态办理人
   重新解析；非祖先 / 非 userTask / 在途并行分支均 fail-closed 拒绝）

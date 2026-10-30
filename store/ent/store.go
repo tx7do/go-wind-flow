@@ -344,6 +344,7 @@ func (t tokenStore) upsert(ctx context.Context, tk *flow.Token) error {
 			SetStatus(string(tk.Status)).
 			SetParentID(tk.ParentID).
 			SetChildInstID(tk.ChildInstID).
+			SetNillableDueAt(tk.DueAt).
 			Save(ctx)
 		return err
 	}
@@ -354,6 +355,7 @@ func (t tokenStore) upsert(ctx context.Context, tk *flow.Token) error {
 		SetStatus(string(tk.Status)).
 		SetParentID(tk.ParentID).
 		SetChildInstID(tk.ChildInstID).
+		SetNillableDueAt(tk.DueAt).
 		SetCreatedAt(tk.CreatedAt).
 		Save(ctx)
 	return err
@@ -371,6 +373,7 @@ func tokenToFlow(e *gen.Token) *flow.Token {
 		Status:      flow.TokenStatus(e.Status),
 		ParentID:    e.ParentID,
 		ChildInstID: e.ChildInstID,
+		DueAt:       e.DueAt,
 		CreatedAt:   e.CreatedAt,
 	}
 }
@@ -388,6 +391,24 @@ func (t tokenStore) Get(ctx context.Context, id string) (*flow.Token, error) {
 
 func (t tokenStore) ListByInstance(ctx context.Context, instanceID string) ([]*flow.Token, error) {
 	es, err := t.s.clientOf(ctx).Token.Query().Where(token.InstanceIDEQ(instanceID)).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*flow.Token, 0, len(es))
+	for _, e := range es {
+		out = append(out, tokenToFlow(e))
+	}
+	return out, nil
+}
+
+func (t tokenStore) ListDueTimers(ctx context.Context, now time.Time) ([]*flow.Token, error) {
+	es, err := t.s.clientOf(ctx).Token.Query().
+		Where(
+			token.StatusEQ(string(flow.TokenWaiting)),
+			token.DueAtNotNil(),
+			token.DueAtLTE(now),
+		).
+		All(ctx)
 	if err != nil {
 		return nil, err
 	}

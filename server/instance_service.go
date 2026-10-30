@@ -302,3 +302,20 @@ func (s *Services) ListInstanceHistory(ctx context.Context, req *flowv1.ListInst
 	}
 	return out, nil
 }
+
+// ResumeDueTimers 到期定时器扫描（宿主 cron 驱动）。
+func (s *Services) ResumeDueTimers(ctx context.Context, req *flowv1.ResumeDueTimersRequest) (*flowv1.ResumeDueTimersResponse, error) {
+	now := time.Now()
+	if req.GetAsOf() != nil {
+		now = req.GetAsOf().AsTime()
+	}
+	resumed, err := s.engine.ResumeDueTimers(ctx, now)
+	if err != nil {
+		return nil, mapError(err)
+	}
+	out := &flowv1.ResumeDueTimersResponse{}
+	for _, tk := range resumed {
+		out.TokenIds = append(out.TokenIds, tk.ID)
+	}
+	return out, nil
+}

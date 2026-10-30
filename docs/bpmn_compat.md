@@ -52,8 +52,9 @@ xmlBytes, _ := eng.ExportDefinition(ctx, "t1", "leave", 0, "bpmn-xml")
 | `callActivity` | ✅ | `calledElement` 支持 `key` / `key:vN` |
 | `multiInstanceLoopCharacteristics` | ✅ | 非顺序多实例；完成语义经 `completionCondition`（ALL/ANY）或扩展 JSON |
 | `conditionExpression` | ✅ | `${...}` 包裹自动剥壳为裸表达式 |
+| `intermediateCatchEvent` + `timerEventDefinition` | ✅ | M1 定时器节点；`timeDuration` 支持 ISO8601 天/时/分/秒（年/月/周日历单位显式拒绝） |
 | `documentation` | ⛔ M2 | 透传到 Node.Documentation |
-| `boundaryEvent` / 中间事件 / 消息事件 | ⛔ M2 | 见 roadmap |
+| `boundaryEvent` / 消息与信号事件 / 顺序中间事件 | ⛔ M2 | 定时器中间事件已在 M1 落地（见上一行） |
 | 顺序多实例（isSequential=true） | ⛔ M2 | |
 | lane / 泳道 | ⛔ | 展示层概念，不入引擎 |
 | BPMN DI（图形坐标） | 透传保留 | 不解析不使用，导出不还原（M2 考虑透传） |

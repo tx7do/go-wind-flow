@@ -19,6 +19,7 @@ func (Token) Fields() []ent.Field {
 		field.String("status"),
 		field.String("parent_id").Default(""),
 		field.String("child_inst_id").Default(""),
+		field.Time("due_at").Optional().Nillable(),
 		field.Time("created_at"),
 	}
 }
@@ -26,5 +27,6 @@ func (Token) Fields() []ent.Field {
 func (Token) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Fields("instance_id", "node_id", "status"),
+		index.Fields("status", "due_at"),
 	}
 }

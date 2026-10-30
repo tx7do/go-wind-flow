@@ -25,6 +25,9 @@ service FlowInstanceService {
 
   // 管理员强制终止（不向父流程传播）
   rpc AbortInstance(AbortInstanceRequest) returns (FlowInstance) {}
+
+  // 到期定时器扫描（宿主 cron 驱动；续跑到期定时器节点上的令牌）
+  rpc ResumeDueTimers(ResumeDueTimersRequest) returns (ResumeDueTimersResponse) {}
 }
 
 // 实例状态。
@@ -106,4 +109,14 @@ message WithdrawInstanceRequest {
 message AbortInstanceRequest {
   string id = 1 ;
   string actor_id = 2;
+}
+
+message ResumeDueTimersRequest {
+  // 判定时刻（缺省 = 服务端当前时间）
+  optional google.protobuf.Timestamp as_of = 1;
+}
+
+message ResumeDueTimersResponse {
+  // 本次续跑的令牌
+  repeated string token_ids = 1;
 }

@@ -24,6 +24,7 @@ const (
 	FlowInstanceService_ListInstances_FullMethodName    = "/flow.v1.FlowInstanceService/ListInstances"
 	FlowInstanceService_WithdrawInstance_FullMethodName = "/flow.v1.FlowInstanceService/WithdrawInstance"
 	FlowInstanceService_AbortInstance_FullMethodName    = "/flow.v1.FlowInstanceService/AbortInstance"
+	FlowInstanceService_ResumeDueTimers_FullMethodName  = "/flow.v1.FlowInstanceService/ResumeDueTimers"
 )
 
 // FlowInstanceServiceClient is the client API for FlowInstanceService service.
@@ -43,6 +44,8 @@ type FlowInstanceServiceClient interface {
 	WithdrawInstance(ctx context.Context, in *WithdrawInstanceRequest, opts ...grpc.CallOption) (*FlowInstance, error)
 	// 管理员强制终止（不向父流程传播）
 	AbortInstance(ctx context.Context, in *AbortInstanceRequest, opts ...grpc.CallOption) (*FlowInstance, error)
+	// 到期定时器扫描（宿主 cron 驱动；续跑到期定时器节点上的令牌）
+	ResumeDueTimers(ctx context.Context, in *ResumeDueTimersRequest, opts ...grpc.CallOption) (*ResumeDueTimersResponse, error)
 }
 
 type flowInstanceServiceClient struct {
@@ -103,6 +106,16 @@ func (c *flowInstanceServiceClient) AbortInstance(ctx context.Context, in *Abort
 	return out, nil
 }
 
+func (c *flowInstanceServiceClient) ResumeDueTimers(ctx context.Context, in *ResumeDueTimersRequest, opts ...grpc.CallOption) (*ResumeDueTimersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResumeDueTimersResponse)
+	err := c.cc.Invoke(ctx, FlowInstanceService_ResumeDueTimers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FlowInstanceServiceServer is the server API for FlowInstanceService service.
 // All implementations must embed UnimplementedFlowInstanceServiceServer
 // for forward compatibility.
@@ -120,6 +133,8 @@ type FlowInstanceServiceServer interface {
 	WithdrawInstance(context.Context, *WithdrawInstanceRequest) (*FlowInstance, error)
 	// 管理员强制终止（不向父流程传播）
 	AbortInstance(context.Context, *AbortInstanceRequest) (*FlowInstance, error)
+	// 到期定时器扫描（宿主 cron 驱动；续跑到期定时器节点上的令牌）
+	ResumeDueTimers(context.Context, *ResumeDueTimersRequest) (*ResumeDueTimersResponse, error)
 	mustEmbedUnimplementedFlowInstanceServiceServer()
 }
 
@@ -144,6 +159,9 @@ func (UnimplementedFlowInstanceServiceServer) WithdrawInstance(context.Context, 
 }
 func (UnimplementedFlowInstanceServiceServer) AbortInstance(context.Context, *AbortInstanceRequest) (*FlowInstance, error) {
 	return nil, status.Error(codes.Unimplemented, "method AbortInstance not implemented")
+}
+func (UnimplementedFlowInstanceServiceServer) ResumeDueTimers(context.Context, *ResumeDueTimersRequest) (*ResumeDueTimersResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ResumeDueTimers not implemented")
 }
 func (UnimplementedFlowInstanceServiceServer) mustEmbedUnimplementedFlowInstanceServiceServer() {}
 func (UnimplementedFlowInstanceServiceServer) testEmbeddedByValue()                             {}
@@ -256,6 +274,24 @@ func _FlowInstanceService_AbortInstance_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FlowInstanceService_ResumeDueTimers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResumeDueTimersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FlowInstanceServiceServer).ResumeDueTimers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FlowInstanceService_ResumeDueTimers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FlowInstanceServiceServer).ResumeDueTimers(ctx, req.(*ResumeDueTimersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FlowInstanceService_ServiceDesc is the grpc.ServiceDesc for FlowInstanceService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -282,6 +318,10 @@ var FlowInstanceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AbortInstance",
 			Handler:    _FlowInstanceService_AbortInstance_Handler,
+		},
+		{
+			MethodName: "ResumeDueTimers",
+			Handler:    _FlowInstanceService_ResumeDueTimers_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -254,6 +254,18 @@ func (t tokenStore) ListByInstance(_ context.Context, instanceID string) ([]*flo
 	return out, nil
 }
 
+func (t tokenStore) ListDueTimers(_ context.Context, now time.Time) ([]*flow.Token, error) {
+	t.s.mu.RLock()
+	defer t.s.mu.RUnlock()
+	var out []*flow.Token
+	for _, tk := range t.s.tokens {
+		if tk.Status == flow.TokenWaiting && tk.DueAt != nil && !tk.DueAt.After(now) {
+			out = append(out, cloneToken(tk))
+		}
+	}
+	return out, nil
+}
+
 func cloneToken(in *flow.Token) *flow.Token {
 	cp := *in
 	return &cp

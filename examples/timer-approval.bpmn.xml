@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 定时审批示例：提交申请 → 等待 2 秒（模拟冷却/超时窗口）→ 主管审批 -->
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:flow="https://github.com/tx7do/go-wind-flow"
+             targetNamespace="https://github.com/tx7do/go-wind-flow">
+  <process id="timer_approval" name="定时审批" isExecutable="true">
+    <startEvent id="start" name="提交申请"/>
+    <intermediateCatchEvent id="cooling" name="冷却期">
+      <timerEventDefinition>
+        <timeDuration>PT2S</timeDuration>
+      </timerEventDefinition>
+    </intermediateCatchEvent>
+    <userTask id="review" name="主管审批">
+      <extensionElements>
+        <flow:assignees>{"approvers":[{"kind":"USER","value":"later"}]}</flow:assignees>
+      </extensionElements>
+    </userTask>
+    <endEvent id="end" name="结束"/>
+    <sequenceFlow id="f1" sourceRef="start" targetRef="cooling"/>
+    <sequenceFlow id="f2" sourceRef="cooling" targetRef="review"/>
+    <sequenceFlow id="f3" sourceRef="review" targetRef="end"/>
+  </process>
+</definitions>

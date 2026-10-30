@@ -47,7 +47,8 @@ low-code platforms).
   (JS / Lua / Python / CEL / Expr / Go / WASM…), pure Go with zero CGO; `contrib/exprlang`
   provides the same evaluator behavior as go-wind-oa / go-wind-im in production
 - **Enterprise semantics built in**: multi-tenancy, counter-signing (ALL) / any-signing (ANY),
-  delegation, task forwarding, withdrawal, due-time tracking, fail-closed subprocess
+  delegation, task forwarding, add-signing (dynamic approvers), return-to-node,
+  due-time tracking, timer nodes (ISO8601 durations), fail-closed subprocess
   propagation, full history audit trail
 - **Fail-closed by default**: a failed condition evaluation never takes a branch, an unresolved
   assignee never creates a task, script sandboxes expose only whitelisted APIs — every

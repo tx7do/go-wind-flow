@@ -662,6 +662,50 @@ func (e *Engine) CheckDueTasks(ctx context.Context, now time.Time) ([]*Task, err
 	return due, nil
 }
 
+// ResumeDueTimers 扫描到期定时器节点并续跑令牌（宿主 cron 驱动）。
+// 与 CheckDueTasks 同一调度习惯：定时器到期是引擎自驱（令牌续走），
+// 任务到期是宿主自决（监听器决定催办/升级）。
+// 返回本次续跑的令牌；单个令牌推进失败立即返回（fail-closed，不静默跳过）。
+func (e *Engine) ResumeDueTimers(ctx context.Context, now time.Time) ([]*Token, error) {
+	due, err := e.store.Tokens().ListDueTimers(ctx, now)
+	if err != nil {
+		return nil, err
+	}
+	var resumed []*Token
+	for _, tk := range due {
+		inst, err := e.store.Instances().Get(ctx, tk.InstanceID)
+		if err != nil || inst == nil || !inst.Status.Live() {
+			continue
+		}
+		def, err := e.definitionOf(ctx, inst)
+		if err != nil {
+			return resumed, err
+		}
+		out := def.OutEdges(tk.NodeID)
+		if len(out) != 1 {
+			return resumed, fmt.Errorf("timer node %s has %d out edges", tk.NodeID, len(out))
+		}
+
+		_ = e.appendHistory(ctx, inst, &Event{Type: EventTimerFired, NodeID: tk.NodeID}, Vars{"dueAt": tk.DueAt.Unix()})
+		e.fireListeners(ctx, &Event{
+			Type: EventTimerFired, TenantID: inst.TenantID, InstanceID: inst.ID,
+			NodeID: tk.NodeID, Vars: inst.Variables.Clone(), At: e.clock.Now(),
+		})
+
+		tk.Status = TokenRunning
+		tk.NodeID = out[0].To
+		tk.DueAt = nil
+		if err := e.store.Tokens().Update(ctx, tk); err != nil {
+			return resumed, err
+		}
+		resumed = append(resumed, tk)
+		if err := e.runToken(ctx, inst, tk, def); err != nil {
+			return resumed, err
+		}
+	}
+	return resumed, nil
+}
+
 // ============================================================
 // 内部：实例终结
 // ============================================================

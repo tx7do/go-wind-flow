@@ -3470,6 +3470,7 @@ type TokenMutation struct {
 	status        *string
 	parent_id     *string
 	child_inst_id *string
+	due_at        *time.Time
 	created_at    *time.Time
 	clearedFields map[string]struct{}
 	done          bool
@@ -3761,6 +3762,55 @@ func (m *TokenMutation) ResetChildInstID() {
 	m.child_inst_id = nil
 }
 
+// SetDueAt sets the "due_at" field.
+func (m *TokenMutation) SetDueAt(t time.Time) {
+	m.due_at = &t
+}
+
+// DueAt returns the value of the "due_at" field in the mutation.
+func (m *TokenMutation) DueAt() (r time.Time, exists bool) {
+	v := m.due_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDueAt returns the old "due_at" field's value of the Token entity.
+// If the Token object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TokenMutation) OldDueAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDueAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDueAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDueAt: %w", err)
+	}
+	return oldValue.DueAt, nil
+}
+
+// ClearDueAt clears the value of the "due_at" field.
+func (m *TokenMutation) ClearDueAt() {
+	m.due_at = nil
+	m.clearedFields[token.FieldDueAt] = struct{}{}
+}
+
+// DueAtCleared returns if the "due_at" field was cleared in this mutation.
+func (m *TokenMutation) DueAtCleared() bool {
+	_, ok := m.clearedFields[token.FieldDueAt]
+	return ok
+}
+
+// ResetDueAt resets all changes to the "due_at" field.
+func (m *TokenMutation) ResetDueAt() {
+	m.due_at = nil
+	delete(m.clearedFields, token.FieldDueAt)
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *TokenMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -3831,7 +3881,7 @@ func (m *TokenMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TokenMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.instance_id != nil {
 		fields = append(fields, token.FieldInstanceID)
 	}
@@ -3846,6 +3896,9 @@ func (m *TokenMutation) Fields() []string {
 	}
 	if m.child_inst_id != nil {
 		fields = append(fields, token.FieldChildInstID)
+	}
+	if m.due_at != nil {
+		fields = append(fields, token.FieldDueAt)
 	}
 	if m.created_at != nil {
 		fields = append(fields, token.FieldCreatedAt)
@@ -3868,6 +3921,8 @@ func (m *TokenMutation) Field(name string) (ent.Value, bool) {
 		return m.ParentID()
 	case token.FieldChildInstID:
 		return m.ChildInstID()
+	case token.FieldDueAt:
+		return m.DueAt()
 	case token.FieldCreatedAt:
 		return m.CreatedAt()
 	}
@@ -3889,6 +3944,8 @@ func (m *TokenMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldParentID(ctx)
 	case token.FieldChildInstID:
 		return m.OldChildInstID(ctx)
+	case token.FieldDueAt:
+		return m.OldDueAt(ctx)
 	case token.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	}
@@ -3935,6 +3992,13 @@ func (m *TokenMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetChildInstID(v)
 		return nil
+	case token.FieldDueAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDueAt(v)
+		return nil
 	case token.FieldCreatedAt:
 		v, ok := value.(time.Time)
 		if !ok {
@@ -3971,7 +4035,11 @@ func (m *TokenMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *TokenMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(token.FieldDueAt) {
+		fields = append(fields, token.FieldDueAt)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -3984,6 +4052,11 @@ func (m *TokenMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *TokenMutation) ClearField(name string) error {
+	switch name {
+	case token.FieldDueAt:
+		m.ClearDueAt()
+		return nil
+	}
 	return fmt.Errorf("unknown Token nullable field %s", name)
 }
 
@@ -4005,6 +4078,9 @@ func (m *TokenMutation) ResetField(name string) error {
 		return nil
 	case token.FieldChildInstID:
 		m.ResetChildInstID()
+		return nil
+	case token.FieldDueAt:
+		m.ResetDueAt()
 		return nil
 	case token.FieldCreatedAt:
 		m.ResetCreatedAt()

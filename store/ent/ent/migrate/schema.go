@@ -154,6 +154,7 @@ var (
 		{Name: "status", Type: field.TypeString},
 		{Name: "parent_id", Type: field.TypeString, Default: ""},
 		{Name: "child_inst_id", Type: field.TypeString, Default: ""},
+		{Name: "due_at", Type: field.TypeTime, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 	}
 	// TokensTable holds the schema information for the "tokens" table.
@@ -166,6 +167,11 @@ var (
 				Name:    "token_instance_id_node_id_status",
 				Unique:  false,
 				Columns: []*schema.Column{TokensColumns[1], TokensColumns[2], TokensColumns[3]},
+			},
+			{
+				Name:    "token_status_due_at",
+				Unique:  false,
+				Columns: []*schema.Column{TokensColumns[3], TokensColumns[6]},
 			},
 		},
 	}

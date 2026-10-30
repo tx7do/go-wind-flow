@@ -656,6 +656,96 @@ func (x *AbortInstanceRequest) GetActorId() string {
 	return ""
 }
 
+type ResumeDueTimersRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 判定时刻（缺省 = 服务端当前时间）
+	AsOf          *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=as_of,json=asOf,proto3,oneof" json:"as_of,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResumeDueTimersRequest) Reset() {
+	*x = ResumeDueTimersRequest{}
+	mi := &file_flow_v1_instance_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResumeDueTimersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResumeDueTimersRequest) ProtoMessage() {}
+
+func (x *ResumeDueTimersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_flow_v1_instance_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResumeDueTimersRequest.ProtoReflect.Descriptor instead.
+func (*ResumeDueTimersRequest) Descriptor() ([]byte, []int) {
+	return file_flow_v1_instance_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *ResumeDueTimersRequest) GetAsOf() *timestamppb.Timestamp {
+	if x != nil {
+		return x.AsOf
+	}
+	return nil
+}
+
+type ResumeDueTimersResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 本次续跑的令牌
+	TokenIds      []string `protobuf:"bytes,1,rep,name=token_ids,json=tokenIds,proto3" json:"token_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResumeDueTimersResponse) Reset() {
+	*x = ResumeDueTimersResponse{}
+	mi := &file_flow_v1_instance_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResumeDueTimersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResumeDueTimersResponse) ProtoMessage() {}
+
+func (x *ResumeDueTimersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_flow_v1_instance_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResumeDueTimersResponse.ProtoReflect.Descriptor instead.
+func (*ResumeDueTimersResponse) Descriptor() ([]byte, []int) {
+	return file_flow_v1_instance_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ResumeDueTimersResponse) GetTokenIds() []string {
+	if x != nil {
+		return x.TokenIds
+	}
+	return nil
+}
+
 var File_flow_v1_instance_proto protoreflect.FileDescriptor
 
 const file_flow_v1_instance_proto_rawDesc = "" +
@@ -708,20 +798,26 @@ const file_flow_v1_instance_proto_rawDesc = "" +
 	"\bactor_id\x18\x02 \x01(\tR\aactorId\"A\n" +
 	"\x14AbortInstanceRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
-	"\bactor_id\x18\x02 \x01(\tR\aactorId*\xe8\x01\n" +
+	"\bactor_id\x18\x02 \x01(\tR\aactorId\"X\n" +
+	"\x16ResumeDueTimersRequest\x124\n" +
+	"\x05as_of\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\x04asOf\x88\x01\x01B\b\n" +
+	"\x06_as_of\"6\n" +
+	"\x17ResumeDueTimersResponse\x12\x1b\n" +
+	"\ttoken_ids\x18\x01 \x03(\tR\btokenIds*\xe8\x01\n" +
 	"\x12FlowInstanceStatus\x12$\n" +
 	" FLOW_INSTANCE_STATUS_UNSPECIFIED\x10\x00\x12 \n" +
 	"\x1cFLOW_INSTANCE_STATUS_RUNNING\x10\x01\x12!\n" +
 	"\x1dFLOW_INSTANCE_STATUS_APPROVED\x10\x02\x12!\n" +
 	"\x1dFLOW_INSTANCE_STATUS_REJECTED\x10\x03\x12\"\n" +
 	"\x1eFLOW_INSTANCE_STATUS_WITHDRAWN\x10\x04\x12 \n" +
-	"\x1cFLOW_INSTANCE_STATUS_ABORTED\x10\x052\x96\x03\n" +
+	"\x1cFLOW_INSTANCE_STATUS_ABORTED\x10\x052\xee\x03\n" +
 	"\x13FlowInstanceService\x12P\n" +
 	"\rStartInstance\x12\x1d.flow.v1.StartInstanceRequest\x1a\x1e.flow.v1.StartInstanceResponse\"\x00\x12C\n" +
 	"\vGetInstance\x12\x1b.flow.v1.GetInstanceRequest\x1a\x15.flow.v1.FlowInstance\"\x00\x12P\n" +
 	"\rListInstances\x12\x1d.flow.v1.ListInstancesRequest\x1a\x1e.flow.v1.ListInstancesResponse\"\x00\x12M\n" +
 	"\x10WithdrawInstance\x12 .flow.v1.WithdrawInstanceRequest\x1a\x15.flow.v1.FlowInstance\"\x00\x12G\n" +
-	"\rAbortInstance\x12\x1d.flow.v1.AbortInstanceRequest\x1a\x15.flow.v1.FlowInstance\"\x00B9Z7github.com/tx7do/go-wind-flow/api/gen/go/flow/v1;flowv1b\x06proto3"
+	"\rAbortInstance\x12\x1d.flow.v1.AbortInstanceRequest\x1a\x15.flow.v1.FlowInstance\"\x00\x12V\n" +
+	"\x0fResumeDueTimers\x12\x1f.flow.v1.ResumeDueTimersRequest\x1a .flow.v1.ResumeDueTimersResponse\"\x00B9Z7github.com/tx7do/go-wind-flow/api/gen/go/flow/v1;flowv1b\x06proto3"
 
 var (
 	file_flow_v1_instance_proto_rawDescOnce sync.Once
@@ -736,7 +832,7 @@ func file_flow_v1_instance_proto_rawDescGZIP() []byte {
 }
 
 var file_flow_v1_instance_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_flow_v1_instance_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_flow_v1_instance_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_flow_v1_instance_proto_goTypes = []any{
 	(FlowInstanceStatus)(0),         // 0: flow.v1.FlowInstanceStatus
 	(*FlowInstance)(nil),            // 1: flow.v1.FlowInstance
@@ -747,35 +843,40 @@ var file_flow_v1_instance_proto_goTypes = []any{
 	(*ListInstancesResponse)(nil),   // 6: flow.v1.ListInstancesResponse
 	(*WithdrawInstanceRequest)(nil), // 7: flow.v1.WithdrawInstanceRequest
 	(*AbortInstanceRequest)(nil),    // 8: flow.v1.AbortInstanceRequest
-	(*structpb.Struct)(nil),         // 9: google.protobuf.Struct
-	(*timestamppb.Timestamp)(nil),   // 10: google.protobuf.Timestamp
-	(*v1.PagingRequest)(nil),        // 11: pagination.PagingRequest
+	(*ResumeDueTimersRequest)(nil),  // 9: flow.v1.ResumeDueTimersRequest
+	(*ResumeDueTimersResponse)(nil), // 10: flow.v1.ResumeDueTimersResponse
+	(*structpb.Struct)(nil),         // 11: google.protobuf.Struct
+	(*timestamppb.Timestamp)(nil),   // 12: google.protobuf.Timestamp
+	(*v1.PagingRequest)(nil),        // 13: pagination.PagingRequest
 }
 var file_flow_v1_instance_proto_depIdxs = []int32{
 	0,  // 0: flow.v1.FlowInstance.status:type_name -> flow.v1.FlowInstanceStatus
-	9,  // 1: flow.v1.FlowInstance.variables:type_name -> google.protobuf.Struct
-	10, // 2: flow.v1.FlowInstance.created_at:type_name -> google.protobuf.Timestamp
-	10, // 3: flow.v1.FlowInstance.ended_at:type_name -> google.protobuf.Timestamp
-	9,  // 4: flow.v1.StartInstanceRequest.variables:type_name -> google.protobuf.Struct
+	11, // 1: flow.v1.FlowInstance.variables:type_name -> google.protobuf.Struct
+	12, // 2: flow.v1.FlowInstance.created_at:type_name -> google.protobuf.Timestamp
+	12, // 3: flow.v1.FlowInstance.ended_at:type_name -> google.protobuf.Timestamp
+	11, // 4: flow.v1.StartInstanceRequest.variables:type_name -> google.protobuf.Struct
 	1,  // 5: flow.v1.StartInstanceResponse.instance:type_name -> flow.v1.FlowInstance
 	0,  // 6: flow.v1.ListInstancesRequest.status:type_name -> flow.v1.FlowInstanceStatus
-	11, // 7: flow.v1.ListInstancesRequest.paging:type_name -> pagination.PagingRequest
+	13, // 7: flow.v1.ListInstancesRequest.paging:type_name -> pagination.PagingRequest
 	1,  // 8: flow.v1.ListInstancesResponse.items:type_name -> flow.v1.FlowInstance
-	2,  // 9: flow.v1.FlowInstanceService.StartInstance:input_type -> flow.v1.StartInstanceRequest
-	4,  // 10: flow.v1.FlowInstanceService.GetInstance:input_type -> flow.v1.GetInstanceRequest
-	5,  // 11: flow.v1.FlowInstanceService.ListInstances:input_type -> flow.v1.ListInstancesRequest
-	7,  // 12: flow.v1.FlowInstanceService.WithdrawInstance:input_type -> flow.v1.WithdrawInstanceRequest
-	8,  // 13: flow.v1.FlowInstanceService.AbortInstance:input_type -> flow.v1.AbortInstanceRequest
-	3,  // 14: flow.v1.FlowInstanceService.StartInstance:output_type -> flow.v1.StartInstanceResponse
-	1,  // 15: flow.v1.FlowInstanceService.GetInstance:output_type -> flow.v1.FlowInstance
-	6,  // 16: flow.v1.FlowInstanceService.ListInstances:output_type -> flow.v1.ListInstancesResponse
-	1,  // 17: flow.v1.FlowInstanceService.WithdrawInstance:output_type -> flow.v1.FlowInstance
-	1,  // 18: flow.v1.FlowInstanceService.AbortInstance:output_type -> flow.v1.FlowInstance
-	14, // [14:19] is the sub-list for method output_type
-	9,  // [9:14] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	12, // 9: flow.v1.ResumeDueTimersRequest.as_of:type_name -> google.protobuf.Timestamp
+	2,  // 10: flow.v1.FlowInstanceService.StartInstance:input_type -> flow.v1.StartInstanceRequest
+	4,  // 11: flow.v1.FlowInstanceService.GetInstance:input_type -> flow.v1.GetInstanceRequest
+	5,  // 12: flow.v1.FlowInstanceService.ListInstances:input_type -> flow.v1.ListInstancesRequest
+	7,  // 13: flow.v1.FlowInstanceService.WithdrawInstance:input_type -> flow.v1.WithdrawInstanceRequest
+	8,  // 14: flow.v1.FlowInstanceService.AbortInstance:input_type -> flow.v1.AbortInstanceRequest
+	9,  // 15: flow.v1.FlowInstanceService.ResumeDueTimers:input_type -> flow.v1.ResumeDueTimersRequest
+	3,  // 16: flow.v1.FlowInstanceService.StartInstance:output_type -> flow.v1.StartInstanceResponse
+	1,  // 17: flow.v1.FlowInstanceService.GetInstance:output_type -> flow.v1.FlowInstance
+	6,  // 18: flow.v1.FlowInstanceService.ListInstances:output_type -> flow.v1.ListInstancesResponse
+	1,  // 19: flow.v1.FlowInstanceService.WithdrawInstance:output_type -> flow.v1.FlowInstance
+	1,  // 20: flow.v1.FlowInstanceService.AbortInstance:output_type -> flow.v1.FlowInstance
+	10, // 21: flow.v1.FlowInstanceService.ResumeDueTimers:output_type -> flow.v1.ResumeDueTimersResponse
+	16, // [16:22] is the sub-list for method output_type
+	10, // [10:16] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_flow_v1_instance_proto_init() }
@@ -785,13 +886,14 @@ func file_flow_v1_instance_proto_init() {
 	}
 	file_flow_v1_instance_proto_msgTypes[0].OneofWrappers = []any{}
 	file_flow_v1_instance_proto_msgTypes[4].OneofWrappers = []any{}
+	file_flow_v1_instance_proto_msgTypes[8].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_flow_v1_instance_proto_rawDesc), len(file_flow_v1_instance_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   8,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

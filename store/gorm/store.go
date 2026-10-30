@@ -276,6 +276,7 @@ func tokenToModel(tk *flow.Token) *Token {
 		Status:      string(tk.Status),
 		ParentID:    tk.ParentID,
 		ChildInstID: tk.ChildInstID,
+		DueAt:       tk.DueAt,
 		CreatedAt:   tk.CreatedAt,
 	}
 }
@@ -288,6 +289,7 @@ func tokenToFlow(m *Token) *flow.Token {
 		Status:      flow.TokenStatus(m.Status),
 		ParentID:    m.ParentID,
 		ChildInstID: m.ChildInstID,
+		DueAt:       m.DueAt,
 		CreatedAt:   m.CreatedAt,
 	}
 }
@@ -317,6 +319,21 @@ func (t tokenStore) Get(ctx context.Context, id string) (*flow.Token, error) {
 func (t tokenStore) ListByInstance(ctx context.Context, instanceID string) ([]*flow.Token, error) {
 	var ms []Token
 	if err := t.s.dbOf(ctx).Where("instance_id = ?", instanceID).Find(&ms).Error; err != nil {
+		return nil, err
+	}
+	out := make([]*flow.Token, 0, len(ms))
+	for idx := range ms {
+		out = append(out, tokenToFlow(&ms[idx]))
+	}
+	return out, nil
+}
+
+func (t tokenStore) ListDueTimers(ctx context.Context, now time.Time) ([]*flow.Token, error) {
+	var ms []Token
+	if err := t.s.dbOf(ctx).
+		Where("status = ? AND due_at IS NOT NULL AND due_at <= ?",
+			string(flow.TokenWaiting), now).
+		Find(&ms).Error; err != nil {
 		return nil, err
 	}
 	out := make([]*flow.Token, 0, len(ms))

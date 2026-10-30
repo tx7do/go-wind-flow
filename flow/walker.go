@@ -59,6 +59,18 @@ func (e *Engine) runToken(ctx context.Context, inst *Instance, tk *Token, def *D
 				return nil // 在汇合点等待
 			}
 
+		case NodeTimerEvent:
+			// 中间定时器：令牌阻塞至到期；宿主 cron 驱动 ResumeDueTimers 续跑。
+			now := e.clock.Now()
+			due := now.Add(node.Timer.Duration.Std())
+			tk.Status = TokenWaiting
+			tk.DueAt = &due
+			if err := e.store.Tokens().Update(ctx, tk); err != nil {
+				return err
+			}
+			_ = e.appendHistory(ctx, inst, &Event{Type: EventTokenMoved, NodeID: tk.NodeID}, Vars{"dueAt": due.Unix()})
+			return nil
+
 		case NodeCallActivity:
 			return e.startSubprocess(ctx, inst, tk, node)
 

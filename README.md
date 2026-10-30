@@ -38,8 +38,9 @@ Go 私有部署市场提供审批流 / 业务流底座。
   SPI 接口，按需装配（契约见 [docs/architecture_design.md](./docs/architecture_design.md)）
 - **脚本引擎任意插拔**：`contrib/goscripts` 一套依赖接入 go-scripts 的 JS / Lua / Python / CEL / Expr 等
   9 种引擎（纯 Go、零 CGO）；生产求值可换 `contrib/exprlang`（与 go-wind-oa/im 现网行为一致）
-- **企业语义内建**：多租户、会签（ALL）/ 或签（ANY）、委托代办、转办、撤回、超时打点、
-  子流程 fail-closed 传播、全链路历史审计
+- **企业语义内建**：多租户、会签（ALL）/ 或签（ANY）、委托代办、转办、加签、
+  退回指定节点、超时打点、定时器节点（ISO8601 时长）、子流程 fail-closed 传播、
+  全链路历史审计
 - **fail-closed 安全观**：条件求值失败不误走分支、办理人解析失败不建任务、脚本沙箱白名单出口，
   所有不确定态一律拒绝而非放行
 
