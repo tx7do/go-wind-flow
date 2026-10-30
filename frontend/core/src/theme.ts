@@ -288,7 +288,11 @@ export const designerCSS = /* css */ `
   background: var(--gwf-node-bg);
   border: 1px solid var(--gwf-accent);
   color: var(--gwf-accent);
-  font-size: 14px;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   line-height: 1;
   cursor: pointer;
   opacity: 0;

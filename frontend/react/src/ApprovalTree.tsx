@@ -76,7 +76,7 @@ function metaOf(node: DesignerNode): string {
 function Connector({ onAdd, title }: { onAdd: () => void; title: string }) {
   return (
     <div className="gwf-connector">
-      <button className="gwf-add" title={title} onClick={(e) => { e.stopPropagation(); onAdd(); }}>＋</button>
+      <button className="gwf-add" title={title} onClick={(e) => { e.stopPropagation(); onAdd(); }}>+</button>
     </div>
   );
 }

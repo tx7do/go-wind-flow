@@ -66,7 +66,7 @@ function taskCard(node: any, removable: boolean) {
       <component :is="taskCard(n.node, true)" />
     </template>
     <div class="gwf-connector">
-      <button class="gwf-add" title="插入审批节点" @click.stop="api.addAfter(node.node.id)">＋</button>
+      <button class="gwf-add" title="插入审批节点" @click.stop="api.addAfter(node.node.id)">+</button>
     </div>
     <TreeLevel v-if="node.child" :node="node.child" />
   </template>
@@ -102,7 +102,7 @@ function taskCard(node: any, removable: boolean) {
       </div>
     </div>
     <div class="gwf-connector">
-      <button class="gwf-add" title="插入审批节点" @click.stop="api.addAfterBranches(node.gateId)">＋</button>
+      <button class="gwf-add" title="插入审批节点" @click.stop="api.addAfterBranches(node.gateId)">+</button>
     </div>
     <TreeLevel v-if="node.child" :node="node.child" />
   </template>
