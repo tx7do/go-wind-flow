@@ -123,6 +123,9 @@ api/             Protobuf 服务契约（独立子模块）
   protos/flow/v1/  definition/instance/task/history 四服务（纯 gRPC，无 HTTP 注解——
                    HTTP 路由由各宿主 BFF 层定义，家族惯例）
   gen/go/flow/v1/  生成码入库（go / gRPC 两件套；make proto 重新生成）
+server/          gRPC 服务实现（独立子模块）：flowv1 四服务的 proto ↔ 领域结构
+                 映射、错误码映射、写路径 WithTx 事务接线；宿主注册到任意
+                 grpc.ServiceRegistrar（kratos grpc server / 裸 grpc.Server）
 format/bpmn/     BPMN 2.0 XML 双向转换
 format/windjson/ OA/IM node_config 兼容
 contrib/exprlang/  expr-lang 求值器（独立子模块）

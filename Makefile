@@ -12,6 +12,7 @@ build:
 tidy:
 	go mod tidy
 	cd api && go mod tidy
+	cd server && go mod tidy
 	cd contrib/exprlang && go mod tidy
 	cd contrib/goscripts && go mod tidy
 	cd store/ent && go mod tidy

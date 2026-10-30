@@ -23,6 +23,7 @@ import (
 
 	gen "github.com/tx7do/go-wind-flow/store/ent/ent"
 	"github.com/tx7do/go-wind-flow/store/ent/ent/definition"
+	"github.com/tx7do/go-wind-flow/store/ent/ent/predicate"
 	"github.com/tx7do/go-wind-flow/store/ent/ent/historyevent"
 	"github.com/tx7do/go-wind-flow/store/ent/ent/instance"
 	"github.com/tx7do/go-wind-flow/store/ent/ent/task"
@@ -188,6 +189,25 @@ func (d defStore) MaxVersion(ctx context.Context, tenantID, key string) (int, er
 	return e.Version, nil
 }
 
+func (d defStore) List(ctx context.Context, tenantID, key string) ([]*flow.Definition, error) {
+	pred := []predicate.Definition{definition.TenantIDEQ(tenantID)}
+	if key != "" {
+		pred = append(pred, definition.DefKeyEQ(key))
+	}
+	es, err := d.s.clientOf(ctx).Definition.Query().
+		Where(pred...).
+		Order(gen.Asc("def_key"), gen.Asc("version")).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*flow.Definition, 0, len(es))
+	for _, e := range es {
+		out = append(out, defToFlow(e))
+	}
+	return out, nil
+}
+
 // ============================================================
 // InstanceStore
 // ============================================================
@@ -269,6 +289,21 @@ func (i instStore) Get(ctx context.Context, id string) (*flow.Instance, error) {
 func (i instStore) ListByStatus(ctx context.Context, status flow.InstanceStatus) ([]*flow.Instance, error) {
 	es, err := i.s.clientOf(ctx).Instance.Query().
 		Where(instance.StatusEQ(string(status))).
+		Order(gen.Asc("created_at")).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*flow.Instance, 0, len(es))
+	for _, e := range es {
+		out = append(out, instToFlow(e))
+	}
+	return out, nil
+}
+
+func (i instStore) List(ctx context.Context, tenantID string) ([]*flow.Instance, error) {
+	es, err := i.s.clientOf(ctx).Instance.Query().
+		Where(instance.TenantIDEQ(tenantID)).
 		Order(gen.Asc("created_at")).
 		All(ctx)
 	if err != nil {

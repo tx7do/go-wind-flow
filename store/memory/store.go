@@ -115,6 +115,24 @@ func (d defStore) MaxVersion(_ context.Context, tenantID, key string) (int, erro
 	return max, nil
 }
 
+func (d defStore) List(_ context.Context, tenantID, key string) ([]*flow.Definition, error) {
+	d.s.mu.RLock()
+	defer d.s.mu.RUnlock()
+	var out []*flow.Definition
+	for _, def := range d.s.defs {
+		if def.TenantID == tenantID && (key == "" || def.Key == key) {
+			out = append(out, def.Clone())
+		}
+	}
+	sort.Slice(out, func(a, b int) bool {
+		if out[a].Key != out[b].Key {
+			return out[a].Key < out[b].Key
+		}
+		return out[a].Version < out[b].Version
+	})
+	return out, nil
+}
+
 // ============================================================
 // InstanceStore
 // ============================================================
@@ -156,6 +174,19 @@ func (i instStore) ListByStatus(_ context.Context, status flow.InstanceStatus) (
 	var out []*flow.Instance
 	for _, inst := range i.s.insts {
 		if inst.Status == status {
+			out = append(out, cloneInst(inst))
+		}
+	}
+	sort.Slice(out, func(a, b int) bool { return out[a].CreatedAt.Before(out[b].CreatedAt) })
+	return out, nil
+}
+
+func (i instStore) List(_ context.Context, tenantID string) ([]*flow.Instance, error) {
+	i.s.mu.RLock()
+	defer i.s.mu.RUnlock()
+	var out []*flow.Instance
+	for _, inst := range i.s.insts {
+		if inst.TenantID == tenantID {
 			out = append(out, cloneInst(inst))
 		}
 	}

@@ -149,6 +149,22 @@ func (d defStore) MaxVersion(ctx context.Context, tenantID, key string) (int, er
 	return m.Version, nil
 }
 
+func (d defStore) List(ctx context.Context, tenantID, key string) ([]*flow.Definition, error) {
+	q := d.s.dbOf(ctx).Where("tenant_id = ?", tenantID)
+	if key != "" {
+		q = q.Where("def_key = ?", key)
+	}
+	var ms []Definition
+	if err := q.Order("def_key ASC, version ASC").Find(&ms).Error; err != nil {
+		return nil, err
+	}
+	out := make([]*flow.Definition, 0, len(ms))
+	for idx := range ms {
+		out = append(out, defToFlow(&ms[idx]))
+	}
+	return out, nil
+}
+
 // ============================================================
 // InstanceStore
 // ============================================================
@@ -218,6 +234,21 @@ func (i instStore) ListByStatus(ctx context.Context, status flow.InstanceStatus)
 	var ms []Instance
 	if err := i.s.dbOf(ctx).
 		Where("status = ?", string(status)).
+		Order("created_at ASC").
+		Find(&ms).Error; err != nil {
+		return nil, err
+	}
+	out := make([]*flow.Instance, 0, len(ms))
+	for idx := range ms {
+		out = append(out, instToFlow(&ms[idx]))
+	}
+	return out, nil
+}
+
+func (i instStore) List(ctx context.Context, tenantID string) ([]*flow.Instance, error) {
+	var ms []Instance
+	if err := i.s.dbOf(ctx).
+		Where("tenant_id = ?", tenantID).
 		Order("created_at ASC").
 		Find(&ms).Error; err != nil {
 		return nil, err

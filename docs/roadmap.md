@@ -24,7 +24,10 @@
       FlowHistory 四服务（**纯 gRPC，无 HTTP 注解**；HTTP 由宿主 BFF 层定义），
       buf 生成码入库，proto 发布 BSR（buf.build/go-wind/go-wind-flow），
       宿主 embed 或独立流程中心共用同一契约
-- [ ] kratos 服务封装（实现 api 契约，proto ↔ 领域结构映射 + WithTx 接线）
+- [x] 服务封装：`server/` 独立子模块——实现 api 四契约（纯 gRPC），proto ↔
+      领域结构映射、错误码映射（NotFound/PermissionDenied/FailedPrecondition/…）、
+      写路径 WithTx 事务接线；宿主任意 grpc.ServiceRegistrar 注册
+      （kratos grpc server / 裸 grpc.Server）；HTTP 由宿主 BFF 层定义
 - [ ] 加签（动态增加办理人）、驳回指定节点（ReturnTo）
 - [ ] 变量作用域（实例级 → 节点级局部变量）
 - [ ] 定时器节点（`intermediateTimerEvent`）+ 宿主调度器参考实现

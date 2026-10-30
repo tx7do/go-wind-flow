@@ -7,6 +7,10 @@
 
 ### Added
 
+- `server`：api 契约的 gRPC 服务实现（独立子模块）——proto ↔ 领域结构映射、
+  哨兵错误 → gRPC 状态码映射（NotFound / PermissionDenied / FailedPrecondition /
+  InvalidArgument / Internal）、写路径 WithTx 事务接线；`RegisterAll` 一次注册
+  四服务到任意 grpc.ServiceRegistrar；端到端测试覆盖生命周期、错误码与查询
 - `api`：Protobuf 服务契约（独立子模块）——FlowDefinition / FlowInstance /
   FlowTask / FlowHistory 四服务，**纯 gRPC 契约、无 HTTP 注解**（HTTP 路由由
   各宿主 BFF 层定义，家族惯例），分页复用 go-crud `pagination.PagingRequest`；

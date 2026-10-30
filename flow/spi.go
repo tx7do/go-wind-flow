@@ -67,6 +67,8 @@ type DefinitionStore interface {
 	// Get version<=0 表示取最新版本。
 	Get(ctx context.Context, tenantID, key string, version int) (*Definition, error)
 	MaxVersion(ctx context.Context, tenantID, key string) (int, error)
+	// List 按租户列出定义；key 为空表示全部，结果按 (key, version) 排序。
+	List(ctx context.Context, tenantID, key string) ([]*Definition, error)
 }
 
 // InstanceStore 实例存储。
@@ -75,6 +77,8 @@ type InstanceStore interface {
 	Get(ctx context.Context, id string) (*Instance, error)
 	Update(ctx context.Context, inst *Instance) error
 	ListByStatus(ctx context.Context, status InstanceStatus) ([]*Instance, error)
+	// List 按租户列出实例（全状态），按创建时间升序。
+	List(ctx context.Context, tenantID string) ([]*Instance, error)
 }
 
 // TokenStore 令牌存储。
