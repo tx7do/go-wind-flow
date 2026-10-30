@@ -15,37 +15,53 @@ jobs:
     defaults:
       run:
         working-directory: frontend
+    env:
+      # 通过 job 级 env 透出，供下面各步的 if 判断（secrets 不能直接写进 if）。
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
+        if: env.NPM_TOKEN != ''
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
+      - name: Missing token notice
+        if: env.NPM_TOKEN == ''
+        run: |
+          echo "::notice::未配置 NPM_TOKEN，跳过发布。"
+          echo "发布需要 npm granular token（勾选 Bypass 2FA），见 README 发布说明。"
+
       - name: Install
+        if: env.NPM_TOKEN != ''
         run: npm ci
 
       - name: Build
+        if: env.NPM_TOKEN != ''
         run: npm run build
 
       - name: Test
+        if: env.NPM_TOKEN != ''
         run: npm test -w @go-wind/flow-designer-core
 
       # core 必须先发：vue/react 依赖它。
       - name: Publish core
+        if: env.NPM_TOKEN != ''
         run: npm publish -w @go-wind/flow-designer-core --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish vue
+        if: env.NPM_TOKEN != ''
         run: npm publish -w @go-wind/flow-designer-vue --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish react
+        if: env.NPM_TOKEN != ''
         run: npm publish -w @go-wind/flow-designer-react --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
