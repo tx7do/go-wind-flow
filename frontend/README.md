@@ -73,10 +73,23 @@ async function save() {
 草稿与发布分离、错误回传定位等交互协议见
 [docs/designer_contract.md](../docs/designer_contract.md)。
 
+## 可运行 Demo
+
+`frontend/demo/`（vite 多页）：一个页面 Vue3、一个页面 React，每页演示
+**BPMN 画布（专业模式）**与**垂直审批树（业务模式）**双 Tab、主题三态切换
+（亮/暗/跟随系统）与自定义主题色取色器，保存导出 BPMN XML / designer JSON。
+
+```bash
+cd frontend && npm install
+npm run demo       # 构建三包 + 启动 dev server（http://localhost:5173）
+# React 页：http://localhost:5173/react.html
+```
+
 ## 开发
 
 ```bash
 npm install      # 工作区根目录（frontend/）
 npm run build    # 依次构建三包
 npm run typecheck
+npm test -w @go-wind/flow-designer-core   # 审批树核心测试（vitest）
 ```
