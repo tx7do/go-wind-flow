@@ -64,6 +64,7 @@ type Task struct {
 	TokenID    string     `gorm:"size:64;index:ix_task_token"`
 	Name       string     `gorm:"size:255"`
 	Assignee   string     `gorm:"size:64;index:ix_task_assignee,priority:1"`
+	CandidateGroups []string `gorm:"serializer:json"`
 	Status     string     `gorm:"size:32;index:ix_task_assignee,priority:2;index:ix_task_due,priority:1"`
 	Outcome    string     `gorm:"size:32"`
 	Comment    string     `gorm:"type:text"`

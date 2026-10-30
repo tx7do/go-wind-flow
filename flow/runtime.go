@@ -108,12 +108,14 @@ type Task struct {
 	TokenID    string
 	Name       string
 	Assignee   string
-	Status     TaskStatus
-	Outcome    string
-	Comment    string
-	DueAt      *time.Time
-	CreatedAt  time.Time
-	EndedAt    *time.Time
+	// CandidateGroups 候选组（Assignee 为空时任务待认领，组内成员可 Claim）。
+	CandidateGroups []string
+	Status          TaskStatus
+	Outcome         string
+	Comment         string
+	DueAt           *time.Time
+	CreatedAt       time.Time
+	EndedAt         *time.Time
 }
 
 // HistoryEvent 流转历史（append-only，审计与时间线渲染）。
@@ -141,6 +143,7 @@ const (
 	EventTaskForwarded     EventType = "task.forwarded"
 	EventTaskApproverAdded EventType = "task.approver_added" // 加签
 	EventTaskDue           EventType = "task.due"
+	EventTaskClaimed       EventType = "task.claimed" // 候选组任务认领/退认
 	EventTimerFired        EventType = "timer.fired"       // 定时器节点到期续跑
 	EventMessageReceived   EventType = "message.received"  // 消息投递解锁令牌
 	EventInstanceReturned  EventType = "instance.returned" // 退回指定节点

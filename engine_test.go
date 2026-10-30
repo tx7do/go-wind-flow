@@ -41,6 +41,10 @@ func (StaticIdentity) ResolveDelegate(_ context.Context, _, userID string) (stri
 	return userID, nil
 }
 
+func (StaticIdentity) ResolveGroupsForUser(_ context.Context, _, _ string) ([]string, error) {
+	return nil, nil
+}
+
 func newEngine(t *testing.T) *flow.Engine {
 	t.Helper()
 	return flow.New(

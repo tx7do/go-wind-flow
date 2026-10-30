@@ -72,6 +72,12 @@ func (_c *TaskCreate) SetAssignee(v string) *TaskCreate {
 	return _c
 }
 
+// SetCandidateGroups sets the "candidate_groups" field.
+func (_c *TaskCreate) SetCandidateGroups(v []string) *TaskCreate {
+	_c.mutation.SetCandidateGroups(v)
+	return _c
+}
+
 // SetStatus sets the "status" field.
 func (_c *TaskCreate) SetStatus(v string) *TaskCreate {
 	_c.mutation.SetStatus(v)
@@ -219,6 +225,9 @@ func (_c *TaskCreate) check() error {
 	if _, ok := _c.mutation.Assignee(); !ok {
 		return &ValidationError{Name: "assignee", err: errors.New(`ent: missing required field "Task.assignee"`)}
 	}
+	if _, ok := _c.mutation.CandidateGroups(); !ok {
+		return &ValidationError{Name: "candidate_groups", err: errors.New(`ent: missing required field "Task.candidate_groups"`)}
+	}
 	if _, ok := _c.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Task.status"`)}
 	}
@@ -289,6 +298,10 @@ func (_c *TaskCreate) createSpec() (*Task, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Assignee(); ok {
 		_spec.SetField(task.FieldAssignee, field.TypeString, value)
 		_node.Assignee = value
+	}
+	if value, ok := _c.mutation.CandidateGroups(); ok {
+		_spec.SetField(task.FieldCandidateGroups, field.TypeJSON, value)
+		_node.CandidateGroups = value
 	}
 	if value, ok := _c.mutation.Status(); ok {
 		_spec.SetField(task.FieldStatus, field.TypeString, value)

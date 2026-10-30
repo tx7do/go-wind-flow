@@ -54,6 +54,7 @@ const (
 	ApproverPosition ApproverKind = "POSITION" // Value = 职位编码
 	ApproverRole     ApproverKind = "ROLE"     // Value = 角色编码
 	ApproverExpr     ApproverKind = "EXPR"     // Value = 表达式（返回用户 ID 或 ID 数组）
+	ApproverGroup    ApproverKind = "GROUP"    // Value = 组编码：创建候选组任务，组内成员认领后办理
 )
 
 // ApproverRule 单条办理人规则。

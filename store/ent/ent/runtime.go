@@ -84,11 +84,11 @@ func init() {
 	// task.DefaultName holds the default value on creation for the name field.
 	task.DefaultName = taskDescName.Default.(string)
 	// taskDescOutcome is the schema descriptor for outcome field.
-	taskDescOutcome := taskFields[8].Descriptor()
+	taskDescOutcome := taskFields[9].Descriptor()
 	// task.DefaultOutcome holds the default value on creation for the outcome field.
 	task.DefaultOutcome = taskDescOutcome.Default.(string)
 	// taskDescComment is the schema descriptor for comment field.
-	taskDescComment := taskFields[9].Descriptor()
+	taskDescComment := taskFields[10].Descriptor()
 	// task.DefaultComment holds the default value on creation for the comment field.
 	task.DefaultComment = taskDescComment.Default.(string)
 	tokenFields := schema.Token{}.Fields()

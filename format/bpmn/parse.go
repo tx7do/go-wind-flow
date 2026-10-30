@@ -76,13 +76,14 @@ type eventXML struct {
 }
 
 type userTaskXML struct {
-	ID             string    `xml:"id,attr"`
-	Name           string    `xml:"name,attr"`
-	Doc            string    `xml:"documentation"`
-	Assignee       string    `xml:"assignee,attr"`
-	CandidateUsers string    `xml:"candidateUsers,attr"`
-	Extension      *extXML   `xml:"extensionElements"`
-	MultiInstance  *multiXML `xml:"multiInstanceLoopCharacteristics"`
+	ID              string    `xml:"id,attr"`
+	Name            string    `xml:"name,attr"`
+	Doc             string    `xml:"documentation"`
+	Assignee        string    `xml:"assignee,attr"`
+	CandidateUsers  string    `xml:"candidateUsers,attr"`
+	CandidateGroups string    `xml:"candidateGroups,attr"`
+	Extension       *extXML   `xml:"extensionElements"`
+	MultiInstance   *multiXML `xml:"multiInstanceLoopCharacteristics"`
 }
 
 type extXML struct {
@@ -223,6 +224,12 @@ func Parse(data []byte) (*flow.Definition, error) {
 				if uid = strings.TrimSpace(uid); uid != "" {
 					rules = append(rules, flow.ApproverRule{Kind: flow.ApproverUser, Value: uid})
 				}
+			}
+		}
+		// candidateGroups（BPMN 标准属性）→ GROUP 规则（与扩展 JSON 并存时叠加）。
+		for _, g := range strings.Split(t.CandidateGroups, ",") {
+			if g = strings.TrimSpace(g); g != "" {
+				rules = append(rules, flow.ApproverRule{Kind: flow.ApproverGroup, Value: g})
 			}
 		}
 		node.Approver = &flow.ApproverSpec{Rules: rules}

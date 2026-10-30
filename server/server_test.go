@@ -44,6 +44,10 @@ func (staticIdentity) ResolveDelegate(_ context.Context, _, userID string) (stri
 	return userID, nil
 }
 
+func (staticIdentity) ResolveGroupsForUser(_ context.Context, _, _ string) ([]string, error) {
+	return nil, nil
+}
+
 func newServices(t *testing.T) *Services {
 	t.Helper()
 	st := memory.New() // 引擎与服务共享同一存储

@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/tx7do/go-wind-flow/store/ent/ent/predicate"
 	"github.com/tx7do/go-wind-flow/store/ent/ent/task"
@@ -109,6 +110,18 @@ func (_u *TaskUpdate) SetNillableAssignee(v *string) *TaskUpdate {
 	if v != nil {
 		_u.SetAssignee(*v)
 	}
+	return _u
+}
+
+// SetCandidateGroups sets the "candidate_groups" field.
+func (_u *TaskUpdate) SetCandidateGroups(v []string) *TaskUpdate {
+	_u.mutation.SetCandidateGroups(v)
+	return _u
+}
+
+// AppendCandidateGroups appends value to the "candidate_groups" field.
+func (_u *TaskUpdate) AppendCandidateGroups(v []string) *TaskUpdate {
+	_u.mutation.AppendCandidateGroups(v)
 	return _u
 }
 
@@ -267,6 +280,14 @@ func (_u *TaskUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.Assignee(); ok {
 		_spec.SetField(task.FieldAssignee, field.TypeString, value)
 	}
+	if value, ok := _u.mutation.CandidateGroups(); ok {
+		_spec.SetField(task.FieldCandidateGroups, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedCandidateGroups(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, task.FieldCandidateGroups, value)
+		})
+	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(task.FieldStatus, field.TypeString, value)
 	}
@@ -392,6 +413,18 @@ func (_u *TaskUpdateOne) SetNillableAssignee(v *string) *TaskUpdateOne {
 	if v != nil {
 		_u.SetAssignee(*v)
 	}
+	return _u
+}
+
+// SetCandidateGroups sets the "candidate_groups" field.
+func (_u *TaskUpdateOne) SetCandidateGroups(v []string) *TaskUpdateOne {
+	_u.mutation.SetCandidateGroups(v)
+	return _u
+}
+
+// AppendCandidateGroups appends value to the "candidate_groups" field.
+func (_u *TaskUpdateOne) AppendCandidateGroups(v []string) *TaskUpdateOne {
+	_u.mutation.AppendCandidateGroups(v)
 	return _u
 }
 
@@ -579,6 +612,14 @@ func (_u *TaskUpdateOne) sqlSave(ctx context.Context) (_node *Task, err error) {
 	}
 	if value, ok := _u.mutation.Assignee(); ok {
 		_spec.SetField(task.FieldAssignee, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.CandidateGroups(); ok {
+		_spec.SetField(task.FieldCandidateGroups, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedCandidateGroups(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, task.FieldCandidateGroups, value)
+		})
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(task.FieldStatus, field.TypeString, value)

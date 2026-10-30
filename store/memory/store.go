@@ -346,6 +346,29 @@ func (t taskStore) ListPendingByAssignee(_ context.Context, tenantID, assignee s
 	return out, nil
 }
 
+func (t taskStore) ListUnclaimedByGroups(_ context.Context, tenantID string, groups []string) ([]*flow.Task, error) {
+	t.s.mu.RLock()
+	defer t.s.mu.RUnlock()
+	want := map[string]bool{}
+	for _, g := range groups {
+		want[g] = true
+	}
+	var out []*flow.Task
+	for _, task := range t.s.tasks {
+		if task.Status != flow.TaskPending || task.Assignee != "" || task.TenantID != tenantID {
+			continue
+		}
+		for _, g := range task.CandidateGroups {
+			if want[g] {
+				out = append(out, cloneTask(task))
+				break
+			}
+		}
+	}
+	sort.Slice(out, func(a, b int) bool { return out[a].CreatedAt.Before(out[b].CreatedAt) })
+	return out, nil
+}
+
 func (t taskStore) ListDue(_ context.Context, now time.Time) ([]*flow.Task, error) {
 	t.s.mu.RLock()
 	defer t.s.mu.RUnlock()
@@ -360,6 +383,7 @@ func (t taskStore) ListDue(_ context.Context, now time.Time) ([]*flow.Task, erro
 
 func cloneTask(in *flow.Task) *flow.Task {
 	cp := *in
+	cp.CandidateGroups = append([]string(nil), in.CandidateGroups...)
 	return &cp
 }
 

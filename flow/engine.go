@@ -632,6 +632,111 @@ func (e *Engine) ForwardTask(ctx context.Context, taskID, actorID, toUserID stri
 	return nil
 }
 
+// ClaimTask 认领候选组任务：任务须待办、未分派（Assignee 为空）且
+// 操作者属于任一候选组（经 IdentityProvider.ResolveGroupsForUser 鉴权）。
+func (e *Engine) ClaimTask(ctx context.Context, taskID, userID string) error {
+	task, err := e.store.Tasks().Get(ctx, taskID)
+	if err != nil {
+		return err
+	}
+	if task.Status != TaskPending {
+		return fmt.Errorf("%w: task %s not pending", ErrInvalidState, task.ID)
+	}
+	if task.Assignee != "" {
+		return fmt.Errorf("%w: task %s already assigned to %s", ErrInvalidState, task.ID, task.Assignee)
+	}
+	if len(task.CandidateGroups) == 0 {
+		return fmt.Errorf("%w: task %s has no candidate groups", ErrForbidden, task.ID)
+	}
+	if e.identity == nil {
+		return fmt.Errorf("%w: IdentityProvider is nil (group membership check)", ErrNotConfigured)
+	}
+	groups, err := e.identity.ResolveGroupsForUser(ctx, task.TenantID, userID)
+	if err != nil {
+		return err
+	}
+	if !intersectAny(task.CandidateGroups, groups) {
+		return fmt.Errorf("%w: user %s is not in candidate groups %v", ErrForbidden, userID, task.CandidateGroups)
+	}
+	task.Assignee = userID
+	if err := e.store.Tasks().Update(ctx, task); err != nil {
+		return err
+	}
+	inst, err := e.store.Instances().Get(ctx, task.InstanceID)
+	if err != nil {
+		return err
+	}
+	_ = e.appendHistory(ctx, inst, &Event{
+		Type: EventTaskClaimed, NodeID: task.NodeID, TaskID: task.ID, ActorID: userID,
+	}, Vars{"action": "claim"})
+	e.fireListeners(ctx, &Event{
+		Type: EventTaskClaimed, TenantID: inst.TenantID, InstanceID: inst.ID,
+		TaskID: task.ID, NodeID: task.NodeID, ActorID: userID,
+		Vars: inst.Variables.Clone(), At: e.clock.Now(),
+	})
+	return nil
+}
+
+// UnclaimTask 退认：把已认领的候选组任务放回待认领池。
+func (e *Engine) UnclaimTask(ctx context.Context, taskID, actorID string) error {
+	task, err := e.store.Tasks().Get(ctx, taskID)
+	if err != nil {
+		return err
+	}
+	if task.Status != TaskPending {
+		return fmt.Errorf("%w: task %s not pending", ErrInvalidState, task.ID)
+	}
+	if task.Assignee == "" || len(task.CandidateGroups) == 0 {
+		return fmt.Errorf("%w: task %s is not a claimed candidate task", ErrInvalidState, task.ID)
+	}
+	if actorID == "" || actorID != task.Assignee {
+		return fmt.Errorf("%w: actor %q is not assignee of task %s", ErrForbidden, actorID, task.ID)
+	}
+	task.Assignee = ""
+	if err := e.store.Tasks().Update(ctx, task); err != nil {
+		return err
+	}
+	inst, err := e.store.Instances().Get(ctx, task.InstanceID)
+	if err != nil {
+		return err
+	}
+	_ = e.appendHistory(ctx, inst, &Event{
+		Type: EventTaskClaimed, NodeID: task.NodeID, TaskID: task.ID, ActorID: actorID,
+	}, Vars{"action": "unclaim"})
+	e.fireListeners(ctx, &Event{
+		Type: EventTaskClaimed, TenantID: inst.TenantID, InstanceID: inst.ID,
+		TaskID: task.ID, NodeID: task.NodeID, ActorID: actorID,
+		Vars: inst.Variables.Clone(), At: e.clock.Now(),
+	})
+	return nil
+}
+
+// ListCandidateTasks 列出用户可认领的组待办。
+func (e *Engine) ListCandidateTasks(ctx context.Context, tenantID, userID string) ([]*Task, error) {
+	if e.identity == nil {
+		return nil, fmt.Errorf("%w: IdentityProvider is nil", ErrNotConfigured)
+	}
+	groups, err := e.identity.ResolveGroupsForUser(ctx, tenantID, userID)
+	if err != nil {
+		return nil, err
+	}
+	if len(groups) == 0 {
+		return nil, nil
+	}
+	return e.store.Tasks().ListUnclaimedByGroups(ctx, tenantID, groups)
+}
+
+func intersectAny(a, b []string) bool {
+	for _, x := range a {
+		for _, y := range b {
+			if x == y {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // Withdraw 发起人撤回。仅发起人可撤回（权限细化由宿主在上层拦截）。
 func (e *Engine) Withdraw(ctx context.Context, instanceID, actorID string) error {
 	inst, err := e.store.Instances().Get(ctx, instanceID)

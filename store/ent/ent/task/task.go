@@ -23,6 +23,8 @@ const (
 	FieldName = "name"
 	// FieldAssignee holds the string denoting the assignee field in the database.
 	FieldAssignee = "assignee"
+	// FieldCandidateGroups holds the string denoting the candidate_groups field in the database.
+	FieldCandidateGroups = "candidate_groups"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
 	// FieldOutcome holds the string denoting the outcome field in the database.
@@ -48,6 +50,7 @@ var Columns = []string{
 	FieldTokenID,
 	FieldName,
 	FieldAssignee,
+	FieldCandidateGroups,
 	FieldStatus,
 	FieldOutcome,
 	FieldComment,

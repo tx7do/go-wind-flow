@@ -353,37 +353,39 @@ func (s *Store) Tasks() flow.TaskStore { return taskStore{s} }
 
 func taskToModel(x *flow.Task) *Task {
 	return &Task{
-		ID:         x.ID,
-		InstanceID: x.InstanceID,
-		TenantID:   x.TenantID,
-		NodeID:     x.NodeID,
-		TokenID:    x.TokenID,
-		Name:       x.Name,
-		Assignee:   x.Assignee,
-		Status:     string(x.Status),
-		Outcome:    x.Outcome,
-		Comment:    x.Comment,
-		DueAt:      x.DueAt,
-		CreatedAt:  x.CreatedAt,
-		EndedAt:    x.EndedAt,
+		ID:              x.ID,
+		InstanceID:      x.InstanceID,
+		TenantID:        x.TenantID,
+		NodeID:          x.NodeID,
+		TokenID:         x.TokenID,
+		Name:            x.Name,
+		Assignee:        x.Assignee,
+		CandidateGroups: x.CandidateGroups,
+		Status:          string(x.Status),
+		Outcome:         x.Outcome,
+		Comment:         x.Comment,
+		DueAt:           x.DueAt,
+		CreatedAt:       x.CreatedAt,
+		EndedAt:         x.EndedAt,
 	}
 }
 
 func taskToFlow(m *Task) *flow.Task {
 	return &flow.Task{
-		ID:         m.ID,
-		InstanceID: m.InstanceID,
-		TenantID:   m.TenantID,
-		NodeID:     m.NodeID,
-		TokenID:    m.TokenID,
-		Name:       m.Name,
-		Assignee:   m.Assignee,
-		Status:     flow.TaskStatus(m.Status),
-		Outcome:    m.Outcome,
-		Comment:    m.Comment,
-		DueAt:      m.DueAt,
-		CreatedAt:  m.CreatedAt,
-		EndedAt:    m.EndedAt,
+		ID:              m.ID,
+		InstanceID:      m.InstanceID,
+		TenantID:        m.TenantID,
+		NodeID:          m.NodeID,
+		TokenID:         m.TokenID,
+		Name:            m.Name,
+		Assignee:        m.Assignee,
+		CandidateGroups: m.CandidateGroups,
+		Status:          flow.TaskStatus(m.Status),
+		Outcome:         m.Outcome,
+		Comment:         m.Comment,
+		DueAt:           m.DueAt,
+		CreatedAt:       m.CreatedAt,
+		EndedAt:         m.EndedAt,
 	}
 }
 
@@ -429,6 +431,32 @@ func (t taskStore) ListPendingByAssignee(ctx context.Context, tenantID, assignee
 	return t.tasksQuery(ctx,
 		"status = ? AND tenant_id = ? AND assignee = ?",
 		string(flow.TaskPending), tenantID, assignee)
+}
+
+func (t taskStore) ListUnclaimedByGroups(ctx context.Context, tenantID string, groups []string) ([]*flow.Task, error) {
+	// JSON 数组字段跨方言 contains不可移植——查未分派待办后内存过滤。
+	var ms []Task
+	if err := t.s.dbOf(ctx).
+		Where("status = ? AND assignee = '' AND tenant_id = ?",
+			string(flow.TaskPending), tenantID).
+		Order("created_at ASC").
+		Find(&ms).Error; err != nil {
+		return nil, err
+	}
+	want := map[string]bool{}
+	for _, g := range groups {
+		want[g] = true
+	}
+	out := make([]*flow.Task, 0, len(ms))
+	for idx := range ms {
+		for _, g := range ms[idx].CandidateGroups {
+			if want[g] {
+				out = append(out, taskToFlow(&ms[idx]))
+				break
+			}
+		}
+	}
+	return out, nil
 }
 
 func (t taskStore) ListDue(ctx context.Context, now time.Time) ([]*flow.Task, error) {

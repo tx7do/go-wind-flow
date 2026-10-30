@@ -2495,25 +2495,27 @@ func (m *InstanceMutation) ResetEdge(name string) error {
 // TaskMutation represents an operation that mutates the Task nodes in the graph.
 type TaskMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *string
-	instance_id   *string
-	tenant_id     *string
-	node_id       *string
-	token_id      *string
-	name          *string
-	assignee      *string
-	status        *string
-	outcome       *string
-	comment       *string
-	due_at        *time.Time
-	created_at    *time.Time
-	ended_at      *time.Time
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*Task, error)
-	predicates    []predicate.Task
+	op                     Op
+	typ                    string
+	id                     *string
+	instance_id            *string
+	tenant_id              *string
+	node_id                *string
+	token_id               *string
+	name                   *string
+	assignee               *string
+	candidate_groups       *[]string
+	appendcandidate_groups []string
+	status                 *string
+	outcome                *string
+	comment                *string
+	due_at                 *time.Time
+	created_at             *time.Time
+	ended_at               *time.Time
+	clearedFields          map[string]struct{}
+	done                   bool
+	oldValue               func(context.Context) (*Task, error)
+	predicates             []predicate.Task
 }
 
 var _ ent.Mutation = (*TaskMutation)(nil)
@@ -2836,6 +2838,57 @@ func (m *TaskMutation) ResetAssignee() {
 	m.assignee = nil
 }
 
+// SetCandidateGroups sets the "candidate_groups" field.
+func (m *TaskMutation) SetCandidateGroups(s []string) {
+	m.candidate_groups = &s
+	m.appendcandidate_groups = nil
+}
+
+// CandidateGroups returns the value of the "candidate_groups" field in the mutation.
+func (m *TaskMutation) CandidateGroups() (r []string, exists bool) {
+	v := m.candidate_groups
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCandidateGroups returns the old "candidate_groups" field's value of the Task entity.
+// If the Task object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TaskMutation) OldCandidateGroups(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCandidateGroups is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCandidateGroups requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCandidateGroups: %w", err)
+	}
+	return oldValue.CandidateGroups, nil
+}
+
+// AppendCandidateGroups adds s to the "candidate_groups" field.
+func (m *TaskMutation) AppendCandidateGroups(s []string) {
+	m.appendcandidate_groups = append(m.appendcandidate_groups, s...)
+}
+
+// AppendedCandidateGroups returns the list of values that were appended to the "candidate_groups" field in this mutation.
+func (m *TaskMutation) AppendedCandidateGroups() ([]string, bool) {
+	if len(m.appendcandidate_groups) == 0 {
+		return nil, false
+	}
+	return m.appendcandidate_groups, true
+}
+
+// ResetCandidateGroups resets all changes to the "candidate_groups" field.
+func (m *TaskMutation) ResetCandidateGroups() {
+	m.candidate_groups = nil
+	m.appendcandidate_groups = nil
+}
+
 // SetStatus sets the "status" field.
 func (m *TaskMutation) SetStatus(s string) {
 	m.status = &s
@@ -3112,7 +3165,7 @@ func (m *TaskMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TaskMutation) Fields() []string {
-	fields := make([]string, 0, 12)
+	fields := make([]string, 0, 13)
 	if m.instance_id != nil {
 		fields = append(fields, task.FieldInstanceID)
 	}
@@ -3130,6 +3183,9 @@ func (m *TaskMutation) Fields() []string {
 	}
 	if m.assignee != nil {
 		fields = append(fields, task.FieldAssignee)
+	}
+	if m.candidate_groups != nil {
+		fields = append(fields, task.FieldCandidateGroups)
 	}
 	if m.status != nil {
 		fields = append(fields, task.FieldStatus)
@@ -3169,6 +3225,8 @@ func (m *TaskMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case task.FieldAssignee:
 		return m.Assignee()
+	case task.FieldCandidateGroups:
+		return m.CandidateGroups()
 	case task.FieldStatus:
 		return m.Status()
 	case task.FieldOutcome:
@@ -3202,6 +3260,8 @@ func (m *TaskMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldName(ctx)
 	case task.FieldAssignee:
 		return m.OldAssignee(ctx)
+	case task.FieldCandidateGroups:
+		return m.OldCandidateGroups(ctx)
 	case task.FieldStatus:
 		return m.OldStatus(ctx)
 	case task.FieldOutcome:
@@ -3264,6 +3324,13 @@ func (m *TaskMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAssignee(v)
+		return nil
+	case task.FieldCandidateGroups:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCandidateGroups(v)
 		return nil
 	case task.FieldStatus:
 		v, ok := value.(string)
@@ -3388,6 +3455,9 @@ func (m *TaskMutation) ResetField(name string) error {
 		return nil
 	case task.FieldAssignee:
 		m.ResetAssignee()
+		return nil
+	case task.FieldCandidateGroups:
+		m.ResetCandidateGroups()
 		return nil
 	case task.FieldStatus:
 		m.ResetStatus()

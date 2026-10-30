@@ -111,6 +111,7 @@ var (
 		{Name: "token_id", Type: field.TypeString},
 		{Name: "name", Type: field.TypeString, Default: ""},
 		{Name: "assignee", Type: field.TypeString},
+		{Name: "candidate_groups", Type: field.TypeJSON},
 		{Name: "status", Type: field.TypeString},
 		{Name: "outcome", Type: field.TypeString, Default: ""},
 		{Name: "comment", Type: field.TypeString, Size: 2147483647, Default: ""},
@@ -127,7 +128,7 @@ var (
 			{
 				Name:    "task_assignee_status",
 				Unique:  false,
-				Columns: []*schema.Column{TasksColumns[6], TasksColumns[7]},
+				Columns: []*schema.Column{TasksColumns[6], TasksColumns[8]},
 			},
 			{
 				Name:    "task_instance_id",
@@ -142,7 +143,7 @@ var (
 			{
 				Name:    "task_status_due_at",
 				Unique:  false,
-				Columns: []*schema.Column{TasksColumns[7], TasksColumns[10]},
+				Columns: []*schema.Column{TasksColumns[8], TasksColumns[11]},
 			},
 		},
 	}

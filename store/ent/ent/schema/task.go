@@ -20,6 +20,7 @@ func (Task) Fields() []ent.Field {
 		field.String("token_id"),
 		field.String("name").Default(""),
 		field.String("assignee"),
+		field.Strings("candidate_groups"),
 		field.String("status"),
 		field.String("outcome").Default(""),
 		field.Text("comment").Default(""),

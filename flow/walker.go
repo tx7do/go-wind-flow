@@ -156,7 +156,7 @@ func mergedEnv(inst *Instance, tk *Token) Vars {
 // arriveAtUserTask 到达用户任务：解析办理人、创建任务、令牌阻塞，
 // 并为挂接的边界定时器创建边界令牌（到期由 ResumeDueTimers 触发）。
 func (e *Engine) arriveAtUserTask(ctx context.Context, inst *Instance, tk *Token, node *Node, def *Definition) error {
-	assignees, err := e.resolveApprovers(ctx, inst, tk, node)
+	assignees, groups, err := e.resolveApprovers(ctx, inst, tk, node)
 	if err != nil {
 		// fail-closed：解析失败不创建任务，令牌留在原地（RUNNING），
 		// 由宿主决定重试或终止。
@@ -171,7 +171,12 @@ func (e *Engine) arriveAtUserTask(ctx context.Context, inst *Instance, tk *Token
 
 	// 顺序多实例：办理人串行逐个审批——只创建第一个任务，办结后在
 	// CompleteTask 里链式派生下一个（序列快照存令牌保留键）。
+	// 候选组不支持顺序多实例（认领语义与串行链冲突）。
 	if node.Approval.Sequential {
+		if len(groups) > 0 && len(assignees) == 0 {
+			return fmt.Errorf("%w: sequential multi-instance does not support GROUP approvers (node %s)",
+				ErrInvalidDefinition, node.ID)
+		}
 		seq := make([]any, 0, len(assignees))
 		for _, uid := range assignees {
 			seq = append(seq, uid)
@@ -187,17 +192,49 @@ func (e *Engine) arriveAtUserTask(ctx context.Context, inst *Instance, tk *Token
 		return e.createSequentialTask(ctx, inst, tk, node, assignees[0], now)
 	}
 
+	// 候选组任务：无显式办理人时创建一条待认领任务（Assignee 为空）。
+	if len(assignees) == 0 && len(groups) > 0 {
+		task := &Task{
+			ID:              e.idgen(),
+			InstanceID:      inst.ID,
+			TenantID:        inst.TenantID,
+			NodeID:          node.ID,
+			TokenID:         tk.ID,
+			Name:            node.Name,
+			Assignee:        "",
+			CandidateGroups: groups,
+			Status:          TaskPending,
+			CreatedAt:       now,
+		}
+		if node.Timer != nil {
+			due := now.Add(node.Timer.Duration.Std())
+			task.DueAt = &due
+		}
+		if err := e.store.Tasks().Save(ctx, task); err != nil {
+			return err
+		}
+		_ = e.appendHistory(ctx, inst, &Event{
+			Type: EventTaskCreated, NodeID: node.ID, TaskID: task.ID,
+		}, Vars{"candidateGroups": strings.Join(groups, ",")})
+		e.fireListeners(ctx, &Event{
+			Type: EventTaskCreated, TenantID: inst.TenantID, InstanceID: inst.ID,
+			TokenID: tk.ID, TaskID: task.ID, NodeID: node.ID,
+			Vars: inst.Variables.Clone(), At: now,
+		})
+	}
+
 	for _, uid := range assignees {
 		task := &Task{
-			ID:         e.idgen(),
-			InstanceID: inst.ID,
-			TenantID:   inst.TenantID,
-			NodeID:     node.ID,
-			TokenID:    tk.ID,
-			Name:       node.Name,
-			Assignee:   uid,
-			Status:     TaskPending,
-			CreatedAt:  now,
+			ID:              e.idgen(),
+			InstanceID:      inst.ID,
+			TenantID:        inst.TenantID,
+			NodeID:          node.ID,
+			TokenID:         tk.ID,
+			Name:            node.Name,
+			Assignee:        uid,
+			CandidateGroups: groups,
+			Status:          TaskPending,
+			CreatedAt:       now,
 		}
 		if node.Timer != nil {
 			due := now.Add(node.Timer.Duration.Std())
@@ -277,13 +314,25 @@ func (e *Engine) createSequentialTask(ctx context.Context, inst *Instance, tk *T
 
 // resolveApprovers 解析任务办理人：去重保序 + 委托叠加。
 // 动态规则（EXPR）的求值环境为实例变量 + 令牌局部叠加。
-func (e *Engine) resolveApprovers(ctx context.Context, inst *Instance, tk *Token, node *Node) ([]string, error) {
+// GROUP 规则单独返回（候选组任务不解析为具体用户）。
+func (e *Engine) resolveApprovers(ctx context.Context, inst *Instance, tk *Token, node *Node) ([]string, []string, error) {
 	if node.Approver == nil || len(node.Approver.Rules) == 0 {
-		return nil, fmt.Errorf("%w: node %s has no approver rules", ErrInvalidDefinition, node.ID)
+		return nil, nil, fmt.Errorf("%w: node %s has no approver rules", ErrInvalidDefinition, node.ID)
 	}
 
+	var userRules []ApproverRule
+	seenGroups := map[string]bool{}
+	var groups []string
 	needDynamic := false
 	for _, r := range node.Approver.Rules {
+		if r.Kind == ApproverGroup {
+			if r.Value != "" && !seenGroups[r.Value] {
+				seenGroups[r.Value] = true
+				groups = append(groups, r.Value)
+			}
+			continue
+		}
+		userRules = append(userRules, r)
 		switch r.Kind {
 		case ApproverLeader, ApproverPosition, ApproverRole, ApproverExpr:
 			needDynamic = true
@@ -293,7 +342,7 @@ func (e *Engine) resolveApprovers(ctx context.Context, inst *Instance, tk *Token
 	env := mergedEnv(inst, tk)
 	var ids []string
 	switch {
-	case e.identity != nil:
+	case e.identity != nil && len(userRules) > 0:
 		resolved, err := e.identity.ResolveApprovers(ctx, ResolveRequest{
 			TenantID:     inst.TenantID,
 			InstanceID:   inst.ID,
@@ -301,16 +350,16 @@ func (e *Engine) resolveApprovers(ctx context.Context, inst *Instance, tk *Token
 			NodeID:       node.ID,
 			StarterID:    inst.StarterID,
 			InstanceVars: env,
-			Rules:        node.Approver.Rules,
+			Rules:        userRules,
 		})
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		ids = resolved
 	case !needDynamic:
 		// 内置静态解析：USER / STARTER。
 		seen := map[string]bool{}
-		for _, r := range node.Approver.Rules {
+		for _, r := range userRules {
 			v := r.Value
 			if r.Kind == ApproverStarter {
 				v = inst.StarterID
@@ -321,12 +370,14 @@ func (e *Engine) resolveApprovers(ctx context.Context, inst *Instance, tk *Token
 			}
 		}
 	default:
-		return nil, fmt.Errorf("%w: node %s needs dynamic approver but IdentityProvider is nil",
+		return nil, nil, fmt.Errorf("%w: node %s needs dynamic approver but IdentityProvider is nil",
 			ErrNotConfigured, node.ID)
 	}
 
-	if len(ids) == 0 {
-		return nil, fmt.Errorf("node %s resolved to zero approvers (fail-closed)", node.ID)
+	// 静态 USER 规则与 GROUP 共存、且无 identity 时：GROUP 需要委托/认领解析，
+	// 用户任务仍可创建（组信息挂到任务上供展示）。
+	if len(ids) == 0 && len(groups) == 0 {
+		return nil, nil, fmt.Errorf("node %s resolved to zero approvers (fail-closed)", node.ID)
 	}
 
 	// 委托叠加：受托人代办。
@@ -340,7 +391,7 @@ func (e *Engine) resolveApprovers(ctx context.Context, inst *Instance, tk *Token
 			ids[i] = delegate
 		}
 	}
-	return ids, nil
+	return ids, groups, nil
 }
 
 // execScriptTask 执行脚本任务；返回 map 时按键值落点合并——

@@ -442,6 +442,7 @@ func (t taskStore) upsert(ctx context.Context, x *flow.Task) error {
 			SetOutcome(x.Outcome).
 			SetComment(x.Comment).
 			SetAssignee(x.Assignee).
+			SetCandidateGroups(x.CandidateGroups).
 			SetNillableDueAt(x.DueAt).
 			SetNillableEndedAt(x.EndedAt).
 			Save(ctx)
@@ -455,6 +456,7 @@ func (t taskStore) upsert(ctx context.Context, x *flow.Task) error {
 		SetTokenID(x.TokenID).
 		SetName(x.Name).
 		SetAssignee(x.Assignee).
+		SetCandidateGroups(x.CandidateGroups).
 		SetStatus(string(x.Status)).
 		SetOutcome(x.Outcome).
 		SetComment(x.Comment).
@@ -465,24 +467,25 @@ func (t taskStore) upsert(ctx context.Context, x *flow.Task) error {
 	return err
 }
 
-func (t taskStore) Save(ctx context.Context, x *flow.Task) error  { return t.upsert(ctx, x) }
+func (t taskStore) Save(ctx context.Context, x *flow.Task) error   { return t.upsert(ctx, x) }
 func (t taskStore) Update(ctx context.Context, x *flow.Task) error { return t.upsert(ctx, x) }
 
 func taskToFlow(e *gen.Task) *flow.Task {
 	return &flow.Task{
-		ID:         e.ID,
-		InstanceID: e.InstanceID,
-		TenantID:   e.TenantID,
-		NodeID:     e.NodeID,
-		TokenID:    e.TokenID,
-		Name:       e.Name,
-		Assignee:   e.Assignee,
-		Status:     flow.TaskStatus(e.Status),
-		Outcome:    e.Outcome,
-		Comment:    e.Comment,
-		DueAt:      e.DueAt,
-		CreatedAt:  e.CreatedAt,
-		EndedAt:    e.EndedAt,
+		ID:              e.ID,
+		InstanceID:      e.InstanceID,
+		TenantID:        e.TenantID,
+		NodeID:          e.NodeID,
+		TokenID:         e.TokenID,
+		Name:            e.Name,
+		Assignee:        e.Assignee,
+		CandidateGroups: e.CandidateGroups,
+		Status:          flow.TaskStatus(e.Status),
+		Outcome:         e.Outcome,
+		Comment:         e.Comment,
+		DueAt:           e.DueAt,
+		CreatedAt:       e.CreatedAt,
+		EndedAt:         e.EndedAt,
 	}
 }
 
@@ -540,6 +543,36 @@ func (t taskStore) ListPendingByAssignee(ctx context.Context, tenantID, assignee
 		return nil, err
 	}
 	return tasksToFlow(es), nil
+}
+
+func (t taskStore) ListUnclaimedByGroups(ctx context.Context, tenantID string, groups []string) ([]*flow.Task, error) {
+	// candidate_groups 为 JSON 数组字段，方言相关contains不可移植——
+	// 查出未分派待办后内存过滤（未认领任务规模可控）。
+	es, err := t.s.clientOf(ctx).Task.Query().
+		Where(
+			task.StatusEQ(string(flow.TaskPending)),
+			task.AssigneeEQ(""),
+			task.TenantIDEQ(tenantID),
+		).
+		Order(gen.Asc("created_at")).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	want := map[string]bool{}
+	for _, g := range groups {
+		want[g] = true
+	}
+	out := make([]*flow.Task, 0, len(es))
+	for _, e := range es {
+		for _, g := range e.CandidateGroups {
+			if want[g] {
+				out = append(out, taskToFlow(e))
+				break
+			}
+		}
+	}
+	return out, nil
 }
 
 func (t taskStore) ListDue(ctx context.Context, now time.Time) ([]*flow.Task, error) {

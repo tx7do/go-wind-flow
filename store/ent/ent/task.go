@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -29,6 +30,8 @@ type Task struct {
 	Name string `json:"name,omitempty"`
 	// Assignee holds the value of the "assignee" field.
 	Assignee string `json:"assignee,omitempty"`
+	// CandidateGroups holds the value of the "candidate_groups" field.
+	CandidateGroups []string `json:"candidate_groups,omitempty"`
 	// Status holds the value of the "status" field.
 	Status string `json:"status,omitempty"`
 	// Outcome holds the value of the "outcome" field.
@@ -49,6 +52,8 @@ func (*Task) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case task.FieldCandidateGroups:
+			values[i] = new([]byte)
 		case task.FieldID, task.FieldInstanceID, task.FieldTenantID, task.FieldNodeID, task.FieldTokenID, task.FieldName, task.FieldAssignee, task.FieldStatus, task.FieldOutcome, task.FieldComment:
 			values[i] = new(sql.NullString)
 		case task.FieldDueAt, task.FieldCreatedAt, task.FieldEndedAt:
@@ -109,6 +114,14 @@ func (_m *Task) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field assignee", values[i])
 			} else if value.Valid {
 				_m.Assignee = value.String
+			}
+		case task.FieldCandidateGroups:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field candidate_groups", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.CandidateGroups); err != nil {
+					return fmt.Errorf("unmarshal field candidate_groups: %w", err)
+				}
 			}
 		case task.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -201,6 +214,9 @@ func (_m *Task) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("assignee=")
 	builder.WriteString(_m.Assignee)
+	builder.WriteString(", ")
+	builder.WriteString("candidate_groups=")
+	builder.WriteString(fmt.Sprintf("%v", _m.CandidateGroups))
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(_m.Status)

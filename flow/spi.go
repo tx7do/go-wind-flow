@@ -48,6 +48,10 @@ type IdentityProvider interface {
 	ResolveApprovers(ctx context.Context, req ResolveRequest) ([]string, error)
 	// ResolveDelegate 返回 userID 的受托人；无委托时返回 userID 本身。
 	ResolveDelegate(ctx context.Context, tenantID, userID string) (string, error)
+	// ResolveGroupsForUser 返回用户所属的组编码列表（候选组任务的
+	// Claim 鉴权与组待办可见性）。M2 起为必选方法——存量实现需补齐；
+	// 无组体系的宿主返回 (nil, nil) 即可。
+	ResolveGroupsForUser(ctx context.Context, tenantID, userID string) ([]string, error)
 }
 
 // Store 持久化 SPI。每次状态迁移引擎都会调用对应写方法，
@@ -100,6 +104,9 @@ type TaskStore interface {
 	ListByInstance(ctx context.Context, instanceID string) ([]*Task, error)
 	ListByToken(ctx context.Context, tokenID string) ([]*Task, error)
 	ListPendingByAssignee(ctx context.Context, tenantID, assignee string) ([]*Task, error)
+	// ListUnclaimedByGroups 列出分派给任一候选组、尚未认领的待办
+	//（PENDING + Assignee 为空 + CandidateGroups 与给定组有交集）。
+	ListUnclaimedByGroups(ctx context.Context, tenantID string, groups []string) ([]*Task, error)
 	ListDue(ctx context.Context, now time.Time) ([]*Task, error)
 }
 
