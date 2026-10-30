@@ -175,3 +175,33 @@ describe('树操作', () => {
     expect(doc.nodes.length).toBeGreaterThanOrEqual(3);
   });
 });
+import { treeAddTaskFirst, treeAppendTaskToBranch, treeRemoveBranch } from './tree';
+
+describe('分支级操作', () => {
+  it('追加任务到分支链 / 删除分支并解包', () => {
+    const tree = documentToTree(branchDoc);
+    const gateId = tree.root?.kind === 'task' && tree.root.child?.kind === 'branches' ? tree.root.child.gateId : '';
+
+    // 追加到高额分支链尾。
+    const appended = treeAppendTaskToBranch(tree, 'bh', { name: '追加审批' });
+    const doc1 = treeToDocument(appended);
+    expect(doc1.nodes.some((n) => n.name === '追加审批')).toBe(true);
+    // 回环仍合法。
+    expect(() => documentToTree(doc1)).not.toThrow();
+
+    // 删除默认分支 → 只剩一条分支 → 解包（分支构造消失）。
+    const removed = treeRemoveBranch(appended, gateId, 'bd');
+    const doc2 = treeToDocument(removed);
+    const gateNode = doc2.nodes.find((n) => n.id === gateId);
+    expect(gateNode).toBeUndefined();
+    expect(() => documentToTree(doc2)).not.toThrow();
+  });
+
+  it('前置插入任务', () => {
+    const tree = documentToTree(linearDoc);
+    const first = treeAddTaskFirst(tree, { name: '前置' });
+    expect(first.root?.kind === 'task' && first.root.node.name).toBe('前置');
+    const doc = treeToDocument(first);
+    expect(() => documentToTree(doc)).not.toThrow();
+  });
+});

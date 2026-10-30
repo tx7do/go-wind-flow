@@ -350,6 +350,79 @@ export function treeRemoveNode(tree: ApprovalTree, nodeId: string): ApprovalTree
   }
 }
 
+/** 在最前端插入新审批节点（原首节点成为其下游）。 */
+export function treeAddTaskFirst(tree: ApprovalTree, init?: Partial<DesignerNode>): ApprovalTree {
+  const t = cloneTree(tree);
+  const fresh: ApprovalTreeTask = {
+    kind: 'task',
+    node: {
+      id: freshId(t, 'task'),
+      type: 'userTask',
+      name: init?.name ?? '审批节点',
+      approver: init?.approver ?? { rules: [{ kind: 'USER', value: '' }], strategy: 'ALL' },
+    },
+    child: t.root,
+  };
+  t.root = fresh;
+  return t;
+}
+
+/** 向分支链末尾追加审批节点（链为空时成为链首）。 */
+export function treeAppendTaskToBranch(tree: ApprovalTree, branchId: string, init?: Partial<DesignerNode>): ApprovalTree {
+  const t = cloneTree(tree);
+  const slot = findBranchChildSlot(t.root, branchId);
+  if (!slot) throw new Error(`branch ${branchId} not found`);
+  const fresh: ApprovalTreeTask = {
+    kind: 'task',
+    node: {
+      id: freshId(t, 'task'),
+      type: 'userTask',
+      name: init?.name ?? '审批节点',
+      approver: init?.approver ?? { rules: [{ kind: 'USER', value: '' }], strategy: 'ALL' },
+    },
+    child: slot.child,
+  };
+  slot.set(fresh);
+  return t;
+}
+
+/** 删除整条分支；删后仅剩一条分支时自动解包（去掉分支构造）。 */
+export function treeRemoveBranch(tree: ApprovalTree, gateId: string, branchId: string): ApprovalTree {
+  const t = cloneTree(tree);
+  const slot = findBranchesSlot(t.root, gateId);
+  if (!slot) throw new Error(`branches ${gateId} not found`);
+  const construct = slot.child;
+  if (!construct || construct.kind !== 'branches') return t;
+  const remaining = construct.branches.filter((b) => b.id !== branchId);
+  if (remaining.length === 0) return t;
+  if (remaining.length === 1) {
+    // 解包：唯一分支的链直接替代整个分支构造。
+    slot.set(remaining[0].child);
+    return t;
+  }
+  slot.set({ ...construct, branches: remaining });
+  return t;
+}
+
+/** 在分支构造（汇合之后）插入审批节点。 */
+export function treeAddTaskAfterBranches(tree: ApprovalTree, gateId: string, init?: Partial<DesignerNode>): ApprovalTree {
+  const t = cloneTree(tree);
+  const slot = findBranchChildSlot(t.root, gateId);
+  if (!slot) throw new Error(`branches ${gateId} not found`);
+  const fresh: ApprovalTreeTask = {
+    kind: 'task',
+    node: {
+      id: freshId(t, 'task'),
+      type: 'userTask',
+      name: init?.name ?? '审批节点',
+      approver: init?.approver ?? { rules: [{ kind: 'USER', value: '' }], strategy: 'ALL' },
+    },
+    child: slot.child,
+  };
+  slot.set(fresh);
+  return t;
+}
+
 export function treeUpdateNode(tree: ApprovalTree, nodeId: string, patch: Partial<DesignerNode>): ApprovalTree {
   const t = cloneTree(tree);
   const slot = findTask(t.root, nodeId);
@@ -371,6 +444,66 @@ function findTask(root: ApprovalTreeNode | null, id: string): ApprovalTreeTask |
       if (hit) return hit;
     }
     cur = cur.child;
+  }
+  return null;
+}
+
+// ============================================================
+// 槽位查找（供分支级操作读写 child）
+// ============================================================
+
+interface ChildSlot {
+  child: ApprovalTreeNode | null;
+  set(n: ApprovalTreeNode | null): void;
+}
+
+function findBranchChildSlot(root: ApprovalTreeNode | null, branchId: string): ChildSlot | null {
+  if (!root) return null;
+  for (const b of root.kind === 'branches' ? root.branches : []) {
+    if (b.id === branchId) {
+      return { child: b.child, set: (n) => void (b.child = n) };
+    }
+    const hit = findBranchChildSlot(b.child, branchId);
+    if (hit) return hit;
+  }
+  if (root.kind === 'branches') {
+    const hit = findBranchChildSlot(root.child, branchId);
+    if (hit) return hit;
+  } else {
+    const hit = findBranchChildSlot(root.child, branchId);
+    if (hit) return hit;
+  }
+  return null;
+}
+
+function findBranchesSlot(root: ApprovalTreeNode | null, gateId: string): ChildSlot | null {
+  if (!root) return null;
+  if (root.kind === 'branches' && root.gateId === gateId) {
+    // 根即目标：需要父槽位——用哨兵包装。
+    return { child: root, set: () => void 0 };
+  }
+  for (const b of root.kind === 'branches' ? root.branches : []) {
+    const bc = b.child;
+    if (bc && bc.kind === 'branches' && bc.gateId === gateId) {
+      return { child: bc, set: (n) => void (b.child = n) };
+    }
+    const hit = findBranchesSlot(bc, gateId);
+    if (hit) return hit;
+  }
+  if (root.kind === 'branches') {
+    const cc = root.child;
+    if (cc && cc.kind === 'branches' && cc.gateId === gateId) {
+      return { child: cc, set: (n) => void (root.child = n) };
+    }
+    const hit = findBranchesSlot(cc, gateId);
+    if (hit) return hit;
+  } else {
+    const cc = root.child;
+    if (cc && cc.kind === 'branches' && cc.gateId === gateId) {
+      return { child: cc, set: (n) => void (root.child = n) };
+    }
+    const hit = findBranchesSlot(cc, gateId);
+    if (hit) return hit;
   }
   return null;
 }

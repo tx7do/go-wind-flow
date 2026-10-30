@@ -7,7 +7,11 @@ export {
   treeToDocument,
   emptyTree,
   treeAddTaskAfter,
+  treeAddTaskAfterBranches,
+  treeAddTaskFirst,
   treeAddBranch,
+  treeAppendTaskToBranch,
+  treeRemoveBranch,
   treeRemoveNode,
   treeUpdateNode,
   UnsupportedError,
@@ -21,3 +25,4 @@ export type {
 } from './tree';
 export type * from './types';
 export { applyTheme, applyAccent, applyThemeToAll, designerCSS, ensureStyles, THEME_ATTR } from './theme';
+export type { Theme } from './theme';

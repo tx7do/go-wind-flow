@@ -195,6 +195,206 @@ export const designerCSS = /* css */ `
   background: var(--gwf-bg);
 }
 
+/* ---------- 垂直审批树 v2（卡片化 + 分支列 + 侧边编辑器） ---------- */
+.gwf-tree-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 24px 32px;
+}
+.gwf-tree-area .gwf-start-node,
+.gwf-tree-area .gwf-end-node {
+  width: 120px;
+  text-align: center;
+  padding: 8px 0;
+  border-radius: 8px;
+  background: var(--gwf-accent-weak);
+  color: var(--gwf-accent);
+  font-weight: 600;
+  font-size: 13px;
+}
+.gwf-v2-node {
+  width: 248px;
+  position: relative;
+  background: var(--gwf-node-bg);
+  border: 1px solid var(--gwf-node-border);
+  border-radius: 10px;
+  padding: 10px 12px 10px 48px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+.gwf-v2-node:hover {
+  border-color: var(--gwf-accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px var(--gwf-accent-weak);
+}
+.gwf-v2-node.selected {
+  border-color: var(--gwf-accent);
+  box-shadow: 0 0 0 2px var(--gwf-accent-weak);
+}
+.gwf-v2-avatar {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--gwf-accent-weak);
+  color: var(--gwf-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+.gwf-v2-name { font-weight: 600; font-size: 13px; }
+.gwf-v2-meta { margin-top: 2px; font-size: 12px; color: var(--gwf-text-secondary); }
+.gwf-v2-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.gwf-v2-node:hover .gwf-v2-actions,
+.gwf-v2-node.selected .gwf-v2-actions { opacity: 1; }
+.gwf-connector {
+  position: relative;
+  width: 248px;
+  height: 32px;
+}
+.gwf-connector::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--gwf-node-border);
+}
+.gwf-connector .gwf-add {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--gwf-node-bg);
+  border: 1px solid var(--gwf-accent);
+  color: var(--gwf-accent);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+  z-index: 1;
+}
+.gwf-connector:hover .gwf-add { opacity: 1; }
+.gwf-connector .gwf-add:hover {
+  background: var(--gwf-accent);
+  color: #fff;
+}
+.gwf-branch-cols {
+  display: flex;
+  gap: 14px;
+  align-items: stretch;
+}
+.gwf-branch-col {
+  flex: 1;
+  min-width: 220px;
+  border: 1px solid var(--gwf-node-border);
+  border-radius: 12px;
+  padding: 8px;
+  background: var(--gwf-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.gwf-branch-tag {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 4px;
+}
+.gwf-branch-tag .gwf-badge {
+  background: var(--gwf-accent-weak);
+  color: var(--gwf-accent);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.gwf-branch-tag input {
+  flex: 1;
+  min-width: 0;
+  background: var(--gwf-bg);
+  color: var(--gwf-text);
+  border: 1px solid var(--gwf-border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 12px;
+}
+.gwf-editor {
+  width: 320px;
+  border-left: 1px solid var(--gwf-border);
+  padding: 16px;
+  background: var(--gwf-node-bg);
+  overflow-y: auto;
+}
+.gwf-editor h4 {
+  margin: 0 0 12px;
+  font-size: 14px;
+}
+.gwf-editor label {
+  display: block;
+  font-size: 12px;
+  color: var(--gwf-text-secondary);
+  margin: 10px 0 4px;
+}
+.gwf-editor input,
+.gwf-editor select {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--gwf-bg);
+  color: var(--gwf-text);
+  border: 1px solid var(--gwf-border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+.gwf-editor .gwf-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+  align-items: center;
+}
+.gwf-editor .gwf-row input,
+.gwf-editor .gwf-row select {
+  flex: 1;
+  min-width: 0;
+}
+.gwf-editor .gwf-btn {
+  border: none;
+  background: var(--gwf-accent-weak);
+  color: var(--gwf-accent);
+  border-radius: 4px;
+  padding: 3px 10px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.gwf-editor .gwf-btn.danger {
+  background: transparent;
+  color: var(--gwf-danger);
+}
+.gwf-v2-fade-enter-active { transition: all 0.2s ease-out; }
+
 /* ---------- 垂直审批树（DOM 组件） ---------- */
 .gwf-tree {
   overflow-y: auto;
@@ -339,6 +539,96 @@ export const designerCSS = /* css */ `
 }
 .gwf-form .gwf-row input,
 .gwf-form .gwf-row select {
+  flex: 1;
+  min-width: 0;
+}
+.gwf-designer .gwf-btn {
+  border: none;
+  background: var(--gwf-accent-weak);
+  color: var(--gwf-accent);
+  border-radius: 4px;
+  padding: 3px 10px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.gwf-designer .gwf-btn.danger {
+  background: transparent;
+  color: var(--gwf-danger);
+}
+.gwf-editor-inline {
+  border-top: 1px solid var(--gwf-border);
+  margin-top: 8px;
+  padding-top: 8px;
+  display: grid;
+  gap: 6px;
+  width: 100%;
+}
+.gwf-editor-inline label {
+  font-size: 12px;
+  color: var(--gwf-text-secondary);
+}
+.gwf-editor-inline input,
+.gwf-editor-inline select {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--gwf-bg);
+  color: var(--gwf-text);
+  border: 1px solid var(--gwf-border);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 12px;
+}
+.gwf-editor-inline .gwf-row {
+  display: flex;
+  gap: 4px;
+}
+.gwf-editor-inline .gwf-row input,
+.gwf-editor-inline .gwf-row select {
+  flex: 1;
+  min-width: 0;
+}
+.gwf-designer .gwf-btn {
+  border: none;
+  background: var(--gwf-accent-weak);
+  color: var(--gwf-accent);
+  border-radius: 4px;
+  padding: 3px 10px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.gwf-designer .gwf-btn.danger {
+  background: transparent;
+  color: var(--gwf-danger);
+}
+.gwf-editor-inline {
+  border-top: 1px solid var(--gwf-border);
+  margin-top: 8px;
+  padding-top: 8px;
+  display: grid;
+  gap: 6px;
+  width: 100%;
+}
+.gwf-editor-inline label {
+  font-size: 12px;
+  color: var(--gwf-text-secondary);
+}
+.gwf-editor-inline input,
+.gwf-editor-inline select {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--gwf-bg);
+  color: var(--gwf-text);
+  border: 1px solid var(--gwf-border);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 12px;
+}
+.gwf-editor-inline .gwf-row {
+  display: flex;
+  gap: 4px;
+}
+.gwf-editor-inline .gwf-row input,
+.gwf-editor-inline .gwf-row select {
   flex: 1;
   min-width: 0;
 }
