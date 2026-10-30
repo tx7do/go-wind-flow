@@ -1,0 +1,32 @@
+{
+  "name": "@go-wind/flow-designer-core",
+  "version": "0.1.0",
+  "description": "go-wind-flow 流程设计器核心（框架无关）：bpmn-js 建模器 + go-wind-flow 属性面板 + designer-json-v1 序列化",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "vite build && tsc --emitDeclarationOnly --declaration --outDir dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@bpmn-io/properties-panel": "^3.42.0",
+    "bpmn-js": "^17.9.0",
+    "bpmn-js-properties-panel": "^5.24.0",
+    "min-dash": "^4.2.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "vite": "^5.4.0"
+  },
+  "peerDependencies": {},
+  "sideEffects": false
+}

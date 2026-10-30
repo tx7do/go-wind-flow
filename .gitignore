@@ -21,3 +21,11 @@ Thumbs.db
 
 # Go
 vendor/
+
+# Node
+node_modules/
+frontend/*/dist/
+
+# Node
+node_modules/
+frontend/*/dist/

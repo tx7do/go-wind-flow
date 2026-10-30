@@ -1,0 +1,14 @@
+{
+  "name": "go-wind-flow-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "core",
+    "vue",
+    "react"
+  ],
+  "scripts": {
+    "build": "npm run build -w @go-wind/flow-designer-core && npm run build -w @go-wind/flow-designer-vue && npm run build -w @go-wind/flow-designer-react",
+    "typecheck": "npm run typecheck -w @go-wind/flow-designer-core && npm run typecheck -w @go-wind/flow-designer-vue && npm run typecheck -w @go-wind/flow-designer-react"
+  }
+}
