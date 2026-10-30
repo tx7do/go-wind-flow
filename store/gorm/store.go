@@ -277,6 +277,7 @@ func tokenToModel(tk *flow.Token) *Token {
 		ParentID:    tk.ParentID,
 		ChildInstID: tk.ChildInstID,
 		DueAt:       tk.DueAt,
+		Locals:      tk.Locals,
 		CreatedAt:   tk.CreatedAt,
 	}
 }
@@ -290,6 +291,7 @@ func tokenToFlow(m *Token) *flow.Token {
 		ParentID:    m.ParentID,
 		ChildInstID: m.ChildInstID,
 		DueAt:       m.DueAt,
+		Locals:      m.Locals,
 		CreatedAt:   m.CreatedAt,
 	}
 }

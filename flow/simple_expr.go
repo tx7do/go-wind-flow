@@ -190,8 +190,7 @@ type exprParser struct {
 	idx  int
 }
 
-func (p *exprParser) cur() token  { return p.toks[p.idx] }
-func (p *exprParser) next() token { t := p.toks[p.idx]; p.idx++; return t }
+func (p *exprParser) cur() token { return p.toks[p.idx] }
 
 func (p *exprParser) acceptOp(ops ...string) (string, bool) {
 	t := p.cur()

@@ -24,6 +24,7 @@ func TestSimpleEvaluator(t *testing.T) {
 	}{
 		{"days > 3", true},
 		{"days > 10", false},
+		{"days < 10", true},
 		{"amount >= 1500", true},
 		{"urgent && days > 3", true},
 		{"vip || urgent", true},

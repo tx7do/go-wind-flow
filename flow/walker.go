@@ -606,9 +606,12 @@ func (e *Engine) walkGateway(ctx context.Context, inst *Instance, tk *Token, def
 				chosen = []*Edge{defEdge}
 			}
 			out = chosen
-			inst.Variables[joinExpectedKey(node.ID)] = float64(len(out))
-			if err := e.store.Instances().Update(ctx, inst); err != nil {
-				return err
+			// 期望令牌数记在汇合节点名下（分叉与汇合并不同名，须结构定位）。
+			if joinID := findJoinNode(def, node); joinID != "" {
+				inst.Variables[joinExpectedKey(joinID)] = float64(len(out))
+				if err := e.store.Instances().Update(ctx, inst); err != nil {
+					return err
+				}
 			}
 		}
 
@@ -682,4 +685,45 @@ func joinExpectedKey(nodeID string) string { return "flow:joinExpected:" + nodeI
 func joinExpected(vars Vars, nodeID string) float64 {
 	v, _ := vars[joinExpectedKey(nodeID)].(float64)
 	return v
+}
+
+// findJoinNode 自分叉网关的各出边同时 BFS，返回所有分支首个共同到达的网关——
+// 即包容网关的汇合点。找不到（分支各自终止）返回空串。
+func findJoinNode(def *Definition, fork *Node) string {
+	outs := def.OutEdges(fork.ID)
+	if len(outs) < 2 {
+		return ""
+	}
+	type item struct {
+		id     string
+		branch int
+	}
+	reached := map[string]map[int]bool{}
+	seen := map[item]bool{}
+	queue := make([]item, 0, len(outs))
+	for i, e := range outs {
+		queue = append(queue, item{e.To, i})
+	}
+	for len(queue) > 0 {
+		cur := queue[0]
+		queue = queue[1:]
+		if seen[cur] {
+			continue
+		}
+		seen[cur] = true
+		if reached[cur.id] == nil {
+			reached[cur.id] = map[int]bool{}
+		}
+		reached[cur.id][cur.branch] = true
+		if len(reached[cur.id]) == len(outs) {
+			switch def.Nodes[cur.id].Type {
+			case NodeParallelGateway, NodeInclusiveGateway, NodeExclusiveGateway:
+				return cur.id
+			}
+		}
+		for _, e := range def.OutEdges(cur.id) {
+			queue = append(queue, item{e.To, cur.branch})
+		}
+	}
+	return ""
 }
