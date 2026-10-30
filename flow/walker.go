@@ -29,6 +29,11 @@ func (e *Engine) runToken(ctx context.Context, inst *Instance, tk *Token, def *D
 		case NodeEndEvent:
 			return e.finishTokenAtEnd(ctx, inst, tk)
 
+		case NodeErrorEndEvent:
+			// 错误结束：终结本实例并抛出错误码——父 callActivity 的错误边界
+			// 可捕获接管；未捕获则按 fail-closed 级联（父实例 REJECTED）。
+			return e.throwError(ctx, inst, tk, node.ErrorCode)
+
 		case NodeUserTask:
 			return e.arriveAtUserTask(ctx, inst, tk, node, def)
 
@@ -156,17 +161,38 @@ func mergedEnv(inst *Instance, tk *Token) Vars {
 // arriveAtUserTask 到达用户任务：解析办理人、创建任务、令牌阻塞，
 // 并为挂接的边界定时器创建边界令牌（到期由 ResumeDueTimers 触发）。
 func (e *Engine) arriveAtUserTask(ctx context.Context, inst *Instance, tk *Token, node *Node, def *Definition) error {
-	assignees, groups, err := e.resolveApprovers(ctx, inst, tk, node)
-	if err != nil {
-		// fail-closed：解析失败不创建任务，令牌留在原地（RUNNING），
-		// 由宿主决定重试或终止。
-		return err
+	// 集合多实例：collection 表达式（字符串数组）覆盖规则解析的办理人。
+	var assignees, groups []string
+	if node.Approval.Collection != "" {
+		items, cerr := e.evalCollection(ctx, inst, tk, node.Approval.Collection)
+		if cerr != nil {
+			return cerr
+		}
+		if len(items) == 0 {
+			return fmt.Errorf("%w: collection %q empty (fail-closed)", ErrExpression, node.Approval.Collection)
+		}
+		assignees = items
+		groups = nil
+	} else {
+		// 规则解析（GROUP 拆分 / 动态规则 / 委托叠加）。
+		var rerr error
+		assignees, groups, rerr = e.resolveApprovers(ctx, inst, tk, node)
+		if rerr != nil {
+			// fail-closed：解析失败不创建任务，令牌留在原地（RUNNING），
+			// 由宿主决定重试或终止。
+			return rerr
+		}
 	}
 
 	now := e.clock.Now()
 	tk.Status = TokenWaiting
 	if err := e.store.Tokens().Update(ctx, tk); err != nil {
 		return err
+	}
+
+	elementVar := node.Approval.ElementVar
+	if elementVar == "" {
+		elementVar = "item"
 	}
 
 	// 顺序多实例：办理人串行逐个审批——只创建第一个任务，办结后在
@@ -188,6 +214,16 @@ func (e *Engine) arriveAtUserTask(ctx context.Context, inst *Instance, tk *Token
 		tk.Locals[miDoneKey(node.ID)] = []any{}
 		if err := e.store.Tokens().Update(ctx, tk); err != nil {
 			return err
+		}
+		if node.Approval.Collection != "" && len(assignees) > 0 {
+			// collection + elementVar：项写入令牌局部变量（非保留键）。
+			if tk.Locals == nil {
+				tk.Locals = Vars{}
+			}
+			tk.Locals[elementVar] = assignees[0]
+			if err := e.store.Tokens().Update(ctx, tk); err != nil {
+				return err
+			}
 		}
 		return e.createSequentialTask(ctx, inst, tk, node, assignees[0], now)
 	}
@@ -275,6 +311,35 @@ func (e *Engine) arriveAtUserTask(ctx context.Context, inst *Instance, tk *Token
 		}
 	}
 	return nil
+}
+
+// evalCollection 求值多实例集合表达式（须为字符串数组）。
+// 需要求值器实现 ValueEvaluator 可选能力；否则 fail-closed。
+func (e *Engine) evalCollection(ctx context.Context, inst *Instance, tk *Token, expression string) ([]string, error) {
+	ve, ok := e.evaluator.(ValueEvaluator)
+	if !ok {
+		return nil, fmt.Errorf("%w: evaluator %T does not support value evaluation (collection)",
+			ErrNotConfigured, e.evaluator)
+	}
+	v, err := ve.EvalAny(ctx, expression, mergedEnv(inst, tk))
+	if err != nil {
+		return nil, fmt.Errorf("%w: collection %q: %v", ErrExpression, expression, err)
+	}
+	arr, ok := v.([]any)
+	if !ok {
+		return nil, fmt.Errorf("%w: collection %q must evaluate to an array, got %T",
+			ErrExpression, expression, v)
+	}
+	out := make([]string, 0, len(arr))
+	for _, it := range arr {
+		s, ok := it.(string)
+		if !ok || s == "" {
+			return nil, fmt.Errorf("%w: collection %q items must be non-empty strings",
+				ErrExpression, expression)
+		}
+		out = append(out, s)
+	}
+	return out, nil
 }
 
 // miSequenceKey / miDoneKey 顺序多实例的令牌保留键。

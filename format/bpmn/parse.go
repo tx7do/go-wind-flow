@@ -66,13 +66,39 @@ type processXML struct {
 
 	CallActivities []callXML `xml:"callActivity"`
 
+	SubProcesses []subProcessXML `xml:"subProcess"`
+
 	SequenceFlows []seqFlowXML `xml:"sequenceFlow"`
 }
 
 type eventXML struct {
-	ID   string `xml:"id,attr"`
-	Name string `xml:"name,attr"`
-	Doc  string `xml:"documentation"`
+	ID    string       `xml:"id,attr"`
+	Name  string       `xml:"name,attr"`
+	Doc   string       `xml:"documentation"`
+	Error *errorDefXML `xml:"errorEventDefinition"`
+	Timer *timerDefXML `xml:"timerEventDefinition"`
+}
+
+type errorDefXML struct {
+	ErrorRef string `xml:"errorRef,attr"`
+}
+
+// subProcessXML 嵌入子流程。v1 仅支持扁平化导入：内部恰好一个普通 start
+// 与一个普通 end（单入单出），导入时以 `<subProcessID>.<childID>` 前缀
+// 并入父图；带事件子流程/边界/多实例的嵌入子流程显式拒绝。
+type subProcessXML struct {
+	ID           string          `xml:"id,attr"`
+	Name         string          `xml:"name,attr"`
+	StartEvents  []eventXML      `xml:"startEvent"`
+	EndEvents    []eventXML      `xml:"endEvent"`
+	UserTasks    []userTaskXML   `xml:"userTask"`
+	ScriptTasks  []scriptTaskXML `xml:"scriptTask"`
+	ServiceTasks []scriptTaskXML `xml:"serviceTask"`
+
+	ExclusiveGateways []gatewayXML `xml:"exclusiveGateway"`
+	ParallelGateways  []gatewayXML `xml:"parallelGateway"`
+
+	SequenceFlows []seqFlowXML `xml:"sequenceFlow"`
 }
 
 type userTaskXML struct {
@@ -145,6 +171,7 @@ type boundaryXML struct {
 	AttachedToRef  string       `xml:"attachedToRef,attr"`
 	CancelActivity *string      `xml:"cancelActivity,attr"` // 缺省 true
 	Timer          *timerDefXML `xml:"timerEventDefinition"`
+	Error          *errorDefXML `xml:"errorEventDefinition"`
 }
 
 type gatewayXML struct {
@@ -179,7 +206,9 @@ type extSpec struct {
 	Strategy   string              `json:"strategy,omitempty"`
 	RejectMode string              `json:"rejectMode,omitempty"`
 	Due        string              `json:"due,omitempty"`
-	Action     string              `json:"action,omitempty"` // 到期动作：auto_approve / auto_reject
+	Action     string              `json:"action,omitempty"`
+	Collection string              `json:"collection,omitempty"` // 多实例集合表达式
+	ElementVar string              `json:"elementVar,omitempty"` // 项变量名（缺省 item）
 }
 
 var tagStripper = regexp.MustCompile(`<[^>]*>`)
@@ -205,9 +234,26 @@ func Parse(data []byte) (*flow.Definition, error) {
 	}
 
 	for _, s := range p.StartEvents {
-		add(&flow.Node{ID: s.ID, Name: s.Name, Type: flow.NodeStartEvent, Documentation: s.Doc})
+		node := &flow.Node{ID: s.ID, Name: s.Name, Type: flow.NodeStartEvent, Documentation: s.Doc}
+		if s.Timer != nil && strings.TrimSpace(s.Timer.Duration) != "" {
+			// 定时器启动事件：解析保留（ISO8601），运行期自动调度由宿主
+			// cron + Start 组合驱动（引擎提供解析与查询契约）。
+			d, err := ParseISODuration(s.Timer.Duration)
+			if err != nil {
+				return nil, fmt.Errorf("startEvent %s: %w", s.ID, err)
+			}
+			node.Timer = &flow.TimerSpec{Duration: flow.Duration(d)}
+		}
+		add(node)
 	}
 	for _, s := range p.EndEvents {
+		if s.Error != nil {
+			add(&flow.Node{
+				ID: s.ID, Name: s.Name, Type: flow.NodeErrorEndEvent,
+				ErrorCode: strings.TrimSpace(s.Error.ErrorRef), Documentation: s.Doc,
+			})
+			continue
+		}
 		add(&flow.Node{ID: s.ID, Name: s.Name, Type: flow.NodeEndEvent, Documentation: s.Doc})
 	}
 	for _, t := range p.UserTasks {
@@ -290,6 +336,12 @@ func Parse(data []byte) (*flow.Definition, error) {
 		node.Documentation = be.Doc
 		interrupting := be.CancelActivity == nil || strings.EqualFold(strings.TrimSpace(*be.CancelActivity), "true")
 		node.Interrupting = &interrupting
+		if be.Error != nil {
+			// 错误边界：捕获挂接节点（callActivity）子流程抛出的错误码。
+			node.ErrorCode = strings.TrimSpace(be.Error.ErrorRef)
+			add(node)
+			continue
+		}
 		if be.Timer == nil || strings.TrimSpace(be.Timer.Duration) == "" {
 			return nil, fmt.Errorf("%w: boundaryEvent %s missing timerEventDefinition/timeDuration",
 				flow.ErrInvalidDefinition, be.ID)
@@ -342,6 +394,13 @@ func Parse(data []byte) (*flow.Definition, error) {
 		def.Edges = append(def.Edges, edge)
 	}
 
+	// 嵌入子流程扁平化（SES 约束，见 subprocess.go）。
+	for _, sp := range p.SubProcesses {
+		if err := flattenSubProcess(def, sp); err != nil {
+			return nil, err
+		}
+	}
+
 	return def, nil
 }
 
@@ -360,6 +419,8 @@ func parseExt(e *extXML) extSpec {
 
 func approvalFrom(spec extSpec, mi *multiXML) flow.ApprovalSpec {
 	var a flow.ApprovalSpec
+	a.Collection = spec.Collection
+	a.ElementVar = spec.ElementVar
 	switch strings.ToUpper(spec.Strategy) {
 	case "ANY":
 		a.Strategy = flow.StrategyAny
@@ -459,6 +520,10 @@ func Write(def *flow.Definition) ([]byte, error) {
 				fmt.Fprintf(b, "    <startEvent id=%q name=%q/>\n", n.ID, n.Name)
 			case flow.NodeEndEvent:
 				fmt.Fprintf(b, "    <endEvent id=%q name=%q/>\n", n.ID, n.Name)
+			case flow.NodeErrorEndEvent:
+				fmt.Fprintf(b, "    <endEvent id=%q name=%q>\n", n.ID, n.Name)
+				fmt.Fprintf(b, "      <errorEventDefinition errorRef=%q/>\n", n.ErrorCode)
+				fmt.Fprintf(b, "    </endEvent>\n")
 			case flow.NodeUserTask:
 				b.WriteString("    <userTask id=" + quote(n.ID) + " name=" + quote(n.Name) + ">\n")
 				b.WriteString("      <extensionElements>\n")
@@ -544,9 +609,13 @@ func Write(def *flow.Definition) ([]byte, error) {
 				}
 				fmt.Fprintf(b, "    <boundaryEvent id=%q name=%q attachedToRef=%q cancelActivity=%q>\n",
 					n.ID, n.Name, n.AttachedTo, cancel)
-				fmt.Fprintf(b, "      <timerEventDefinition>\n")
-				fmt.Fprintf(b, "        <timeDuration>%s</timeDuration>\n", dur)
-				fmt.Fprintf(b, "      </timerEventDefinition>\n")
+				if n.ErrorCode != "" {
+					fmt.Fprintf(b, "      <errorEventDefinition errorRef=%q/>\n", n.ErrorCode)
+				} else {
+					fmt.Fprintf(b, "      <timerEventDefinition>\n")
+					fmt.Fprintf(b, "        <timeDuration>%s</timeDuration>\n", dur)
+					fmt.Fprintf(b, "      </timerEventDefinition>\n")
+				}
 				fmt.Fprintf(b, "    </boundaryEvent>\n")
 			case flow.NodeCallActivity:
 				ref := n.SubprocessKey

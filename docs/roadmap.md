@@ -60,7 +60,13 @@
 - [x] Camunda Modeler 往返兼容性测试集（带前缀根元素/incoming-outgoing/
       camunda: 属性/documentation/DI 全量回环）；任务超时自动动作
       （auto_approve / auto_reject，缺省仅广播）一并落地
-- [ ] bpmn-js properties-panel 扩展（flow:assignees 可视化配置，go-wind-ui 侧）
+- [x] 候选组任务（candidateGroups）：GROUP 规则 → 待认领任务，Claim/Unclaim/
+      组待办查询（IdentityProvider.ResolveGroupsForUser 鉴权）；契约 v0.1.5
+- [x] 错误事件：errorEndEvent + callActivity 错误边界（errorRef 通配），
+      未捕获 fail-closed 父实例 REJECTED
+- [x] 集合多实例（collection 表达式 + elementVar，串行项变量入令牌局部）
+- [x] 嵌入子流程扁平化导入（SES 约束，前缀并入，边界/MI 子流程显式拒绝）+
+      定时器启动事件解析（调度宿主驱动）
 
 ## M3 —— 生态与商业化
 

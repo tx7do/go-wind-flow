@@ -22,6 +22,13 @@ type ExpressionEvaluator interface {
 	EvalBool(ctx context.Context, expression string, env Vars) (bool, error)
 }
 
+// ValueEvaluator 可选能力接口：求值非布尔表达式（多实例 collection 等）。
+// 内置 SimpleEvaluator 与 contrib/exprlang 均实现；未实现该接口的求值器
+// 遇到 collection 时引擎 fail-closed 报 ErrNotConfigured。
+type ValueEvaluator interface {
+	EvalAny(ctx context.Context, expression string, env Vars) (any, error)
+}
+
 // ScriptRunner 脚本执行器（脚本任务与脚本监听器）。
 // 实现方负责沙箱、超时（context deadline）与并发隔离（引擎池）。
 type ScriptRunner interface {

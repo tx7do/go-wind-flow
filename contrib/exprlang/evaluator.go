@@ -26,33 +26,41 @@ func New(opts ...expr.Option) *Evaluator {
 	return &Evaluator{opts: opts}
 }
 
-func (e *Evaluator) EvalBool(_ context.Context, expression string, env flow.Vars) (bool, error) {
-	expression = trim(expression)
-	if expression == "" {
-		return false, fmt.Errorf("%w: empty expression", flow.ErrExpression)
-	}
-
-	envMap := map[string]any(env)
-	opts := append([]expr.Option{
-		expr.Env(envMap),
-		expr.AsBool(),
-		// 安全约束：禁止任意函数调用与全局访问。
-		expr.DisableAllBuiltins(),
-	}, e.opts...)
-
-	program, err := expr.Compile(expression, opts...)
+func (e *Evaluator) EvalBool(ctx context.Context, expression string, env flow.Vars) (bool, error) {
+	output, err := e.EvalAny(ctx, expression, env)
 	if err != nil {
-		return false, fmt.Errorf("%w: compile: %v", flow.ErrExpression, err)
-	}
-	output, err := expr.Run(program, envMap)
-	if err != nil {
-		return false, fmt.Errorf("%w: run: %v", flow.ErrExpression, err)
+		return false, err
 	}
 	b, ok := output.(bool)
 	if !ok {
 		return false, fmt.Errorf("%w: result is %T, want bool", flow.ErrExpression, output)
 	}
 	return b, nil
+}
+
+// EvalAny 实现 flow.ValueEvaluator：求值非布尔表达式（多实例 collection 等）。
+func (e *Evaluator) EvalAny(_ context.Context, expression string, env flow.Vars) (any, error) {
+	expression = trim(expression)
+	if expression == "" {
+		return nil, fmt.Errorf("%w: empty expression", flow.ErrExpression)
+	}
+
+	envMap := map[string]any(env)
+	opts := append([]expr.Option{
+		expr.Env(envMap),
+		// 安全约束：禁止任意函数调用与全局访问。
+		expr.DisableAllBuiltins(),
+	}, e.opts...)
+
+	program, err := expr.Compile(expression, opts...)
+	if err != nil {
+		return nil, fmt.Errorf("%w: compile: %v", flow.ErrExpression, err)
+	}
+	output, err := expr.Run(program, envMap)
+	if err != nil {
+		return nil, fmt.Errorf("%w: run: %v", flow.ErrExpression, err)
+	}
+	return output, nil
 }
 
 func trim(s string) string {

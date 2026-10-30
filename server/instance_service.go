@@ -213,6 +213,44 @@ func (s *Services) GetTask(ctx context.Context, req *flowv1.GetTaskRequest) (*fl
 	return taskToProto(task), nil
 }
 
+// ClaimTask 认领候选组任务（组员鉴权经引擎 IdentityProvider）。
+func (s *Services) ClaimTask(ctx context.Context, req *flowv1.ClaimTaskRequest) (*flowv1.FlowTask, error) {
+	if err := s.engine.ClaimTask(ctx, req.GetTaskId(), req.GetUserId()); err != nil {
+		return nil, mapError(err)
+	}
+	task, err := s.store.Tasks().Get(ctx, req.GetTaskId())
+	if err != nil {
+		return nil, mapError(err)
+	}
+	return taskToProto(task), nil
+}
+
+// UnclaimTask 退认（放回待认领池）。
+func (s *Services) UnclaimTask(ctx context.Context, req *flowv1.UnclaimTaskRequest) (*flowv1.FlowTask, error) {
+	if err := s.engine.UnclaimTask(ctx, req.GetTaskId(), req.GetActorId()); err != nil {
+		return nil, mapError(err)
+	}
+	task, err := s.store.Tasks().Get(ctx, req.GetTaskId())
+	if err != nil {
+		return nil, mapError(err)
+	}
+	return taskToProto(task), nil
+}
+
+// ListCandidateTasks 用户可认领的组待办。
+func (s *Services) ListCandidateTasks(ctx context.Context, req *flowv1.ListCandidateTasksRequest) (*flowv1.ListTasksResponse, error) {
+	tasks, err := s.engine.ListCandidateTasks(ctx, req.GetTenantId(), req.GetUserId())
+	if err != nil {
+		return nil, mapError(err)
+	}
+	items, total := paginate(tasks, req.GetPaging())
+	out := &flowv1.ListTasksResponse{Total: total}
+	for _, t := range items {
+		out.Items = append(out.Items, taskToProto(t))
+	}
+	return out, nil
+}
+
 func (s *Services) AddSigners(ctx context.Context, req *flowv1.AddSignersRequest) (*flowv1.ListTasksResponse, error) {
 	created, err := s.engine.AddTaskApprovers(ctx, req.GetTaskId(), req.GetActorId(), req.GetUserIds())
 	if err != nil {

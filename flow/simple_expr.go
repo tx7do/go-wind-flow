@@ -28,24 +28,8 @@ type SimpleEvaluator struct{}
 
 func NewSimpleEvaluator() *SimpleEvaluator { return &SimpleEvaluator{} }
 
-func (SimpleEvaluator) EvalBool(_ context.Context, expression string, env Vars) (bool, error) {
-	expression = strings.TrimSpace(expression)
-	if expression == "" {
-		return false, fmt.Errorf("%w: empty expression", ErrExpression)
-	}
-	toks, terr := tokenize(expression)
-	if terr != nil {
-		return false, terr
-	}
-	p := &exprParser{toks: toks}
-	node, err := p.parseExpr()
-	if err != nil {
-		return false, err
-	}
-	if p.cur().kind != tkEOF {
-		return false, errf("unexpected token %q at %d", p.cur().text, p.cur().pos)
-	}
-	v, err := evalNode(node, env)
+func (SimpleEvaluator) EvalBool(ctx context.Context, expression string, env Vars) (bool, error) {
+	v, err := SimpleEvaluator{}.EvalAny(ctx, expression, env)
 	if err != nil {
 		return false, err
 	}
@@ -54,6 +38,27 @@ func (SimpleEvaluator) EvalBool(_ context.Context, expression string, env Vars) 
 		return false, errf("expression result is %T, want bool", v)
 	}
 	return b, nil
+}
+
+// EvalAny 实现 ValueEvaluator：求值任意表达式（多实例 collection 等）。
+func (SimpleEvaluator) EvalAny(_ context.Context, expression string, env Vars) (any, error) {
+	expression = strings.TrimSpace(expression)
+	if expression == "" {
+		return nil, fmt.Errorf("%w: empty expression", ErrExpression)
+	}
+	toks, terr := tokenize(expression)
+	if terr != nil {
+		return nil, terr
+	}
+	p := &exprParser{toks: toks}
+	node, err := p.parseExpr()
+	if err != nil {
+		return nil, err
+	}
+	if p.cur().kind != tkEOF {
+		return nil, errf("unexpected token %q at %d", p.cur().text, p.cur().pos)
+	}
+	return evalNode(node, env)
 }
 
 // ===================== 词法 =====================

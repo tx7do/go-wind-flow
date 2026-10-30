@@ -26,7 +26,7 @@ func ValidateDefinition(def *Definition) error {
 			startCount++
 		case NodeEndEvent:
 			endCount++
-		case NodeUserTask, NodeScriptTask, NodeServiceTask, NodeCallActivity, NodeTimerEvent, NodeBoundaryEvent, NodeMessageEvent:
+		case NodeUserTask, NodeScriptTask, NodeServiceTask, NodeCallActivity, NodeTimerEvent, NodeBoundaryEvent, NodeMessageEvent, NodeErrorEndEvent:
 		case NodeExclusiveGateway, NodeParallelGateway, NodeInclusiveGateway:
 		default:
 			return fmt.Errorf("%w: unknown node type %q (%s)", ErrInvalidDefinition, n.Type, id)
@@ -94,12 +94,26 @@ func ValidateDefinition(def *Definition) error {
 				return fmt.Errorf("%w: boundary event %s attached to unknown node %s",
 					ErrInvalidDefinition, id, n.AttachedTo)
 			}
-			if attached.Type != NodeUserTask {
-				return fmt.Errorf("%w: boundary event %s can only attach to userTask, got %s",
+			hasTimer := n.Timer != nil && n.Timer.Duration.Std() > 0
+			hasError := n.ErrorCode != "" // 错误边界：仅支持挂接 callActivity（子流程错误传播）
+			if hasError && attached.Type != NodeCallActivity {
+				return fmt.Errorf("%w: error boundary %s can only attach to callActivity, got %s",
 					ErrInvalidDefinition, id, attached.Type)
 			}
-			if n.Timer == nil || n.Timer.Duration.Std() <= 0 {
-				return fmt.Errorf("%w: boundary event %s missing positive timer duration", ErrInvalidDefinition, id)
+			if !hasError && attached.Type != NodeUserTask {
+				return fmt.Errorf("%w: timer boundary %s can only attach to userTask, got %s",
+					ErrInvalidDefinition, id, attached.Type)
+			}
+			if !hasTimer && !hasError {
+				return fmt.Errorf("%w: boundary event %s missing trigger (timer duration or error code)",
+					ErrInvalidDefinition, id)
+			}
+		case NodeErrorEndEvent:
+			if in < 1 || len(out) != 0 {
+				return fmt.Errorf("%w: errorEndEvent %s must have ≥1 in / 0 out", ErrInvalidDefinition, id)
+			}
+			if n.ErrorCode == "" {
+				return fmt.Errorf("%w: errorEndEvent %s missing error code", ErrInvalidDefinition, id)
 			}
 		case NodeExclusiveGateway:
 			if len(out) < 2 {
@@ -156,7 +170,8 @@ func checkReachability(def *Definition) error {
 			if start == "" {
 				start = id
 			}
-		case NodeEndEvent:
+		case NodeEndEvent, NodeErrorEndEvent:
+			// 错误结束同样是实例终点。
 			ends[id] = true
 		}
 	}

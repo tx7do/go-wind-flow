@@ -7,6 +7,22 @@
 
 ### Added
 
+- 引擎：**候选组任务**——`ApproverKind.GROUP`（BPMN `candidateGroups` 属性直读）：
+  无显式办理人时创建待认领任务（Assignee 空 + CandidateGroups），组内成员经
+  `IdentityProvider.ResolveGroupsForUser`（SPI 新增必选方法，无组体系返回 nil,nil）
+  鉴权后 `ClaimTask` 认领 / `UnclaimTask` 退认 / `ListCandidateTasks` 组待办查询；
+  `task.claimed` 事件。契约 v0.1.5：Claim/Unclaim/ListCandidateTasks RPC +
+  FlowTask.candidate_groups（已推 BSR）
+- 引擎：**错误事件**——`errorEndEvent`（errorRef 错误码）终结实例并抛错；
+  **错误边界**（挂接 callActivity，errorRef 空串通配）捕获子流程错误沿边界
+  出边接管（补偿分支）；未捕获 fail-closed 父实例 REJECTED。可达性校验将
+  错误终点计入终点集合
+- 引擎：**集合多实例**——`collection` 表达式（字符串数组）覆盖规则解析，
+  串行模式支持 `elementVar`（项写入令牌局部变量，后续节点/条件可读）；
+  需求值器实现 `ValueEvaluator` 可选接口（SimpleEvaluator / exprlang 均已实现）
+- BPMN：**嵌入子流程扁平化导入**（SES 单入单出约束：内部 start/end 不落节点，
+  外部边重定向衔接；边界挂接/事件子流程/MI 子流程显式拒绝并文档化）+
+  **定时器启动事件解析**（ISO8601，运行期调度由宿主 cron + Start 组合驱动）
 - 引擎：**任务超时自动动作**——TimerSpec 新增 `action`：`auto_approve`（到期
   自动通过，系统操作者 `flow:timer` 署名）与 `auto_reject`（到期自动驳回，
   按节点 RejectMode 终结/停留）；缺省仍仅广播 task.due 由监听器自决。

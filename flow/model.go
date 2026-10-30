@@ -16,7 +16,8 @@ const (
 	NodeServiceTask      NodeType = "serviceTask" // v0 与 ScriptTask 同语义（回调由宿主监听器承接）
 	NodeTimerEvent       NodeType = "intermediateTimerEvent" // 中间定时器：令牌阻塞至到期，宿主 cron 驱动续跑
 	NodeMessageEvent     NodeType = "intermediateMessageEvent" // 中间消息：令牌阻塞等外部投递（SendMessage 解锁）
-	NodeBoundaryEvent    NodeType = "boundaryEvent"          // 边界事件：挂接在 userTask 上，到期触发升级/接管分支
+	NodeErrorEndEvent    NodeType = "errorEndEvent"          // 错误结束：终结实例并抛出错误码（父 callActivity 错误边界可捕获）
+	NodeBoundaryEvent    NodeType = "boundaryEvent"          // 边界事件：挂接在 userTask/callActivity 上，到期或错误触发升级/接管分支
 	NodeExclusiveGateway NodeType = "exclusiveGateway"
 	NodeParallelGateway  NodeType = "parallelGateway" // 分叉/汇合同型，按出入度区分（BPMN 惯例）
 	NodeInclusiveGateway NodeType = "inclusiveGateway"
@@ -140,10 +141,13 @@ type Node struct {
 	// ExclusiveGateway 默认出边 ID（无条件命中时兜底，fail-closed：必须存在）。
 	DefaultEdge string `json:"defaultEdge,omitempty"`
 
-	// BoundaryEvent 专用：挂接的目标 userTask；Interrupting 缺省 true
-	//（到期取消原任务并接管流程），false = 非中断（只派生升级分支，原任务照常）。
+	// BoundaryEvent 专用：挂接的目标 userTask/callActivity；Interrupting 缺省
+	// true（到期取消原任务并接管流程），false = 非中断（只派生升级分支）。
+	// ErrorCode 非空 = 错误边界（捕获 callActivity 子流程抛出的错误码，
+	// 空串通配）；Timer 非空 = 定时边界。
 	AttachedTo   string `json:"attachedTo,omitempty"`
 	Interrupting *bool  `json:"interrupting,omitempty"`
+	ErrorCode    string `json:"errorCode,omitempty"`
 
 	// MessageEvent 专用：消息名（SendMessage 按实例 + 消息名投递解锁）。
 	Message string `json:"message,omitempty"`
@@ -158,6 +162,13 @@ type ApprovalSpec struct {
 	// Sequential 顺序多实例（BPMN isSequential=true）：办理人列表串行逐个审批
 	//（按解析顺序），全部通过才推进；中途驳回按 RejectMode。串行隐含 ALL 语义。
 	Sequential bool `json:"sequential,omitempty"`
+	// Collection 多实例集合表达式（求值结果须为字符串数组）：
+	//   - 并行多实例：每项一个任务（项即办理人，ElementVar 不生效）；
+	//   - 顺序多实例 + ElementVar：串行逐项，项写入令牌局部变量（非保留键），
+	//     后续节点/条件可读；ElementVar 缺省 "item"。
+	// 设置后覆盖 Approver 规则解析。
+	Collection string `json:"collection,omitempty"`
+	ElementVar string `json:"elementVar,omitempty"`
 }
 
 // Edge 定义图中的顺序流。

@@ -80,14 +80,15 @@ func taskToProto(t *flow.Task) *flowv1.FlowTask {
 		endedAt = timestamppb.New(*t.EndedAt)
 	}
 	return &flowv1.FlowTask{
-		Id:         t.ID,
-		InstanceId: t.InstanceID,
-		TenantId:   t.TenantID,
-		NodeId:     t.NodeID,
-		TokenId:    t.TokenID,
-		Name:       t.Name,
-		Assignee:   t.Assignee,
-		Status:     taskStatusToProto(t.Status),
+		Id:              t.ID,
+		InstanceId:      t.InstanceID,
+		TenantId:        t.TenantID,
+		NodeId:          t.NodeID,
+		TokenId:         t.TokenID,
+		Name:            t.Name,
+		Assignee:        t.Assignee,
+		CandidateGroups: t.CandidateGroups,
+		Status:          taskStatusToProto(t.Status),
 		Outcome:    t.Outcome,
 		Comment:    t.Comment,
 		DueAt:      dueAt,

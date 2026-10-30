@@ -17,6 +17,15 @@ service FlowTaskService {
   // 转办：把待办任务移交他人
   rpc ForwardTask(ForwardTaskRequest) returns (FlowTask) {}
 
+  // 认领候选组任务（组内成员，经 IdentityProvider 鉴权）
+  rpc ClaimTask(ClaimTaskRequest) returns (FlowTask) {}
+
+  // 退认：放回待认领池
+  rpc UnclaimTask(UnclaimTaskRequest) returns (FlowTask) {}
+
+  // 查询用户可认领的组待办
+  rpc ListCandidateTasks(ListCandidateTasksRequest) returns (ListTasksResponse) {}
+
   // 加签：向待办任务所在节点动态追加办理人（会签式，ALL/ANY 语义照常）
   rpc AddSigners(AddSignersRequest) returns (ListTasksResponse) {}
 
@@ -69,6 +78,8 @@ message FlowTask {
   string token_id = 5;
   string name = 6;
   string assignee = 7;
+  // 候选组（待认领任务的组编码集合）
+  repeated string candidate_groups = 14;
   FlowTaskStatus status = 8;
   // 办结动作（APPROVE/REJECT，办结后回填）
   string outcome = 9;
@@ -111,6 +122,24 @@ message GetTaskRequest {
 message ListPendingTasksRequest {
   string tenant_id = 1;
   string assignee = 2;
+  pagination.PagingRequest paging = 3;
+}
+
+message ClaimTaskRequest {
+  string task_id = 1 ;
+  // 认领人（须属于任务候选组）
+  string user_id = 2 ;
+}
+
+message UnclaimTaskRequest {
+  string task_id = 1 ;
+  // 操作者（须为当前认领人）
+  string actor_id = 2 ;
+}
+
+message ListCandidateTasksRequest {
+  string tenant_id = 1;
+  string user_id = 2;
   pagination.PagingRequest paging = 3;
 }
 

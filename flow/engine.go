@@ -711,6 +711,21 @@ func (e *Engine) UnclaimTask(ctx context.Context, taskID, actorID string) error 
 	return nil
 }
 
+// ListInstancesByStatus 按租户与状态列出实例（子流程错误终结等场景的查询口）。
+func (e *Engine) ListInstancesByStatus(ctx context.Context, tenantID string, status InstanceStatus) ([]*Instance, error) {
+	insts, err := e.store.Instances().ListByStatus(ctx, status)
+	if err != nil {
+		return nil, err
+	}
+	var out []*Instance
+	for _, i := range insts {
+		if i.TenantID == tenantID {
+			out = append(out, i)
+		}
+	}
+	return out, nil
+}
+
 // ListCandidateTasks 列出用户可认领的组待办。
 func (e *Engine) ListCandidateTasks(ctx context.Context, tenantID, userID string) ([]*Task, error) {
 	if e.identity == nil {
@@ -948,6 +963,91 @@ func (e *Engine) SendMessage(ctx context.Context, instanceID, messageName string
 	return false, nil
 }
 
+// throwError 抛出错误码：终结本实例（ABORTED，历史记录错误码），
+// 若存在父 callActivity 且其挂接的错误边界匹配该错误码（空码通配），
+// 则父令牌沿边界出边接管；未捕获则父实例按 fail-closed 走 REJECTED。
+func (e *Engine) throwError(ctx context.Context, inst *Instance, tk *Token, code string) error {
+	// 父侧捕获判定。
+	if inst.ParentInstanceID != "" && inst.ParentTokenID != "" {
+		parent, err := e.store.Instances().Get(ctx, inst.ParentInstanceID)
+		if err == nil && parent != nil && parent.Status.Live() {
+			pdef, err := e.definitionOf(ctx, parent)
+			if err == nil {
+				if ptk, err := e.store.Tokens().Get(ctx, inst.ParentTokenID); err == nil && ptk.Status == TokenWaiting {
+					if pNode := pdef.Nodes[ptk.NodeID]; pNode != nil && pNode.Type == NodeCallActivity {
+						for _, be := range pdef.Nodes {
+							if be.Type != NodeBoundaryEvent || be.AttachedTo != pNode.ID || be.ErrorCode == "" {
+								continue
+							}
+							if be.ErrorCode != code && be.ErrorCode != "*" {
+								continue
+							}
+							// 捕获：子实例错误终结（不级联），父令牌沿边界出边接管。
+							if err := e.endInstanceWithError(ctx, inst, code); err != nil {
+								return err
+							}
+							out := pdef.OutEdges(be.ID)
+							if len(out) == 0 {
+								return fmt.Errorf("error boundary %s has no out edge", be.ID)
+							}
+							ptk.Status = TokenRunning
+							ptk.NodeID = out[0].To
+							if err := e.store.Tokens().Update(ctx, ptk); err != nil {
+								return err
+							}
+							return e.runToken(ctx, parent, ptk, pdef)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// 未捕获：本实例错误终结 + 父实例 fail-closed REJECTED。
+	if err := e.endInstanceWithError(ctx, inst, code); err != nil {
+		return err
+	}
+	if inst.ParentInstanceID != "" {
+		return e.resumeParentOnChildEnd(ctx, inst, InstanceAborted)
+	}
+	return nil
+}
+
+// endInstanceWithError 错误终结：取消待办、终结令牌、实例置 ABORTED 并记录
+// 错误码——不向父流程传播（传播由 throwError 决定捕获或 fail-closed）。
+func (e *Engine) endInstanceWithError(ctx context.Context, inst *Instance, code string) error {
+	tasks, _ := e.store.Tasks().ListByInstance(ctx, inst.ID)
+	for _, t := range tasks {
+		if t.Status == TaskPending {
+			now := e.clock.Now()
+			t.Status = TaskCancelled
+			t.EndedAt = &now
+			_ = e.store.Tasks().Update(ctx, t)
+		}
+	}
+	tokens, _ := e.store.Tokens().ListByInstance(ctx, inst.ID)
+	for _, tk := range tokens {
+		if tk.Status != TokenEnded {
+			tk.Status = TokenEnded
+			_ = e.store.Tokens().Update(ctx, tk)
+		}
+	}
+	now := e.clock.Now()
+	inst.Status = InstanceAborted
+	inst.EndedAt = &now
+	if err := e.store.Instances().Update(ctx, inst); err != nil {
+		return err
+	}
+	_ = e.appendHistory(ctx, inst, &Event{
+		Type: EventProcessEnded, Status: InstanceAborted,
+	}, Vars{"errorCode": code})
+	e.fireListeners(ctx, &Event{
+		Type: EventProcessEnded, TenantID: inst.TenantID, InstanceID: inst.ID,
+		Status: InstanceAborted, Vars: inst.Variables.Clone(), At: e.clock.Now(),
+	})
+	return nil
+}
+
 // fireBoundaryTimer 边界定时器触发。返回参与续跑的令牌（非中断型返回 nil——
 // 派生分支另起令牌，边界令牌一次性删除）。
 func (e *Engine) fireBoundaryTimer(ctx context.Context, inst *Instance, tk *Token, def *Definition, node *Node) (*Token, error) {
@@ -1052,6 +1152,18 @@ func (e *Engine) createNextSequentialTask(ctx context.Context, inst *Instance, t
 	}
 	if next == "" {
 		return false, nil
+	}
+
+	// collection + elementVar：串行链上每项写入令牌局部变量（非保留键）。
+	if node.Approval.Collection != "" {
+		ev := node.Approval.ElementVar
+		if ev == "" {
+			ev = "item"
+		}
+		if tk.Locals == nil {
+			tk.Locals = Vars{}
+		}
+		tk.Locals[ev] = next
 	}
 
 	now := e.clock.Now()

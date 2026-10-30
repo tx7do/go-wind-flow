@@ -19,14 +19,17 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	FlowTaskService_CompleteTask_FullMethodName      = "/flow.v1.FlowTaskService/CompleteTask"
-	FlowTaskService_ForwardTask_FullMethodName       = "/flow.v1.FlowTaskService/ForwardTask"
-	FlowTaskService_AddSigners_FullMethodName        = "/flow.v1.FlowTaskService/AddSigners"
-	FlowTaskService_ReturnTo_FullMethodName          = "/flow.v1.FlowTaskService/ReturnTo"
-	FlowTaskService_GetTask_FullMethodName           = "/flow.v1.FlowTaskService/GetTask"
-	FlowTaskService_ListPendingTasks_FullMethodName  = "/flow.v1.FlowTaskService/ListPendingTasks"
-	FlowTaskService_ListInstanceTasks_FullMethodName = "/flow.v1.FlowTaskService/ListInstanceTasks"
-	FlowTaskService_CheckDueTasks_FullMethodName     = "/flow.v1.FlowTaskService/CheckDueTasks"
+	FlowTaskService_CompleteTask_FullMethodName       = "/flow.v1.FlowTaskService/CompleteTask"
+	FlowTaskService_ForwardTask_FullMethodName        = "/flow.v1.FlowTaskService/ForwardTask"
+	FlowTaskService_ClaimTask_FullMethodName          = "/flow.v1.FlowTaskService/ClaimTask"
+	FlowTaskService_UnclaimTask_FullMethodName        = "/flow.v1.FlowTaskService/UnclaimTask"
+	FlowTaskService_ListCandidateTasks_FullMethodName = "/flow.v1.FlowTaskService/ListCandidateTasks"
+	FlowTaskService_AddSigners_FullMethodName         = "/flow.v1.FlowTaskService/AddSigners"
+	FlowTaskService_ReturnTo_FullMethodName           = "/flow.v1.FlowTaskService/ReturnTo"
+	FlowTaskService_GetTask_FullMethodName            = "/flow.v1.FlowTaskService/GetTask"
+	FlowTaskService_ListPendingTasks_FullMethodName   = "/flow.v1.FlowTaskService/ListPendingTasks"
+	FlowTaskService_ListInstanceTasks_FullMethodName  = "/flow.v1.FlowTaskService/ListInstanceTasks"
+	FlowTaskService_CheckDueTasks_FullMethodName      = "/flow.v1.FlowTaskService/CheckDueTasks"
 )
 
 // FlowTaskServiceClient is the client API for FlowTaskService service.
@@ -39,6 +42,12 @@ type FlowTaskServiceClient interface {
 	CompleteTask(ctx context.Context, in *CompleteTaskRequest, opts ...grpc.CallOption) (*CompleteTaskResponse, error)
 	// 转办：把待办任务移交他人
 	ForwardTask(ctx context.Context, in *ForwardTaskRequest, opts ...grpc.CallOption) (*FlowTask, error)
+	// 认领候选组任务（组内成员，经 IdentityProvider 鉴权）
+	ClaimTask(ctx context.Context, in *ClaimTaskRequest, opts ...grpc.CallOption) (*FlowTask, error)
+	// 退认：放回待认领池
+	UnclaimTask(ctx context.Context, in *UnclaimTaskRequest, opts ...grpc.CallOption) (*FlowTask, error)
+	// 查询用户可认领的组待办
+	ListCandidateTasks(ctx context.Context, in *ListCandidateTasksRequest, opts ...grpc.CallOption) (*ListTasksResponse, error)
 	// 加签：向待办任务所在节点动态追加办理人（会签式，ALL/ANY 语义照常）
 	AddSigners(ctx context.Context, in *AddSignersRequest, opts ...grpc.CallOption) (*ListTasksResponse, error)
 	// 退回指定节点：实例退回到更早的 userTask 重走（待办取消、历史保留）
@@ -75,6 +84,36 @@ func (c *flowTaskServiceClient) ForwardTask(ctx context.Context, in *ForwardTask
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(FlowTask)
 	err := c.cc.Invoke(ctx, FlowTaskService_ForwardTask_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *flowTaskServiceClient) ClaimTask(ctx context.Context, in *ClaimTaskRequest, opts ...grpc.CallOption) (*FlowTask, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(FlowTask)
+	err := c.cc.Invoke(ctx, FlowTaskService_ClaimTask_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *flowTaskServiceClient) UnclaimTask(ctx context.Context, in *UnclaimTaskRequest, opts ...grpc.CallOption) (*FlowTask, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(FlowTask)
+	err := c.cc.Invoke(ctx, FlowTaskService_UnclaimTask_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *flowTaskServiceClient) ListCandidateTasks(ctx context.Context, in *ListCandidateTasksRequest, opts ...grpc.CallOption) (*ListTasksResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListTasksResponse)
+	err := c.cc.Invoke(ctx, FlowTaskService_ListCandidateTasks_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -151,6 +190,12 @@ type FlowTaskServiceServer interface {
 	CompleteTask(context.Context, *CompleteTaskRequest) (*CompleteTaskResponse, error)
 	// 转办：把待办任务移交他人
 	ForwardTask(context.Context, *ForwardTaskRequest) (*FlowTask, error)
+	// 认领候选组任务（组内成员，经 IdentityProvider 鉴权）
+	ClaimTask(context.Context, *ClaimTaskRequest) (*FlowTask, error)
+	// 退认：放回待认领池
+	UnclaimTask(context.Context, *UnclaimTaskRequest) (*FlowTask, error)
+	// 查询用户可认领的组待办
+	ListCandidateTasks(context.Context, *ListCandidateTasksRequest) (*ListTasksResponse, error)
 	// 加签：向待办任务所在节点动态追加办理人（会签式，ALL/ANY 语义照常）
 	AddSigners(context.Context, *AddSignersRequest) (*ListTasksResponse, error)
 	// 退回指定节点：实例退回到更早的 userTask 重走（待办取消、历史保留）
@@ -178,6 +223,15 @@ func (UnimplementedFlowTaskServiceServer) CompleteTask(context.Context, *Complet
 }
 func (UnimplementedFlowTaskServiceServer) ForwardTask(context.Context, *ForwardTaskRequest) (*FlowTask, error) {
 	return nil, status.Error(codes.Unimplemented, "method ForwardTask not implemented")
+}
+func (UnimplementedFlowTaskServiceServer) ClaimTask(context.Context, *ClaimTaskRequest) (*FlowTask, error) {
+	return nil, status.Error(codes.Unimplemented, "method ClaimTask not implemented")
+}
+func (UnimplementedFlowTaskServiceServer) UnclaimTask(context.Context, *UnclaimTaskRequest) (*FlowTask, error) {
+	return nil, status.Error(codes.Unimplemented, "method UnclaimTask not implemented")
+}
+func (UnimplementedFlowTaskServiceServer) ListCandidateTasks(context.Context, *ListCandidateTasksRequest) (*ListTasksResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListCandidateTasks not implemented")
 }
 func (UnimplementedFlowTaskServiceServer) AddSigners(context.Context, *AddSignersRequest) (*ListTasksResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method AddSigners not implemented")
@@ -250,6 +304,60 @@ func _FlowTaskService_ForwardTask_Handler(srv interface{}, ctx context.Context, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(FlowTaskServiceServer).ForwardTask(ctx, req.(*ForwardTaskRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FlowTaskService_ClaimTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClaimTaskRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FlowTaskServiceServer).ClaimTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FlowTaskService_ClaimTask_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FlowTaskServiceServer).ClaimTask(ctx, req.(*ClaimTaskRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FlowTaskService_UnclaimTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnclaimTaskRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FlowTaskServiceServer).UnclaimTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FlowTaskService_UnclaimTask_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FlowTaskServiceServer).UnclaimTask(ctx, req.(*UnclaimTaskRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FlowTaskService_ListCandidateTasks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListCandidateTasksRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FlowTaskServiceServer).ListCandidateTasks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FlowTaskService_ListCandidateTasks_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FlowTaskServiceServer).ListCandidateTasks(ctx, req.(*ListCandidateTasksRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -376,6 +484,18 @@ var FlowTaskService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ForwardTask",
 			Handler:    _FlowTaskService_ForwardTask_Handler,
+		},
+		{
+			MethodName: "ClaimTask",
+			Handler:    _FlowTaskService_ClaimTask_Handler,
+		},
+		{
+			MethodName: "UnclaimTask",
+			Handler:    _FlowTaskService_UnclaimTask_Handler,
+		},
+		{
+			MethodName: "ListCandidateTasks",
+			Handler:    _FlowTaskService_ListCandidateTasks_Handler,
 		},
 		{
 			MethodName: "AddSigners",
