@@ -57,8 +57,10 @@
       快照存令牌保留键 flow:miSeq/miDone（不进表达式环境），中途驳回走 RejectMode
 - [x] documentation 透传（双向，XML 转义）+ BPMN DI 坐标透传（导出回填
       bpmndi 图形与原命名空间声明，bpmn-js/Camunda 视觉无损往返）
-- [ ] bpmn-js properties-panel 扩展（flow:assignees 可视化配置）
-- [ ] Camunda Modeler 往返兼容性测试集
+- [x] Camunda Modeler 往返兼容性测试集（带前缀根元素/incoming-outgoing/
+      camunda: 属性/documentation/DI 全量回环）；任务超时自动动作
+      （auto_approve / auto_reject，缺省仅广播）一并落地
+- [ ] bpmn-js properties-panel 扩展（flow:assignees 可视化配置，go-wind-ui 侧）
 
 ## M3 —— 生态与商业化
 
