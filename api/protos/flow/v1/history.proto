@@ -4,19 +4,13 @@ package flow.v1;
 
 option go_package = "github.com/tx7do/go-wind-flow/api/gen/go/flow/v1;flowv1";
 
-import "google/api/annotations.proto";
-import "google/api/field_behavior.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
 // 流转历史服务：实例全链路审计（append-only）。
 service FlowHistoryService {
   // 查询实例历史（按时间升序）
-  rpc ListInstanceHistory(ListInstanceHistoryRequest) returns (ListInstanceHistoryResponse) {
-    option (google.api.http) = {
-      get: "/flow/v1/instances/{instance_id}/history"
-    };
-  }
+  rpc ListInstanceHistory(ListInstanceHistoryRequest) returns (ListInstanceHistoryResponse) {}
 }
 
 // 生命周期事件类型。与引擎 EventType 字符串一一对应。
@@ -57,7 +51,7 @@ message FlowHistoryEvent {
 }
 
 message ListInstanceHistoryRequest {
-  string instance_id = 1 [(google.api.field_behavior) = REQUIRED];
+  string instance_id = 1 ;
 }
 
 message ListInstanceHistoryResponse {

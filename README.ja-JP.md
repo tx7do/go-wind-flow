@@ -141,9 +141,10 @@ _ = st.WithTx(ctx, func(ctx context.Context) error {
 
 ### Protobuf サービス契約
 
-gRPC / REST で統合する場合（サービスの埋め込み or 独立フローセンター）は `api`
+gRPC で統合する場合（サービスの埋め込み or 独立フローセンター）は `api`
 サブモジュールを利用します——FlowDefinition / FlowInstance / FlowTask / FlowHistory
-の 4 サービス、kratos HTTP ルートはアノテーションから生成、ページングは
+の 4 サービス、**HTTP アノテーションなしの純 gRPC 契約**（ファミリーの慣例：
+HTTP ルートは各ホストの BFF レイヤーで定義）、ページングは
 go-wind ファミリーと共通（go-crud `PagingRequest`）：
 
 ```bash

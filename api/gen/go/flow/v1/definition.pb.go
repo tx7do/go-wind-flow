@@ -8,7 +8,6 @@ package flowv1
 
 import (
 	v1 "github.com/tx7do/go-crud/api/gen/go/pagination/v1"
-	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -494,25 +493,25 @@ var File_flow_v1_definition_proto protoreflect.FileDescriptor
 
 const file_flow_v1_definition_proto_rawDesc = "" +
 	"\n" +
-	"\x18flow/v1/definition.proto\x12\aflow.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1epagination/v1/pagination.proto\"\xde\x01\n" +
-	"\x0eFlowDefinition\x12\x16\n" +
-	"\x03key\x18\x01 \x01(\tB\x04\xe2A\x01\x02R\x03key\x12\x12\n" +
+	"\x18flow/v1/definition.proto\x12\aflow.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1epagination/v1/pagination.proto\"\xd8\x01\n" +
+	"\x0eFlowDefinition\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
 	"\aversion\x18\x03 \x01(\x05R\aversion\x12\x1b\n" +
 	"\ttenant_id\x18\x04 \x01(\tR\btenantId\x12\x16\n" +
 	"\x06format\x18\x05 \x01(\tR\x06format\x12\x16\n" +
 	"\x06source\x18\x06 \x01(\tR\x06source\x129\n" +
 	"\n" +
-	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\x9a\x01\n" +
-	"\x17DeployDefinitionRequest\x12!\n" +
-	"\ttenant_id\x18\x01 \x01(\tB\x04\xe2A\x01\x02R\btenantId\x12\x16\n" +
-	"\x03key\x18\x02 \x01(\tB\x04\xe2A\x01\x02R\x03key\x12\x12\n" +
+	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\x88\x01\n" +
+	"\x17DeployDefinitionRequest\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x10\n" +
+	"\x03key\x18\x02 \x01(\tR\x03key\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12\x16\n" +
-	"\x06format\x18\x04 \x01(\tR\x06format\x12\x18\n" +
-	"\x04data\x18\x05 \x01(\fB\x04\xe2A\x01\x02R\x04data\"k\n" +
-	"\x14GetDefinitionRequest\x12!\n" +
-	"\ttenant_id\x18\x01 \x01(\tB\x04\xe2A\x01\x02R\btenantId\x12\x16\n" +
-	"\x03key\x18\x02 \x01(\tB\x04\xe2A\x01\x02R\x03key\x12\x18\n" +
+	"\x06format\x18\x04 \x01(\tR\x06format\x12\x12\n" +
+	"\x04data\x18\x05 \x01(\fR\x04data\"_\n" +
+	"\x14GetDefinitionRequest\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x10\n" +
+	"\x03key\x18\x02 \x01(\tR\x03key\x12\x18\n" +
 	"\aversion\x18\x03 \x01(\x05R\aversion\"h\n" +
 	"\x16ListDefinitionsRequest\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x121\n" +
@@ -527,12 +526,12 @@ const file_flow_v1_definition_proto_rawDesc = "" +
 	"\x06format\x18\x04 \x01(\tR\x06format\"F\n" +
 	"\x18ExportDefinitionResponse\x12\x12\n" +
 	"\x04data\x18\x01 \x01(\fR\x04data\x12\x16\n" +
-	"\x06format\x18\x02 \x01(\tR\x06format2\xed\x03\n" +
-	"\x15FlowDefinitionService\x12n\n" +
-	"\x10DeployDefinition\x12 .flow.v1.DeployDefinitionRequest\x1a\x17.flow.v1.FlowDefinition\"\x1f\x82\xd3\xe4\x93\x02\x19:\x01*\"\x14/flow/v1/definitions\x12k\n" +
-	"\rGetDefinition\x12\x1d.flow.v1.GetDefinitionRequest\x1a\x17.flow.v1.FlowDefinition\"\"\x82\xd3\xe4\x93\x02\x1c\x12\x1a/flow/v1/definitions/{key}\x12r\n" +
-	"\x0fListDefinitions\x12\x1f.flow.v1.ListDefinitionsRequest\x1a .flow.v1.ListDefinitionsResponse\"\x1c\x82\xd3\xe4\x93\x02\x16\x12\x14/flow/v1/definitions\x12\x82\x01\n" +
-	"\x10ExportDefinition\x12 .flow.v1.ExportDefinitionRequest\x1a!.flow.v1.ExportDefinitionResponse\")\x82\xd3\xe4\x93\x02#\x12!/flow/v1/definitions/{key}/exportB9Z7github.com/tx7do/go-wind-flow/api/gen/go/flow/v1;flowv1b\x06proto3"
+	"\x06format\x18\x02 \x01(\tR\x06format2\xe6\x02\n" +
+	"\x15FlowDefinitionService\x12O\n" +
+	"\x10DeployDefinition\x12 .flow.v1.DeployDefinitionRequest\x1a\x17.flow.v1.FlowDefinition\"\x00\x12I\n" +
+	"\rGetDefinition\x12\x1d.flow.v1.GetDefinitionRequest\x1a\x17.flow.v1.FlowDefinition\"\x00\x12V\n" +
+	"\x0fListDefinitions\x12\x1f.flow.v1.ListDefinitionsRequest\x1a .flow.v1.ListDefinitionsResponse\"\x00\x12Y\n" +
+	"\x10ExportDefinition\x12 .flow.v1.ExportDefinitionRequest\x1a!.flow.v1.ExportDefinitionResponse\"\x00B9Z7github.com/tx7do/go-wind-flow/api/gen/go/flow/v1;flowv1b\x06proto3"
 
 var (
 	file_flow_v1_definition_proto_rawDescOnce sync.Once

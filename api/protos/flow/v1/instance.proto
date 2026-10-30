@@ -4,8 +4,6 @@ package flow.v1;
 
 option go_package = "github.com/tx7do/go-wind-flow/api/gen/go/flow/v1;flowv1";
 
-import "google/api/annotations.proto";
-import "google/api/field_behavior.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "pagination/v1/pagination.proto";
@@ -14,42 +12,19 @@ import "pagination/v1/pagination.proto";
 // 实例下的任务/历史查询分别在 FlowTaskService / FlowHistoryService。
 service FlowInstanceService {
   // 启动流程实例（同步推进到首个阻塞点；返回阻塞处新建的用户任务 ID）
-  rpc StartInstance(StartInstanceRequest) returns (StartInstanceResponse) {
-    option (google.api.http) = {
-      post: "/flow/v1/instances"
-      body: "*"
-    };
-  }
+  rpc StartInstance(StartInstanceRequest) returns (StartInstanceResponse) {}
 
   // 查询实例
-  rpc GetInstance(GetInstanceRequest) returns (FlowInstance) {
-    option (google.api.http) = {
-      get: "/flow/v1/instances/{id}"
-    };
-  }
+  rpc GetInstance(GetInstanceRequest) returns (FlowInstance) {}
 
   // 查询实例列表（审批管理视角）
-  rpc ListInstances(ListInstancesRequest) returns (ListInstancesResponse) {
-    option (google.api.http) = {
-      get: "/flow/v1/instances"
-    };
-  }
+  rpc ListInstances(ListInstancesRequest) returns (ListInstancesResponse) {}
 
   // 发起人撤回（仅运行中实例）
-  rpc WithdrawInstance(WithdrawInstanceRequest) returns (FlowInstance) {
-    option (google.api.http) = {
-      post: "/flow/v1/instances/{id}/withdraw"
-      body: "*"
-    };
-  }
+  rpc WithdrawInstance(WithdrawInstanceRequest) returns (FlowInstance) {}
 
   // 管理员强制终止（不向父流程传播）
-  rpc AbortInstance(AbortInstanceRequest) returns (FlowInstance) {
-    option (google.api.http) = {
-      post: "/flow/v1/instances/{id}/abort"
-      body: "*"
-    };
-  }
+  rpc AbortInstance(AbortInstanceRequest) returns (FlowInstance) {}
 }
 
 // 实例状态。
@@ -88,8 +63,8 @@ message FlowInstance {
 }
 
 message StartInstanceRequest {
-  string tenant_id = 1 [(google.api.field_behavior) = REQUIRED];
-  string key = 2 [(google.api.field_behavior) = REQUIRED];
+  string tenant_id = 1 ;
+  string key = 2 ;
   // 0 = 最新版本
   int32 version = 3;
   string business_key = 4;
@@ -105,7 +80,7 @@ message StartInstanceResponse {
 }
 
 message GetInstanceRequest {
-  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  string id = 1 ;
 }
 
 message ListInstancesRequest {
@@ -123,12 +98,12 @@ message ListInstancesResponse {
 }
 
 message WithdrawInstanceRequest {
-  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  string id = 1 ;
   // 操作者（必须是发起人）
-  string actor_id = 2 [(google.api.field_behavior) = REQUIRED];
+  string actor_id = 2 ;
 }
 
 message AbortInstanceRequest {
-  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  string id = 1 ;
   string actor_id = 2;
 }

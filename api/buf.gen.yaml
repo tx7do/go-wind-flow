@@ -1,4 +1,5 @@
-# go-wind-flow API 生成配置（对齐 go-wind 家族 buf 惯例）。
+# go-wind-flow API 生成配置。
+# 域契约保持纯 gRPC（HTTP 路由由宿主 BFF 层定义——家族惯例）。
 # 生成：buf generate    （依赖更新：buf dep update）
 version: v2
 
@@ -14,9 +15,3 @@ plugins:
   - local: protoc-gen-go-grpc
     out: gen/go
     opt: paths=source_relative
-
-  # kratos REST 服务（google.api.http 注解 → HTTP 路由）
-  - local: protoc-gen-go-http
-    out: gen/go
-    opt:
-      - paths=source_relative

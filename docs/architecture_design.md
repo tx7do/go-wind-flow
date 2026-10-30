@@ -120,8 +120,9 @@ store/           存储 SPI 的实现（memory 随主模块，生产实现为独
   ent/           ent 实现（WithTx 事务；生成代码已入库，schema 在 ent/schema/）
   gorm/          GORM 实现（MySQL/PostgreSQL/SQLite 等方言通用）
 api/             Protobuf 服务契约（独立子模块）
-  protos/flow/v1/  definition/instance/task/history 四服务 + kratos HTTP 注解
-  gen/go/flow/v1/  生成码入库（go / gRPC / kratos-http 三件套；make proto 重新生成）
+  protos/flow/v1/  definition/instance/task/history 四服务（纯 gRPC，无 HTTP 注解——
+                   HTTP 路由由各宿主 BFF 层定义，家族惯例）
+  gen/go/flow/v1/  生成码入库（go / gRPC 两件套；make proto 重新生成）
 format/bpmn/     BPMN 2.0 XML 双向转换
 format/windjson/ OA/IM node_config 兼容
 contrib/exprlang/  expr-lang 求值器（独立子模块）

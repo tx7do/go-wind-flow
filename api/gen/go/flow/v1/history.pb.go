@@ -7,7 +7,6 @@
 package flowv1
 
 import (
-	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	structpb "google.golang.org/protobuf/types/known/structpb"
@@ -299,7 +298,7 @@ var File_flow_v1_history_proto protoreflect.FileDescriptor
 
 const file_flow_v1_history_proto_rawDesc = "" +
 	"\n" +
-	"\x15flow/v1/history.proto\x12\aflow.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xaa\x02\n" +
+	"\x15flow/v1/history.proto\x12\aflow.v1\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xaa\x02\n" +
 	"\x10FlowHistoryEvent\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1f\n" +
 	"\vinstance_id\x18\x02 \x01(\tR\n" +
@@ -310,9 +309,9 @@ const file_flow_v1_history_proto_rawDesc = "" +
 	"\bactor_id\x18\x06 \x01(\tR\aactorId\x121\n" +
 	"\apayload\x18\a \x01(\v2\x17.google.protobuf.StructR\apayload\x129\n" +
 	"\n" +
-	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"C\n" +
-	"\x1aListInstanceHistoryRequest\x12%\n" +
-	"\vinstance_id\x18\x01 \x01(\tB\x04\xe2A\x01\x02R\n" +
+	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"=\n" +
+	"\x1aListInstanceHistoryRequest\x12\x1f\n" +
+	"\vinstance_id\x18\x01 \x01(\tR\n" +
 	"instanceId\"N\n" +
 	"\x1bListInstanceHistoryResponse\x12/\n" +
 	"\x05items\x18\x01 \x03(\v2\x19.flow.v1.FlowHistoryEventR\x05items*\xec\x02\n" +
@@ -326,9 +325,9 @@ const file_flow_v1_history_proto_rawDesc = "" +
 	"\x1eFLOW_EVENT_TYPE_TASK_COMPLETED\x10\x06\x12\"\n" +
 	"\x1eFLOW_EVENT_TYPE_TASK_FORWARDED\x10\a\x12\x1c\n" +
 	"\x18FLOW_EVENT_TYPE_TASK_DUE\x10\b\x12$\n" +
-	" FLOW_EVENT_TYPE_VARIABLE_CHANGED\x10\t2\xa9\x01\n" +
-	"\x12FlowHistoryService\x12\x92\x01\n" +
-	"\x13ListInstanceHistory\x12#.flow.v1.ListInstanceHistoryRequest\x1a$.flow.v1.ListInstanceHistoryResponse\"0\x82\xd3\xe4\x93\x02*\x12(/flow/v1/instances/{instance_id}/historyB9Z7github.com/tx7do/go-wind-flow/api/gen/go/flow/v1;flowv1b\x06proto3"
+	" FLOW_EVENT_TYPE_VARIABLE_CHANGED\x10\t2x\n" +
+	"\x12FlowHistoryService\x12b\n" +
+	"\x13ListInstanceHistory\x12#.flow.v1.ListInstanceHistoryRequest\x1a$.flow.v1.ListInstanceHistoryResponse\"\x00B9Z7github.com/tx7do/go-wind-flow/api/gen/go/flow/v1;flowv1b\x06proto3"
 
 var (
 	file_flow_v1_history_proto_rawDescOnce sync.Once

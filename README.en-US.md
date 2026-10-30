@@ -150,9 +150,10 @@ _ = st.WithTx(ctx, func(ctx context.Context) error {
 
 ### Protobuf service contract
 
-For gRPC / REST integration (embedding the service or talking to a standalone flow
+For gRPC integration (embedding the service or talking to a standalone flow
 center), pull in the `api` submodule — four services (FlowDefinition / FlowInstance /
-FlowTask / FlowHistory) with kratos HTTP routes generated from annotations, and the
+FlowTask / FlowHistory) as a **pure gRPC contract with no HTTP annotations**
+(family convention: HTTP routes are defined per-host in the BFF layer), and the
 same paging protocol as the GoWind family (go-crud `PagingRequest`):
 
 ```bash

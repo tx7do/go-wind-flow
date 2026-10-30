@@ -21,8 +21,9 @@
       与 `store/gorm`（多方言，MySQL/PostgreSQL/SQLite）——均已内置提供，
       独立子模块，主模块 go.sum 保持零负担
 - [x] Protobuf 契约：`api` 独立子模块——FlowDefinition/FlowInstance/FlowTask/
-      FlowHistory 四服务（gRPC + kratos HTTP 注解），buf 生成码入库，宿主 embed
-      或独立流程中心共用同一契约
+      FlowHistory 四服务（**纯 gRPC，无 HTTP 注解**；HTTP 由宿主 BFF 层定义），
+      buf 生成码入库，proto 发布 BSR（buf.build/go-wind/go-wind-flow），
+      宿主 embed 或独立流程中心共用同一契约
 - [ ] kratos 服务封装（实现 api 契约，proto ↔ 领域结构映射 + WithTx 接线）
 - [ ] 加签（动态增加办理人）、驳回指定节点（ReturnTo）
 - [ ] 变量作用域（实例级 → 节点级局部变量）

@@ -136,9 +136,10 @@ _ = st.WithTx(ctx, func(ctx context.Context) error {
 
 ### Protobuf 服务契约
 
-宿主以 gRPC / REST 集成（embed 服务或对接独立流程中心）时引入 `api` 子模块——
-FlowDefinition / FlowInstance / FlowTask / FlowHistory 四服务，kratos HTTP 路由
-已由注解生成，分页协议与 go-wind 家族一致（go-crud `PagingRequest`）：
+宿主以 gRPC 集成（embed 服务或对接独立流程中心）时引入 `api` 子模块——
+FlowDefinition / FlowInstance / FlowTask / FlowHistory 四服务，**纯 gRPC 契约，
+不含 HTTP 注解**（家族惯例：HTTP 路由由各宿主 BFF 层按前端需要定义），
+分页协议与 go-wind 家族一致（go-crud `PagingRequest`）：
 
 ```bash
 go get github.com/tx7do/go-wind-flow/api

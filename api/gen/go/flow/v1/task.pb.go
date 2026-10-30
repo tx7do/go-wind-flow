@@ -8,7 +8,6 @@ package flowv1
 
 import (
 	v1 "github.com/tx7do/go-crud/api/gen/go/pagination/v1"
-	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	structpb "google.golang.org/protobuf/types/known/structpb"
@@ -718,7 +717,7 @@ var File_flow_v1_task_proto protoreflect.FileDescriptor
 
 const file_flow_v1_task_proto_rawDesc = "" +
 	"\n" +
-	"\x12flow/v1/task.proto\x12\aflow.v1\x1a\x16flow/v1/instance.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1epagination/v1/pagination.proto\"\xe8\x03\n" +
+	"\x12flow/v1/task.proto\x12\aflow.v1\x1a\x16flow/v1/instance.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1epagination/v1/pagination.proto\"\xe8\x03\n" +
 	"\bFlowTask\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1f\n" +
 	"\vinstance_id\x18\x02 \x01(\tR\n" +
@@ -737,28 +736,28 @@ const file_flow_v1_task_proto_rawDesc = "" +
 	"created_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12:\n" +
 	"\bended_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampH\x01R\aendedAt\x88\x01\x01B\t\n" +
 	"\a_due_atB\v\n" +
-	"\t_ended_at\"\xe0\x01\n" +
-	"\x13CompleteTaskRequest\x12\x1d\n" +
-	"\atask_id\x18\x01 \x01(\tB\x04\xe2A\x01\x02R\x06taskId\x12\x1f\n" +
-	"\bactor_id\x18\x02 \x01(\tB\x04\xe2A\x01\x02R\aactorId\x128\n" +
-	"\aoutcome\x18\x03 \x01(\x0e2\x18.flow.v1.FlowTaskOutcomeB\x04\xe2A\x01\x02R\aoutcome\x12\x18\n" +
+	"\t_ended_at\"\xce\x01\n" +
+	"\x13CompleteTaskRequest\x12\x17\n" +
+	"\atask_id\x18\x01 \x01(\tR\x06taskId\x12\x19\n" +
+	"\bactor_id\x18\x02 \x01(\tR\aactorId\x122\n" +
+	"\aoutcome\x18\x03 \x01(\x0e2\x18.flow.v1.FlowTaskOutcomeR\aoutcome\x12\x18\n" +
 	"\acomment\x18\x04 \x01(\tR\acomment\x125\n" +
 	"\tvariables\x18\x05 \x01(\v2\x17.google.protobuf.StructR\tvariables\"I\n" +
 	"\x14CompleteTaskResponse\x121\n" +
-	"\binstance\x18\x01 \x01(\v2\x15.flow.v1.FlowInstanceR\binstance\"r\n" +
-	"\x12ForwardTaskRequest\x12\x1d\n" +
-	"\atask_id\x18\x01 \x01(\tB\x04\xe2A\x01\x02R\x06taskId\x12\x19\n" +
-	"\bactor_id\x18\x02 \x01(\tR\aactorId\x12\"\n" +
+	"\binstance\x18\x01 \x01(\v2\x15.flow.v1.FlowInstanceR\binstance\"f\n" +
+	"\x12ForwardTaskRequest\x12\x17\n" +
+	"\atask_id\x18\x01 \x01(\tR\x06taskId\x12\x19\n" +
+	"\bactor_id\x18\x02 \x01(\tR\aactorId\x12\x1c\n" +
 	"\n" +
-	"to_user_id\x18\x03 \x01(\tB\x04\xe2A\x01\x02R\btoUserId\"&\n" +
-	"\x0eGetTaskRequest\x12\x14\n" +
-	"\x02id\x18\x01 \x01(\tB\x04\xe2A\x01\x02R\x02id\"\x85\x01\n" +
+	"to_user_id\x18\x03 \x01(\tR\btoUserId\" \n" +
+	"\x0eGetTaskRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x85\x01\n" +
 	"\x17ListPendingTasksRequest\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x1a\n" +
 	"\bassignee\x18\x02 \x01(\tR\bassignee\x121\n" +
-	"\x06paging\x18\x03 \x01(\v2\x19.pagination.PagingRequestR\x06paging\"A\n" +
-	"\x18ListInstanceTasksRequest\x12%\n" +
-	"\vinstance_id\x18\x01 \x01(\tB\x04\xe2A\x01\x02R\n" +
+	"\x06paging\x18\x03 \x01(\v2\x19.pagination.PagingRequestR\x06paging\";\n" +
+	"\x18ListInstanceTasksRequest\x12\x1f\n" +
+	"\vinstance_id\x18\x01 \x01(\tR\n" +
 	"instanceId\"V\n" +
 	"\x14CheckDueTasksRequest\x124\n" +
 	"\x05as_of\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\x04asOf\x88\x01\x01B\b\n" +
@@ -776,14 +775,14 @@ const file_flow_v1_task_proto_rawDesc = "" +
 	"\x0fFlowTaskOutcome\x12!\n" +
 	"\x1dFLOW_TASK_OUTCOME_UNSPECIFIED\x10\x00\x12\x1d\n" +
 	"\x19FLOW_TASK_OUTCOME_APPROVE\x10\x01\x12\x1c\n" +
-	"\x18FLOW_TASK_OUTCOME_REJECT\x10\x022\xb4\x05\n" +
-	"\x0fFlowTaskService\x12y\n" +
-	"\fCompleteTask\x12\x1c.flow.v1.CompleteTaskRequest\x1a\x1d.flow.v1.CompleteTaskResponse\",\x82\xd3\xe4\x93\x02&:\x01*\"!/flow/v1/tasks/{task_id}/complete\x12j\n" +
-	"\vForwardTask\x12\x1b.flow.v1.ForwardTaskRequest\x1a\x11.flow.v1.FlowTask\"+\x82\xd3\xe4\x93\x02%:\x01*\" /flow/v1/tasks/{task_id}/forward\x12R\n" +
-	"\aGetTask\x12\x17.flow.v1.GetTaskRequest\x1a\x11.flow.v1.FlowTask\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/flow/v1/tasks/{id}\x12p\n" +
-	"\x10ListPendingTasks\x12 .flow.v1.ListPendingTasksRequest\x1a\x1a.flow.v1.ListTasksResponse\"\x1e\x82\xd3\xe4\x93\x02\x18\x12\x16/flow/v1/tasks/pending\x12\x82\x01\n" +
-	"\x11ListInstanceTasks\x12!.flow.v1.ListInstanceTasksRequest\x1a\x1a.flow.v1.ListTasksResponse\".\x82\xd3\xe4\x93\x02(\x12&/flow/v1/instances/{instance_id}/tasks\x12o\n" +
-	"\rCheckDueTasks\x12\x1d.flow.v1.CheckDueTasksRequest\x1a\x1a.flow.v1.ListTasksResponse\"#\x82\xd3\xe4\x93\x02\x1d:\x01*\"\x18/flow/v1/tasks/check-dueB9Z7github.com/tx7do/go-wind-flow/api/gen/go/flow/v1;flowv1b\x06proto3"
+	"\x18FLOW_TASK_OUTCOME_REJECT\x10\x022\xd2\x03\n" +
+	"\x0fFlowTaskService\x12M\n" +
+	"\fCompleteTask\x12\x1c.flow.v1.CompleteTaskRequest\x1a\x1d.flow.v1.CompleteTaskResponse\"\x00\x12?\n" +
+	"\vForwardTask\x12\x1b.flow.v1.ForwardTaskRequest\x1a\x11.flow.v1.FlowTask\"\x00\x127\n" +
+	"\aGetTask\x12\x17.flow.v1.GetTaskRequest\x1a\x11.flow.v1.FlowTask\"\x00\x12R\n" +
+	"\x10ListPendingTasks\x12 .flow.v1.ListPendingTasksRequest\x1a\x1a.flow.v1.ListTasksResponse\"\x00\x12T\n" +
+	"\x11ListInstanceTasks\x12!.flow.v1.ListInstanceTasksRequest\x1a\x1a.flow.v1.ListTasksResponse\"\x00\x12L\n" +
+	"\rCheckDueTasks\x12\x1d.flow.v1.CheckDueTasksRequest\x1a\x1a.flow.v1.ListTasksResponse\"\x00B9Z7github.com/tx7do/go-wind-flow/api/gen/go/flow/v1;flowv1b\x06proto3"
 
 var (
 	file_flow_v1_task_proto_rawDescOnce sync.Once

@@ -8,7 +8,6 @@ package flowv1
 
 import (
 	v1 "github.com/tx7do/go-crud/api/gen/go/pagination/v1"
-	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	structpb "google.golang.org/protobuf/types/known/structpb"
@@ -661,7 +660,7 @@ var File_flow_v1_instance_proto protoreflect.FileDescriptor
 
 const file_flow_v1_instance_proto_rawDesc = "" +
 	"\n" +
-	"\x16flow/v1/instance.proto\x12\aflow.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1epagination/v1/pagination.proto\"\xbe\x04\n" +
+	"\x16flow/v1/instance.proto\x12\aflow.v1\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1epagination/v1/pagination.proto\"\xbe\x04\n" +
 	"\fFlowInstance\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\ttenant_id\x18\x02 \x01(\tR\btenantId\x12%\n" +
@@ -679,10 +678,10 @@ const file_flow_v1_instance_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12:\n" +
 	"\bended_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampH\x00R\aendedAt\x88\x01\x01B\v\n" +
-	"\t_ended_at\"\x89\x02\n" +
-	"\x14StartInstanceRequest\x12!\n" +
-	"\ttenant_id\x18\x01 \x01(\tB\x04\xe2A\x01\x02R\btenantId\x12\x16\n" +
-	"\x03key\x18\x02 \x01(\tB\x04\xe2A\x01\x02R\x03key\x12\x18\n" +
+	"\t_ended_at\"\xfd\x01\n" +
+	"\x14StartInstanceRequest\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x10\n" +
+	"\x03key\x18\x02 \x01(\tR\x03key\x12\x18\n" +
 	"\aversion\x18\x03 \x01(\x05R\aversion\x12!\n" +
 	"\fbusiness_key\x18\x04 \x01(\tR\vbusinessKey\x12#\n" +
 	"\rbusiness_type\x18\x05 \x01(\tR\fbusinessType\x12\x1d\n" +
@@ -691,9 +690,9 @@ const file_flow_v1_instance_proto_rawDesc = "" +
 	"\tvariables\x18\a \x01(\v2\x17.google.protobuf.StructR\tvariables\"e\n" +
 	"\x15StartInstanceResponse\x121\n" +
 	"\binstance\x18\x01 \x01(\v2\x15.flow.v1.FlowInstanceR\binstance\x12\x19\n" +
-	"\btask_ids\x18\x02 \x03(\tR\ataskIds\"*\n" +
-	"\x12GetInstanceRequest\x12\x14\n" +
-	"\x02id\x18\x01 \x01(\tB\x04\xe2A\x01\x02R\x02id\"\xf5\x01\n" +
+	"\btask_ids\x18\x02 \x03(\tR\ataskIds\"$\n" +
+	"\x12GetInstanceRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\xf5\x01\n" +
 	"\x14ListInstancesRequest\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x128\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x1b.flow.v1.FlowInstanceStatusH\x00R\x06status\x88\x01\x01\x12%\n" +
@@ -703,12 +702,12 @@ const file_flow_v1_instance_proto_rawDesc = "" +
 	"\a_status\"Z\n" +
 	"\x15ListInstancesResponse\x12+\n" +
 	"\x05items\x18\x01 \x03(\v2\x15.flow.v1.FlowInstanceR\x05items\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x03R\x05total\"P\n" +
-	"\x17WithdrawInstanceRequest\x12\x14\n" +
-	"\x02id\x18\x01 \x01(\tB\x04\xe2A\x01\x02R\x02id\x12\x1f\n" +
-	"\bactor_id\x18\x02 \x01(\tB\x04\xe2A\x01\x02R\aactorId\"G\n" +
-	"\x14AbortInstanceRequest\x12\x14\n" +
-	"\x02id\x18\x01 \x01(\tB\x04\xe2A\x01\x02R\x02id\x12\x19\n" +
+	"\x05total\x18\x02 \x01(\x03R\x05total\"D\n" +
+	"\x17WithdrawInstanceRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
+	"\bactor_id\x18\x02 \x01(\tR\aactorId\"A\n" +
+	"\x14AbortInstanceRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
 	"\bactor_id\x18\x02 \x01(\tR\aactorId*\xe8\x01\n" +
 	"\x12FlowInstanceStatus\x12$\n" +
 	" FLOW_INSTANCE_STATUS_UNSPECIFIED\x10\x00\x12 \n" +
@@ -716,13 +715,13 @@ const file_flow_v1_instance_proto_rawDesc = "" +
 	"\x1dFLOW_INSTANCE_STATUS_APPROVED\x10\x02\x12!\n" +
 	"\x1dFLOW_INSTANCE_STATUS_REJECTED\x10\x03\x12\"\n" +
 	"\x1eFLOW_INSTANCE_STATUS_WITHDRAWN\x10\x04\x12 \n" +
-	"\x1cFLOW_INSTANCE_STATUS_ABORTED\x10\x052\xbf\x04\n" +
-	"\x13FlowInstanceService\x12m\n" +
-	"\rStartInstance\x12\x1d.flow.v1.StartInstanceRequest\x1a\x1e.flow.v1.StartInstanceResponse\"\x1d\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/flow/v1/instances\x12b\n" +
-	"\vGetInstance\x12\x1b.flow.v1.GetInstanceRequest\x1a\x15.flow.v1.FlowInstance\"\x1f\x82\xd3\xe4\x93\x02\x19\x12\x17/flow/v1/instances/{id}\x12j\n" +
-	"\rListInstances\x12\x1d.flow.v1.ListInstancesRequest\x1a\x1e.flow.v1.ListInstancesResponse\"\x1a\x82\xd3\xe4\x93\x02\x14\x12\x12/flow/v1/instances\x12x\n" +
-	"\x10WithdrawInstance\x12 .flow.v1.WithdrawInstanceRequest\x1a\x15.flow.v1.FlowInstance\"+\x82\xd3\xe4\x93\x02%:\x01*\" /flow/v1/instances/{id}/withdraw\x12o\n" +
-	"\rAbortInstance\x12\x1d.flow.v1.AbortInstanceRequest\x1a\x15.flow.v1.FlowInstance\"(\x82\xd3\xe4\x93\x02\":\x01*\"\x1d/flow/v1/instances/{id}/abortB9Z7github.com/tx7do/go-wind-flow/api/gen/go/flow/v1;flowv1b\x06proto3"
+	"\x1cFLOW_INSTANCE_STATUS_ABORTED\x10\x052\x96\x03\n" +
+	"\x13FlowInstanceService\x12P\n" +
+	"\rStartInstance\x12\x1d.flow.v1.StartInstanceRequest\x1a\x1e.flow.v1.StartInstanceResponse\"\x00\x12C\n" +
+	"\vGetInstance\x12\x1b.flow.v1.GetInstanceRequest\x1a\x15.flow.v1.FlowInstance\"\x00\x12P\n" +
+	"\rListInstances\x12\x1d.flow.v1.ListInstancesRequest\x1a\x1e.flow.v1.ListInstancesResponse\"\x00\x12M\n" +
+	"\x10WithdrawInstance\x12 .flow.v1.WithdrawInstanceRequest\x1a\x15.flow.v1.FlowInstance\"\x00\x12G\n" +
+	"\rAbortInstance\x12\x1d.flow.v1.AbortInstanceRequest\x1a\x15.flow.v1.FlowInstance\"\x00B9Z7github.com/tx7do/go-wind-flow/api/gen/go/flow/v1;flowv1b\x06proto3"
 
 var (
 	file_flow_v1_instance_proto_rawDescOnce sync.Once
