@@ -7,6 +7,12 @@
 
 ### Added
 
+- 引擎：**顺序多实例**（BPMN `isSequential=true`）——办理人按解析顺序串行
+  逐个审批（同一时刻仅一个待办），全部通过才推进，中途驳回按 RejectMode；
+  序列快照存令牌保留键（`flow:miSeq/miDone`，不进表达式环境）
+- BPMN：**documentation 双向透传**（XML 转义）+ **DI 图形回填**——导出时从
+  源定义回收 `bpmndi:BPMNDiagram` 与 definitions 原命名空间声明，
+  对 bpmn-js / Camunda Modeler 视觉无损往返
 - 引擎：**边界定时事件**（boundaryEvent，挂接 userTask）——中断型（缺省，
   cancelActivity=true）到期取消原任务全部待办并沿边界流出边接管流程；
   非中断型（cancelActivity=false）只派生升级分支（v1 一次性触发），原任务照常；

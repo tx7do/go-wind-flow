@@ -53,8 +53,10 @@
       边界令牌；BPMN 导入导出 attachedToRef/cancelActivity；可达性校验将边界
       事件作为扩散种子
 - [ ] 中间捕获/抛出事件（timer/message/signal）
-- [ ] 顺序多实例（isSequential=true）
-- [ ] documentation 透传、BPMN DI 坐标透传（导出保留图形）
+- [x] 顺序多实例（isSequential=true）：解析序串行逐个审批（隐含 ALL），序列
+      快照存令牌保留键 flow:miSeq/miDone（不进表达式环境），中途驳回走 RejectMode
+- [x] documentation 透传（双向，XML 转义）+ BPMN DI 坐标透传（导出回填
+      bpmndi 图形与原命名空间声明，bpmn-js/Camunda 视觉无损往返）
 - [ ] bpmn-js properties-panel 扩展（flow:assignees 可视化配置）
 - [ ] Camunda Modeler 往返兼容性测试集
 

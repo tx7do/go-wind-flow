@@ -5,6 +5,7 @@
 package bpmn
 
 import (
+	"bytes"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -51,11 +52,11 @@ type processXML struct {
 	Name         string `xml:"name,attr"`
 	IsExecutable string `xml:"isExecutable,attr"`
 
-	StartEvents []eventXML      `xml:"startEvent"`
-	EndEvents   []eventXML      `xml:"endEvent"`
-	UserTasks   []userTaskXML   `xml:"userTask"`
-	ScriptTasks []scriptTaskXML `xml:"scriptTask"`
-	ServiceTasks []scriptTaskXML `xml:"serviceTask"`
+	StartEvents    []eventXML      `xml:"startEvent"`
+	EndEvents      []eventXML      `xml:"endEvent"`
+	UserTasks      []userTaskXML   `xml:"userTask"`
+	ScriptTasks    []scriptTaskXML `xml:"scriptTask"`
+	ServiceTasks   []scriptTaskXML `xml:"serviceTask"`
 	TimerEvents    []catchEventXML `xml:"intermediateCatchEvent"`
 	BoundaryEvents []boundaryXML   `xml:"boundaryEvent"`
 
@@ -71,11 +72,13 @@ type processXML struct {
 type eventXML struct {
 	ID   string `xml:"id,attr"`
 	Name string `xml:"name,attr"`
+	Doc  string `xml:"documentation"`
 }
 
 type userTaskXML struct {
 	ID             string    `xml:"id,attr"`
 	Name           string    `xml:"name,attr"`
+	Doc            string    `xml:"documentation"`
 	Assignee       string    `xml:"assignee,attr"`
 	CandidateUsers string    `xml:"candidateUsers,attr"`
 	Extension      *extXML   `xml:"extensionElements"`
@@ -94,12 +97,13 @@ type multiXML struct {
 type scriptTaskXML struct {
 	ID           string `xml:"id,attr"`
 	Name         string `xml:"name,attr"`
+	Doc          string `xml:"documentation"`
 	ScriptFormat string `xml:"scriptFormat,attr"`
 	// Scope go-wind-flow 扩展："" / instance / local。
 	// 前缀声明与否会改变 Go xml 的属性名解析（Local=scope + Space=URL vs
 	// 字面 "flow:scope"），两个字段都接，取先到。
-	ScopeNS string `xml:"https://github.com/tx7do/go-wind-flow scope,attr"`
-	Scope   string `xml:"flow:scope,attr"`
+	ScopeNS string         `xml:"https://github.com/tx7do/go-wind-flow scope,attr"`
+	Scope   string         `xml:"flow:scope,attr"`
 	Script  *scriptBodyXML `xml:"script"`
 }
 
@@ -119,6 +123,7 @@ type scriptBodyXML struct {
 type catchEventXML struct {
 	ID    string       `xml:"id,attr"`
 	Name  string       `xml:"name,attr"`
+	Doc   string       `xml:"documentation"`
 	Timer *timerDefXML `xml:"timerEventDefinition"`
 }
 
@@ -130,6 +135,7 @@ type timerDefXML struct {
 type boundaryXML struct {
 	ID             string       `xml:"id,attr"`
 	Name           string       `xml:"name,attr"`
+	Doc            string       `xml:"documentation"`
 	AttachedToRef  string       `xml:"attachedToRef,attr"`
 	CancelActivity *string      `xml:"cancelActivity,attr"` // 缺省 true
 	Timer          *timerDefXML `xml:"timerEventDefinition"`
@@ -138,12 +144,14 @@ type boundaryXML struct {
 type gatewayXML struct {
 	ID      string `xml:"id,attr"`
 	Name    string `xml:"name,attr"`
+	Doc     string `xml:"documentation"`
 	Default string `xml:"default,attr"`
 }
 
 type callXML struct {
 	ID            string `xml:"id,attr"`
 	Name          string `xml:"name,attr"`
+	Doc           string `xml:"documentation"`
 	CalledElement string `xml:"calledElement,attr"`
 }
 
@@ -190,13 +198,14 @@ func Parse(data []byte) (*flow.Definition, error) {
 	}
 
 	for _, s := range p.StartEvents {
-		add(&flow.Node{ID: s.ID, Name: s.Name, Type: flow.NodeStartEvent})
+		add(&flow.Node{ID: s.ID, Name: s.Name, Type: flow.NodeStartEvent, Documentation: s.Doc})
 	}
 	for _, s := range p.EndEvents {
-		add(&flow.Node{ID: s.ID, Name: s.Name, Type: flow.NodeEndEvent})
+		add(&flow.Node{ID: s.ID, Name: s.Name, Type: flow.NodeEndEvent, Documentation: s.Doc})
 	}
 	for _, t := range p.UserTasks {
 		node := &flow.Node{ID: t.ID, Name: t.Name, Type: flow.NodeUserTask}
+		node.Documentation = t.Doc
 		spec := parseExt(t.Extension)
 		rules := spec.Approvers
 		if len(rules) == 0 {
@@ -221,6 +230,7 @@ func Parse(data []byte) (*flow.Definition, error) {
 	}
 	for _, t := range p.ScriptTasks {
 		node := &flow.Node{ID: t.ID, Name: t.Name, Type: flow.NodeScriptTask}
+		node.Documentation = t.Doc
 		if t.Script != nil {
 			node.Script = &flow.ScriptSpec{Lang: t.ScriptFormat, Code: strings.TrimSpace(t.Script.Inner), Scope: t.scopeAttr()}
 		}
@@ -228,6 +238,7 @@ func Parse(data []byte) (*flow.Definition, error) {
 	}
 	for _, t := range p.ServiceTasks {
 		node := &flow.Node{ID: t.ID, Name: t.Name, Type: flow.NodeServiceTask}
+		node.Documentation = t.Doc
 		if t.Script != nil {
 			node.Script = &flow.ScriptSpec{Lang: t.ScriptFormat, Code: strings.TrimSpace(t.Script.Inner), Scope: t.scopeAttr()}
 		}
@@ -235,6 +246,7 @@ func Parse(data []byte) (*flow.Definition, error) {
 	}
 	for _, ev := range p.TimerEvents {
 		node := &flow.Node{ID: ev.ID, Name: ev.Name, Type: flow.NodeTimerEvent}
+		node.Documentation = ev.Doc
 		if ev.Timer == nil || strings.TrimSpace(ev.Timer.Duration) == "" {
 			return nil, fmt.Errorf("%w: intermediateCatchEvent %s missing timerEventDefinition/timeDuration",
 				flow.ErrInvalidDefinition, ev.ID)
@@ -248,6 +260,7 @@ func Parse(data []byte) (*flow.Definition, error) {
 	}
 	for _, be := range p.BoundaryEvents {
 		node := &flow.Node{ID: be.ID, Name: be.Name, Type: flow.NodeBoundaryEvent, AttachedTo: be.AttachedToRef}
+		node.Documentation = be.Doc
 		interrupting := be.CancelActivity == nil || strings.EqualFold(strings.TrimSpace(*be.CancelActivity), "true")
 		node.Interrupting = &interrupting
 		if be.Timer == nil || strings.TrimSpace(be.Timer.Duration) == "" {
@@ -262,19 +275,20 @@ func Parse(data []byte) (*flow.Definition, error) {
 		add(node)
 	}
 	for _, g := range p.ExclusiveGateways {
-		add(&flow.Node{ID: g.ID, Name: g.Name, Type: flow.NodeExclusiveGateway, DefaultEdge: g.Default})
+		add(&flow.Node{ID: g.ID, Name: g.Name, Type: flow.NodeExclusiveGateway, DefaultEdge: g.Default, Documentation: g.Doc})
 	}
 	for _, g := range p.ParallelGateways {
-		add(&flow.Node{ID: g.ID, Name: g.Name, Type: flow.NodeParallelGateway})
+		add(&flow.Node{ID: g.ID, Name: g.Name, Type: flow.NodeParallelGateway, Documentation: g.Doc})
 	}
 	for _, g := range p.InclusiveGateways {
-		add(&flow.Node{ID: g.ID, Name: g.Name, Type: flow.NodeInclusiveGateway})
+		add(&flow.Node{ID: g.ID, Name: g.Name, Type: flow.NodeInclusiveGateway, Documentation: g.Doc})
 	}
 	for _, c := range p.CallActivities {
 		key, version := splitCalledElement(c.CalledElement)
 		add(&flow.Node{
 			ID: c.ID, Name: c.Name, Type: flow.NodeCallActivity,
 			SubprocessKey: key, SubprocessVersion: version,
+			Documentation: c.Doc,
 		})
 	}
 
@@ -326,6 +340,7 @@ func approvalFrom(spec extSpec, mi *multiXML) flow.ApprovalSpec {
 		a.Strategy = flow.StrategyAll
 	}
 	if mi != nil {
+		a.Sequential = strings.EqualFold(strings.TrimSpace(mi.IsSequential), "true")
 		switch strings.ToUpper(strings.TrimSpace(mi.CompletionCondition)) {
 		case "ANY":
 			a.Strategy = flow.StrategyAny
@@ -371,12 +386,22 @@ func parseDuration(s string) (time.Duration, error) {
 // ============================================================
 
 // Write Definition → BPMN 2.0 XML（支持子集）。可被 bpmn-js / Camunda Modeler 打开。
+// 若 def.Source 为含 DI 图形的 BPMN，导出回填图形与原命名空间声明（视觉无损）。
 func Write(def *flow.Definition) ([]byte, error) {
 	var b strings.Builder
 	b.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n")
-	b.WriteString(`<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"` +
+	open := `<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"` +
 		` xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"` +
-		` xmlns:flow="` + NsFlow + `" targetNamespace="` + NsFlow + `">` + "\n")
+		` xmlns:flow="` + NsFlow + `" targetNamespace="` + NsFlow + `">`
+	defsTag, diBlock := harvestSourceExtras(def.Source)
+	if defsTag != "" {
+		open = defsTag
+		if !strings.Contains(open, "xmlns:xsi") {
+			open = strings.Replace(open, ">",
+				` xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">`, 1)
+		}
+	}
+	b.WriteString(open + "\n")
 	b.WriteString(fmt.Sprintf("  <process id=%q name=%q isExecutable=\"true\">\n", def.Key, def.Name))
 
 	ids := make([]string, 0, len(def.Nodes))
@@ -388,90 +413,107 @@ func Write(def *flow.Definition) ([]byte, error) {
 	// 事件与任务。
 	for _, id := range ids {
 		n := def.Nodes[id]
-		switch n.Type {
-		case flow.NodeStartEvent:
-			fmt.Fprintf(&b, "    <startEvent id=%q name=%q/>\n", n.ID, n.Name)
-		case flow.NodeEndEvent:
-			fmt.Fprintf(&b, "    <endEvent id=%q name=%q/>\n", n.ID, n.Name)
-		case flow.NodeUserTask:
-			b.WriteString("    <userTask id=" + quote(n.ID) + " name=" + quote(n.Name) + ">\n")
-			b.WriteString("      <extensionElements>\n")
-			spec := map[string]any{}
-			if n.Approver != nil {
-				spec["approvers"] = n.Approver.Rules
-			}
-			if n.Approval.Strategy == flow.StrategyAny {
-				spec["strategy"] = "ANY"
-			}
-			if n.Approval.RejectMode == flow.RejectStay {
-				spec["rejectMode"] = "STAY"
-			}
-			if n.Timer != nil {
-				spec["due"] = n.Timer.Duration.Std().String()
-			}
-			payload, _ := json.Marshal(spec)
-			fmt.Fprintf(&b, "        <flow:assignees>%s</flow:assignees>\n", string(payload))
-			b.WriteString("      </extensionElements>\n")
-			b.WriteString("    </userTask>\n")
-		case flow.NodeScriptTask, flow.NodeServiceTask:
-			tag := "scriptTask"
-			if n.Type == flow.NodeServiceTask {
-				tag = "serviceTask"
-			}
-			lang, scope := "", ""
-			if n.Script != nil {
-				lang = n.Script.Lang
-				if n.Script.Scope == "local" {
-					scope = ` flow:scope="local"`
+		render := func() string {
+			var nb strings.Builder
+			b := &nb
+			switch n.Type {
+			case flow.NodeStartEvent:
+				fmt.Fprintf(b, "    <startEvent id=%q name=%q/>\n", n.ID, n.Name)
+			case flow.NodeEndEvent:
+				fmt.Fprintf(b, "    <endEvent id=%q name=%q/>\n", n.ID, n.Name)
+			case flow.NodeUserTask:
+				b.WriteString("    <userTask id=" + quote(n.ID) + " name=" + quote(n.Name) + ">\n")
+				b.WriteString("      <extensionElements>\n")
+				spec := map[string]any{}
+				if n.Approver != nil {
+					spec["approvers"] = n.Approver.Rules
 				}
+				if n.Approval.Strategy == flow.StrategyAny {
+					spec["strategy"] = "ANY"
+				}
+				if n.Approval.RejectMode == flow.RejectStay {
+					spec["rejectMode"] = "STAY"
+				}
+				if n.Timer != nil {
+					spec["due"] = n.Timer.Duration.Std().String()
+				}
+				payload, _ := json.Marshal(spec)
+				fmt.Fprintf(b, "        <flow:assignees>%s</flow:assignees>\n", string(payload))
+				b.WriteString("      </extensionElements>\n")
+				b.WriteString("    </userTask>\n")
+			case flow.NodeScriptTask, flow.NodeServiceTask:
+				tag := "scriptTask"
+				if n.Type == flow.NodeServiceTask {
+					tag = "serviceTask"
+				}
+				lang, scope := "", ""
+				if n.Script != nil {
+					lang = n.Script.Lang
+					if n.Script.Scope == "local" {
+						scope = ` flow:scope="local"`
+					}
+				}
+				fmt.Fprintf(b, "    <%s id=%q name=%q scriptFormat=%q%s>\n", tag, n.ID, n.Name, lang, scope)
+				if n.Script != nil {
+					fmt.Fprintf(b, "      <script><![CDATA[%s]]></script>\n", n.Script.Code)
+				}
+				fmt.Fprintf(b, "    </%s>\n", tag)
+			case flow.NodeExclusiveGateway:
+				if n.DefaultEdge != "" {
+					fmt.Fprintf(b, "    <exclusiveGateway id=%q name=%q default=%q/>\n", n.ID, n.Name, n.DefaultEdge)
+				} else {
+					fmt.Fprintf(b, "    <exclusiveGateway id=%q name=%q/>\n", n.ID, n.Name)
+				}
+			case flow.NodeParallelGateway:
+				fmt.Fprintf(b, "    <parallelGateway id=%q name=%q/>\n", n.ID, n.Name)
+			case flow.NodeInclusiveGateway:
+				fmt.Fprintf(b, "    <inclusiveGateway id=%q name=%q/>\n", n.ID, n.Name)
+			case flow.NodeTimerEvent:
+				dur := ""
+				if n.Timer != nil {
+					dur = WriteISODuration(n.Timer.Duration.Std())
+				}
+				fmt.Fprintf(b, "    <intermediateCatchEvent id=%q name=%q>\n", n.ID, n.Name)
+				fmt.Fprintf(b, "      <timerEventDefinition>\n")
+				fmt.Fprintf(b, "        <timeDuration>%s</timeDuration>\n", dur)
+				fmt.Fprintf(b, "      </timerEventDefinition>\n")
+				fmt.Fprintf(b, "    </intermediateCatchEvent>\n")
+			case flow.NodeBoundaryEvent:
+				dur := ""
+				if n.Timer != nil {
+					dur = WriteISODuration(n.Timer.Duration.Std())
+				}
+				cancel := "true"
+				if !n.IsInterrupting() {
+					cancel = "false"
+				}
+				fmt.Fprintf(b, "    <boundaryEvent id=%q name=%q attachedToRef=%q cancelActivity=%q>\n",
+					n.ID, n.Name, n.AttachedTo, cancel)
+				fmt.Fprintf(b, "      <timerEventDefinition>\n")
+				fmt.Fprintf(b, "        <timeDuration>%s</timeDuration>\n", dur)
+				fmt.Fprintf(b, "      </timerEventDefinition>\n")
+				fmt.Fprintf(b, "    </boundaryEvent>\n")
+			case flow.NodeCallActivity:
+				ref := n.SubprocessKey
+				if n.SubprocessVersion > 0 {
+					ref = fmt.Sprintf("%s:v%d", n.SubprocessKey, n.SubprocessVersion)
+				}
+				fmt.Fprintf(b, "    <callActivity id=%q name=%q calledElement=%q/>\n", n.ID, n.Name, ref)
 			}
-			fmt.Fprintf(&b, "    <%s id=%q name=%q scriptFormat=%q%s>\n", tag, n.ID, n.Name, lang, scope)
-			if n.Script != nil {
-				fmt.Fprintf(&b, "      <script><![CDATA[%s]]></script>\n", n.Script.Code)
-			}
-			fmt.Fprintf(&b, "    </%s>\n", tag)
-		case flow.NodeExclusiveGateway:
-			if n.DefaultEdge != "" {
-				fmt.Fprintf(&b, "    <exclusiveGateway id=%q name=%q default=%q/>\n", n.ID, n.Name, n.DefaultEdge)
-			} else {
-				fmt.Fprintf(&b, "    <exclusiveGateway id=%q name=%q/>\n", n.ID, n.Name)
-			}
-		case flow.NodeParallelGateway:
-			fmt.Fprintf(&b, "    <parallelGateway id=%q name=%q/>\n", n.ID, n.Name)
-		case flow.NodeInclusiveGateway:
-			fmt.Fprintf(&b, "    <inclusiveGateway id=%q name=%q/>\n", n.ID, n.Name)
-		case flow.NodeTimerEvent:
-			dur := ""
-			if n.Timer != nil {
-				dur = WriteISODuration(n.Timer.Duration.Std())
-			}
-			fmt.Fprintf(&b, "    <intermediateCatchEvent id=%q name=%q>\n", n.ID, n.Name)
-			fmt.Fprintf(&b, "      <timerEventDefinition>\n")
-			fmt.Fprintf(&b, "        <timeDuration>%s</timeDuration>\n", dur)
-			fmt.Fprintf(&b, "      </timerEventDefinition>\n")
-			fmt.Fprintf(&b, "    </intermediateCatchEvent>\n")
-		case flow.NodeBoundaryEvent:
-			dur := ""
-			if n.Timer != nil {
-				dur = WriteISODuration(n.Timer.Duration.Std())
-			}
-			cancel := "true"
-			if !n.IsInterrupting() {
-				cancel = "false"
-			}
-			fmt.Fprintf(&b, "    <boundaryEvent id=%q name=%q attachedToRef=%q cancelActivity=%q>\n",
-				n.ID, n.Name, n.AttachedTo, cancel)
-			fmt.Fprintf(&b, "      <timerEventDefinition>\n")
-			fmt.Fprintf(&b, "        <timeDuration>%s</timeDuration>\n", dur)
-			fmt.Fprintf(&b, "      </timerEventDefinition>\n")
-			fmt.Fprintf(&b, "    </boundaryEvent>\n")
-		case flow.NodeCallActivity:
-			ref := n.SubprocessKey
-			if n.SubprocessVersion > 0 {
-				ref = fmt.Sprintf("%s:v%d", n.SubprocessKey, n.SubprocessVersion)
-			}
-			fmt.Fprintf(&b, "    <callActivity id=%q name=%q calledElement=%q/>\n", n.ID, n.Name, ref)
+			return nb.String()
 		}
+		body := render()
+		if n.Documentation != "" {
+			// BPMN 约定 documentation 为首子元素；自闭合元素展开为开闭标签。
+			docEl := "      <documentation>" + escDoc(n.Documentation) + "</documentation>\n"
+			trimmed := strings.TrimRight(body, " \n")
+			if strings.HasSuffix(trimmed, "/>") {
+				body = strings.TrimSuffix(trimmed, "/>") + ">\n" + docEl + "    </" + string(n.Type) + ">\n"
+			} else if i := strings.Index(body, ">\n"); i >= 0 {
+				body = body[:i+2] + docEl + body[i+2:]
+			}
+		}
+		b.WriteString(body)
 	}
 
 	for _, e := range def.Edges {
@@ -485,10 +527,52 @@ func Write(def *flow.Definition) ([]byte, error) {
 		}
 	}
 
-	b.WriteString("  </process>\n</definitions>\n")
+	b.WriteString("  </process>\n")
+	if diBlock != "" {
+		b.WriteString("  " + diBlock + "\n")
+	}
+	b.WriteString("</definitions>\n")
 	return []byte(b.String()), nil
 }
 
 func quote(s string) string {
 	return strconv.Quote(s)
+}
+
+// escDoc XML 文本转义（documentation 内容）。
+func escDoc(s string) string {
+	var bb bytes.Buffer
+	_ = xml.EscapeText(&bb, []byte(s))
+	return bb.String()
+}
+
+var defsTagRe = regexp.MustCompile(`(?is)<definitions[^>]*>`)
+
+// harvestSourceExtras 从原始 BPMN 源中回收图形信息（BPMNDiagram/DI）与
+// definitions 开标签（保留全部命名空间声明），供导出回填——往返对
+// bpmn-js / Camunda Modeler 视觉无损。
+func harvestSourceExtras(source []byte) (defsTag, diBlock string) {
+	if len(source) == 0 {
+		return "", ""
+	}
+	src := string(source)
+	hasDI := strings.Contains(src, "<bpmndi:BPMNDiagram") || strings.Contains(src, "<BPMNDiagram")
+	if !hasDI {
+		return "", ""
+	}
+	if m := defsTagRe.FindString(src); m != "" {
+		defsTag = m
+	}
+	start := strings.Index(src, "<bpmndi:BPMNDiagram")
+	if start < 0 {
+		start = strings.Index(src, "<BPMNDiagram")
+	}
+	end := strings.LastIndex(src, "</definitions>")
+	if start >= 0 && end > start {
+		diBlock = strings.TrimSpace(src[start:end])
+	}
+	if diBlock == "" {
+		defsTag = ""
+	}
+	return defsTag, diBlock
 }

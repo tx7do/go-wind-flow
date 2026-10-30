@@ -317,6 +317,19 @@ func (e *Engine) CompleteTask(ctx context.Context, req CompleteTaskRequest) erro
 		return err
 	}
 
+	// 顺序多实例：通过后派生序列中的下一个任务；序列耗尽才正常推进。
+	if outcome == OutcomeApprove {
+		if node := def.Nodes[task.NodeID]; node != nil && node.Approval.Sequential {
+			created, err := e.createNextSequentialTask(ctx, inst, tk, task, node)
+			if err != nil {
+				return err
+			}
+			if created {
+				return nil // 等待串行中的下一位办理人
+			}
+		}
+	}
+
 	if outcome == OutcomeReject {
 		node := def.Nodes[task.NodeID]
 		if node != nil && node.Approval.RejectMode == RejectStay {
@@ -812,6 +825,51 @@ func (e *Engine) fireBoundaryTimer(ctx context.Context, inst *Instance, tk *Toke
 		return nil, err
 	}
 	return nil, nil
+}
+
+// createNextSequentialTask 顺序多实例：派生序列中下一个未办理的任务。
+// 返回是否创建了新任务（false = 序列耗尽，调用方正常推进令牌）。
+func (e *Engine) createNextSequentialTask(ctx context.Context, inst *Instance, tk *Token, task *Task, node *Node) (bool, error) {
+	if tk.Locals == nil {
+		return false, nil
+	}
+	rawSeq, _ := tk.Locals[miSequenceKey(task.NodeID)].([]any)
+	done, _ := tk.Locals[miDoneKey(task.NodeID)].([]any)
+
+	doneSet := map[string]bool{}
+	for _, v := range done {
+		if s, ok := v.(string); ok {
+			doneSet[s] = true
+		}
+	}
+	// 刚办结的办理人即已服务（done 列表在其任务创建后才追加）。
+	if task.Assignee != "" {
+		doneSet[task.Assignee] = true
+	}
+
+	next := ""
+	for _, v := range rawSeq {
+		s, ok := v.(string)
+		if !ok || doneSet[s] {
+			continue
+		}
+		next = s
+		break
+	}
+	if next == "" {
+		return false, nil
+	}
+
+	now := e.clock.Now()
+	if err := e.createSequentialTask(ctx, inst, tk, node, next, now); err != nil {
+		return false, err
+	}
+	// 已服务集合累积：刚办结的办理人 + 新派生的下一位。
+	tk.Locals[miDoneKey(task.NodeID)] = append(done, task.Assignee, next)
+	if err := e.store.Tokens().Update(ctx, tk); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // cancelBoundaryTimers 清理挂接在某节点上的、尚未触发的边界令牌

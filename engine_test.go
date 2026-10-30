@@ -47,6 +47,7 @@ func newEngine(t *testing.T) *flow.Engine {
 		flow.WithStore(memory.New()),
 		flow.WithIdentity(StaticIdentity{}),
 		flow.WithImporters(bpmn.Importer{}, windjson.Importer{}),
+		flow.WithExporters(bpmn.Exporter{}),
 	)
 }
 

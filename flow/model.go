@@ -139,6 +139,9 @@ type Node struct {
 type ApprovalSpec struct {
 	Strategy   Strategy   `json:"strategy,omitempty"`   // 缺省 = ALL 会签
 	RejectMode RejectMode `json:"rejectMode,omitempty"` // 缺省 = TERMINATE
+	// Sequential 顺序多实例（BPMN isSequential=true）：办理人列表串行逐个审批
+	//（按解析顺序），全部通过才推进；中途驳回按 RejectMode。串行隐含 ALL 语义。
+	Sequential bool `json:"sequential,omitempty"`
 }
 
 // Edge 定义图中的顺序流。

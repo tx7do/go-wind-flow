@@ -3,6 +3,8 @@ package flow
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
 )
 
 // runToken 推进令牌直至阻塞（用户任务/子流程/汇合等待）或实例终结。
@@ -125,11 +127,18 @@ func (e *Engine) finishTokenAtEnd(ctx context.Context, inst *Instance, tk *Token
 	return nil
 }
 
+// reservedKeyPrefix 引擎保留的令牌局部变量键前缀（不进入求值环境）。
+const reservedKeyPrefix = "flow:"
+
 // mergedEnv 读侧变量环境：实例变量为底，令牌局部叠加（同名覆盖）。
+// 保留键（flow:* 引擎内部状态，如顺序多实例序列）不进入环境。
 // 返回副本，求值方无法改动引擎状态。
 func mergedEnv(inst *Instance, tk *Token) Vars {
 	env := inst.Variables.Clone()
 	for k, v := range tk.Locals {
+		if strings.HasPrefix(k, reservedKeyPrefix) {
+			continue
+		}
 		env[k] = v
 	}
 	return env
@@ -149,6 +158,24 @@ func (e *Engine) arriveAtUserTask(ctx context.Context, inst *Instance, tk *Token
 	tk.Status = TokenWaiting
 	if err := e.store.Tokens().Update(ctx, tk); err != nil {
 		return err
+	}
+
+	// 顺序多实例：办理人串行逐个审批——只创建第一个任务，办结后在
+	// CompleteTask 里链式派生下一个（序列快照存令牌保留键）。
+	if node.Approval.Sequential {
+		seq := make([]any, 0, len(assignees))
+		for _, uid := range assignees {
+			seq = append(seq, uid)
+		}
+		if tk.Locals == nil {
+			tk.Locals = Vars{}
+		}
+		tk.Locals[miSequenceKey(node.ID)] = seq
+		tk.Locals[miDoneKey(node.ID)] = []any{}
+		if err := e.store.Tokens().Update(ctx, tk); err != nil {
+			return err
+		}
+		return e.createSequentialTask(ctx, inst, tk, node, assignees[0], now)
 	}
 
 	for _, uid := range assignees {
@@ -201,6 +228,41 @@ func (e *Engine) arriveAtUserTask(ctx context.Context, inst *Instance, tk *Token
 			return err
 		}
 	}
+	return nil
+}
+
+// miSequenceKey / miDoneKey 顺序多实例的令牌保留键。
+func miSequenceKey(nodeID string) string { return reservedKeyPrefix + "miSeq:" + nodeID }
+func miDoneKey(nodeID string) string     { return reservedKeyPrefix + "miDone:" + nodeID }
+
+// createSequentialTask 创建串行序列中的下一个任务（复用并行路径的任务构造）。
+func (e *Engine) createSequentialTask(ctx context.Context, inst *Instance, tk *Token, node *Node, uid string, now time.Time) error {
+	task := &Task{
+		ID:         e.idgen(),
+		InstanceID: inst.ID,
+		TenantID:   inst.TenantID,
+		NodeID:     node.ID,
+		TokenID:    tk.ID,
+		Name:       node.Name,
+		Assignee:   uid,
+		Status:     TaskPending,
+		CreatedAt:  now,
+	}
+	if node.Timer != nil {
+		due := now.Add(node.Timer.Duration.Std())
+		task.DueAt = &due
+	}
+	if err := e.store.Tasks().Save(ctx, task); err != nil {
+		return err
+	}
+	_ = e.appendHistory(ctx, inst, &Event{
+		Type: EventTaskCreated, NodeID: node.ID, TaskID: task.ID,
+	}, Vars{"assignee": uid, "sequential": true})
+	e.fireListeners(ctx, &Event{
+		Type: EventTaskCreated, TenantID: inst.TenantID, InstanceID: inst.ID,
+		TokenID: tk.ID, TaskID: task.ID, NodeID: node.ID,
+		ActorID: uid, Vars: inst.Variables.Clone(), At: now,
+	})
 	return nil
 }
 
