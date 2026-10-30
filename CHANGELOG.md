@@ -41,6 +41,8 @@
 - 性能基线补充：ent + sqlite 真实存储档——完整审批周期（WithTx 事务 +
   五表落库）~1.1ms/次（`store/ent` BenchmarkEntLinearFlow），与内存档
   ~104µs 对照
+- 前端：**垂直审批树组件**（钉钉式业务模式，Vue3/React 双适配器）——designer-json-v1 子集（线性链 + 条件分支）的树形渲染与结构化编辑；子集外节点抛 UnsupportedError 供宿主回退 BPMN 画布；核心互导/操作 8 项 vitest 全过；引擎配套放开汇合排他网关（多入单出）
+- 前端：**主题体系**——亮/暗/跟随系统三态 + 自定义主题色（--gwf-accent 注入，color-mix 派生）；覆盖 bpmn-js 画布与 properties-panel；createDesigner 增 theme/accent 选项与 setTheme/setAccent
 - 前端：**流程设计器 Vue3/React 双前端**（`frontend/` npm 工作区）——`@go-wind/flow-designer-core`（框架无关：bpmn-js 封装 + flow:assignees 审批配置面板 + designer-json-v1 ↔ BPMN 双向转换）/ `@go-wind/flow-designer-vue` / `@go-wind/flow-designer-react`
 - 引擎：**顺序多实例**（BPMN `isSequential=true`）——办理人按解析顺序串行
   逐个审批（同一时刻仅一个待办），全部通过才推进，中途驳回按 RejectMode；

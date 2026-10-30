@@ -61,6 +61,7 @@
       camunda: 属性/documentation/DI 全量回环）；任务超时自动动作
       （auto_approve / auto_reject，缺省仅广播）一并落地
 - [x] bpmn-js properties-panel 扩展 + Vue3/React 双前端适配器（frontend/ npm 工作区，flow:assignees 可视化配置 + designer-json-v1 转换）
+- [x] 垂直审批树组件（钉钉式业务模式，双前端适配器，子集外回退画布）+ 主题体系（亮/暗/跟随系统 + 自定义主题色）+ 汇合排他网关校验放开
 - [x] 候选组任务（candidateGroups）：GROUP 规则 → 待认领任务，Claim/Unclaim/
       组待办查询（IdentityProvider.ResolveGroupsForUser 鉴权）；契约 v0.1.5
 - [x] 错误事件：errorEndEvent + callActivity 错误边界（errorRef 通配），
