@@ -5,10 +5,12 @@
   "workspaces": [
     "core",
     "vue",
-    "react"
+    "react",
+    "demo"
   ],
   "scripts": {
     "build": "npm run build -w @go-wind/flow-designer-core && npm run build -w @go-wind/flow-designer-vue && npm run build -w @go-wind/flow-designer-react",
-    "typecheck": "npm run typecheck -w @go-wind/flow-designer-core && npm run typecheck -w @go-wind/flow-designer-vue && npm run typecheck -w @go-wind/flow-designer-react"
+    "typecheck": "npm run typecheck -w @go-wind/flow-designer-core && npm run typecheck -w @go-wind/flow-designer-vue && npm run typecheck -w @go-wind/flow-designer-react",
+    "demo": "npm run build -w @go-wind/flow-designer-core && npm run build -w @go-wind/flow-designer-vue && npm run build -w @go-wind/flow-designer-react && npm run dev -w @go-wind/flow-designer-demo"
   }
 }

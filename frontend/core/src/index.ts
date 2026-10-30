@@ -20,4 +20,4 @@ export type {
   ApprovalTreeBranches,
 } from './tree';
 export type * from './types';
-export { applyTheme, applyAccent, designerCSS, THEME_ATTR, type Theme } from './theme';
+export { applyTheme, applyAccent, applyThemeToAll, designerCSS, ensureStyles, THEME_ATTR } from './theme';

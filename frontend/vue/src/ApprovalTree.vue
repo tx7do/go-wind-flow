@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import {
-  documentToTree,
+[
+    ensureStyles,
+    documentToTree,
   treeAddBranch,
   treeAddTaskAfter,
   treeRemoveNode,
@@ -34,6 +35,7 @@ let tree: ApprovalTree | null = null;
 const version = ref(0);
 
 function init() {
+  ensureStyles();
   unsupported.value = '';
   try {
     tree = documentToTree(props.document);

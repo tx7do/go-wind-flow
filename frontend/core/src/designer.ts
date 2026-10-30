@@ -14,7 +14,7 @@ import type Modeling from 'bpmn-js/lib/features/modeling/Modeling';
 
 import { FlowModdleDescriptor, FlowPropertiesModule } from './panel';
 import { documentToXML, xmlToDocument } from './convert';
-import { applyAccent, applyTheme, designerCSS, type Theme } from './theme';
+import { applyAccent, applyTheme, ensureStyles, designerCSS, type Theme } from './theme';
 import type { DesignerDocument } from './types';
 
 export interface DesignerOptions {
@@ -117,5 +117,5 @@ export function createDesigner(opts: DesignerOptions): DesignerHandle {
 
 export { documentToXML, xmlToDocument } from './convert';
 export { FlowModdleDescriptor, readAssignees, writeAssignees } from './panel';
-export { applyAccent, applyTheme, designerCSS, type Theme } from './theme';
+export { applyAccent, applyTheme, applyThemeToAll, designerCSS, ensureStyles, THEME_ATTR, type Theme } from './theme';
 export * from './types';

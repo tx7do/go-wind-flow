@@ -7,6 +7,7 @@ import {
   treeToDocument,
   treeUpdateNode,
   UnsupportedError,
+  ensureStyles,
   applyTheme,
   applyAccent,
   type ApprovalTree as ApprovalTreeT,
@@ -52,6 +53,7 @@ export const ApprovalTree = forwardRef<ApprovalTreeRef, ApprovalTreeProps>(funct
 
   const rootRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
+    ensureStyles();
     if (rootRef.current) {
       if (theme) applyTheme(rootRef.current, theme);
       if (accent) applyAccent(rootRef.current, accent);

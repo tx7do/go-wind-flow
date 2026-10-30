@@ -10,6 +10,16 @@ export type Theme = 'light' | 'dark' | 'auto';
 
 export const THEME_ATTR = 'data-gwf-theme';
 
+/** 确保组件样式表已注入（幂等；树/画布组件挂载时调用）。 */
+export function ensureStyles(): void {
+  if (typeof document === "undefined") return;
+  if (document.getElementById("gwf-designer-styles")) return;
+  const style = document.createElement("style");
+  style.id = "gwf-designer-styles";
+  style.textContent = designerCSS;
+  document.head.appendChild(style);
+}
+
 /** 应用主题到组件根元素（auto = 跟随系统 prefers-color-scheme）。 */
 export function applyTheme(root: HTMLElement, theme: Theme): void {
   root.setAttribute(THEME_ATTR, theme);
