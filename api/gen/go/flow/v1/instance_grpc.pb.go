@@ -25,6 +25,7 @@ const (
 	FlowInstanceService_WithdrawInstance_FullMethodName = "/flow.v1.FlowInstanceService/WithdrawInstance"
 	FlowInstanceService_AbortInstance_FullMethodName    = "/flow.v1.FlowInstanceService/AbortInstance"
 	FlowInstanceService_ResumeDueTimers_FullMethodName  = "/flow.v1.FlowInstanceService/ResumeDueTimers"
+	FlowInstanceService_SendMessage_FullMethodName      = "/flow.v1.FlowInstanceService/SendMessage"
 )
 
 // FlowInstanceServiceClient is the client API for FlowInstanceService service.
@@ -46,6 +47,8 @@ type FlowInstanceServiceClient interface {
 	AbortInstance(ctx context.Context, in *AbortInstanceRequest, opts ...grpc.CallOption) (*FlowInstance, error)
 	// 到期定时器扫描（宿主 cron 驱动；续跑到期定时器节点上的令牌）
 	ResumeDueTimers(ctx context.Context, in *ResumeDueTimersRequest, opts ...grpc.CallOption) (*ResumeDueTimersResponse, error)
+	// 消息投递：解锁阻塞在同名消息事件上的令牌（payload 并入实例变量）
+	SendMessage(ctx context.Context, in *SendMessageRequest, opts ...grpc.CallOption) (*SendMessageResponse, error)
 }
 
 type flowInstanceServiceClient struct {
@@ -116,6 +119,16 @@ func (c *flowInstanceServiceClient) ResumeDueTimers(ctx context.Context, in *Res
 	return out, nil
 }
 
+func (c *flowInstanceServiceClient) SendMessage(ctx context.Context, in *SendMessageRequest, opts ...grpc.CallOption) (*SendMessageResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendMessageResponse)
+	err := c.cc.Invoke(ctx, FlowInstanceService_SendMessage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FlowInstanceServiceServer is the server API for FlowInstanceService service.
 // All implementations must embed UnimplementedFlowInstanceServiceServer
 // for forward compatibility.
@@ -135,6 +148,8 @@ type FlowInstanceServiceServer interface {
 	AbortInstance(context.Context, *AbortInstanceRequest) (*FlowInstance, error)
 	// 到期定时器扫描（宿主 cron 驱动；续跑到期定时器节点上的令牌）
 	ResumeDueTimers(context.Context, *ResumeDueTimersRequest) (*ResumeDueTimersResponse, error)
+	// 消息投递：解锁阻塞在同名消息事件上的令牌（payload 并入实例变量）
+	SendMessage(context.Context, *SendMessageRequest) (*SendMessageResponse, error)
 	mustEmbedUnimplementedFlowInstanceServiceServer()
 }
 
@@ -162,6 +177,9 @@ func (UnimplementedFlowInstanceServiceServer) AbortInstance(context.Context, *Ab
 }
 func (UnimplementedFlowInstanceServiceServer) ResumeDueTimers(context.Context, *ResumeDueTimersRequest) (*ResumeDueTimersResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ResumeDueTimers not implemented")
+}
+func (UnimplementedFlowInstanceServiceServer) SendMessage(context.Context, *SendMessageRequest) (*SendMessageResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SendMessage not implemented")
 }
 func (UnimplementedFlowInstanceServiceServer) mustEmbedUnimplementedFlowInstanceServiceServer() {}
 func (UnimplementedFlowInstanceServiceServer) testEmbeddedByValue()                             {}
@@ -292,6 +310,24 @@ func _FlowInstanceService_ResumeDueTimers_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FlowInstanceService_SendMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendMessageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FlowInstanceServiceServer).SendMessage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FlowInstanceService_SendMessage_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FlowInstanceServiceServer).SendMessage(ctx, req.(*SendMessageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FlowInstanceService_ServiceDesc is the grpc.ServiceDesc for FlowInstanceService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -322,6 +358,10 @@ var FlowInstanceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ResumeDueTimers",
 			Handler:    _FlowInstanceService_ResumeDueTimers_Handler,
+		},
+		{
+			MethodName: "SendMessage",
+			Handler:    _FlowInstanceService_SendMessage_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -193,6 +193,8 @@ func eventTypeToProto(t flow.EventType) flowv1.FlowEventType {
 		return flowv1.FlowEventType_FLOW_EVENT_TYPE_INSTANCE_RETURNED
 	case flow.EventTimerFired:
 		return flowv1.FlowEventType_FLOW_EVENT_TYPE_TIMER_FIRED
+	case flow.EventMessageReceived:
+		return flowv1.FlowEventType_FLOW_EVENT_TYPE_MESSAGE_RECEIVED
 	case flow.EventVariableChanged:
 		return flowv1.FlowEventType_FLOW_EVENT_TYPE_VARIABLE_CHANGED
 	}

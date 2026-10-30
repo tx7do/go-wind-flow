@@ -7,6 +7,15 @@
 
 ### Added
 
+- 引擎：**中间消息事件**（`intermediateCatchEvent` + `messageEventDefinition`）——
+  令牌阻塞等外部投递，`SendMessage(实例, 消息名, payload)` 解锁并续走
+  （payload 并入实例变量，广播 `message.received`）；v1 按实例+消息名关联、
+  引擎不缓存消息（投递失败由调用方自决重试）。BPMN 导入导出
+  `messageEventDefinition/messageRef`；契约 v0.1.4 增补 SendMessage RPC
+  （已推 BSR）
+- 性能基线补充：ent + sqlite 真实存储档——完整审批周期（WithTx 事务 +
+  五表落库）~1.1ms/次（`store/ent` BenchmarkEntLinearFlow），与内存档
+  ~104µs 对照
 - 引擎：**顺序多实例**（BPMN `isSequential=true`）——办理人按解析顺序串行
   逐个审批（同一时刻仅一个待办），全部通过才推进，中途驳回按 RejectMode；
   序列快照存令牌保留键（`flow:miSeq/miDone`，不进表达式环境）

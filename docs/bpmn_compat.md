@@ -54,7 +54,8 @@ xmlBytes, _ := eng.ExportDefinition(ctx, "t1", "leave", 0, "bpmn-xml")
 完成语义经 `completionCondition`（ALL/ANY）或扩展 JSON |
 | `documentation` | ✅ | 透传到 Node.Documentation（导入导出双向，XML 转义） |
 | `conditionExpression` | ✅ | `${...}` 包裹自动剥壳为裸表达式 |
-| `intermediateCatchEvent` + `timerEventDefinition` | ✅ | M1 定时器节点；`timeDuration` 支持 ISO8601 天/时/分/秒（年/月/周日历单位显式拒绝） |
+0 `intermediateCatchEvent` + `timerEventDefinition` | ✅ | M1 定时器节点；`timeDuration` 支持 ISO8601 天/时/分/秒（年/月/周日历单位显式拒绝） |
+| `intermediateCatchEvent` + `messageEventDefinition` | ✅ | M2 消息事件：令牌阻塞等外部投递，`SendMessage(实例, 消息名, payload)` 解锁；v1 按实例+消息名关联，`messageRef` 即消息名 |
 | `boundaryEvent` + `timerEventDefinition` | ✅ | M2 边界定时事件（挂接 userTask）：中断型（缺省）到期取消原任务并接管流程，`cancelActivity=false` 非中断型只派生升级分支（v1 一次性触发）；由 `ResumeDueTimers` 驱动 |
 | `boundaryEvent` 消息/信号触发 / 消息与信号事件 / 顺序中间事件 | ⛔ M2 | 定时器触发已落地（见上一行） |
 | lane / 泳道 | ⛔ | 展示层概念，不入引擎 |

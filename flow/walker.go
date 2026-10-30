@@ -73,6 +73,15 @@ func (e *Engine) runToken(ctx context.Context, inst *Instance, tk *Token, def *D
 			_ = e.appendHistory(ctx, inst, &Event{Type: EventTokenMoved, NodeID: tk.NodeID}, Vars{"dueAt": due.Unix()})
 			return nil
 
+		case NodeMessageEvent:
+			// 中间消息：令牌阻塞等外部投递；SendMessage(实例, 消息名) 解锁。
+			tk.Status = TokenWaiting
+			if err := e.store.Tokens().Update(ctx, tk); err != nil {
+				return err
+			}
+			_ = e.appendHistory(ctx, inst, &Event{Type: EventTokenMoved, NodeID: tk.NodeID}, Vars{"message": node.Message})
+			return nil
+
 		case NodeCallActivity:
 			return e.startSubprocess(ctx, inst, tk, node)
 

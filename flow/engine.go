@@ -754,6 +754,67 @@ func (e *Engine) ResumeDueTimers(ctx context.Context, now time.Time) ([]*Token, 
 	return resumed, nil
 }
 
+// SendMessage 向实例投递消息：解锁阻塞在同名消息事件上的令牌，
+// payload 并入实例变量后续走。
+// 返回是否投递成功（实例不存在/未运行/无同名等待令牌均返回 false，由调用方
+// 决定重试或丢弃——消息语义是调用方自决，引擎不缓存）。
+func (e *Engine) SendMessage(ctx context.Context, instanceID, messageName string, payload Vars) (bool, error) {
+	inst, err := e.store.Instances().Get(ctx, instanceID)
+	if err != nil {
+		return false, err
+	}
+	if !inst.Status.Live() {
+		return false, nil
+	}
+	def, err := e.definitionOf(ctx, inst)
+	if err != nil {
+		return false, err
+	}
+	tokens, err := e.store.Tokens().ListByInstance(ctx, inst.ID)
+	if err != nil {
+		return false, err
+	}
+	for _, tk := range tokens {
+		if tk.Status != TokenWaiting {
+			continue
+		}
+		node := def.Nodes[tk.NodeID]
+		if node == nil || node.Type != NodeMessageEvent || node.Message != messageName {
+			continue
+		}
+
+		if len(payload) > 0 {
+			inst.Variables.Merge(payload)
+			if err := e.store.Instances().Update(ctx, inst); err != nil {
+				return false, err
+			}
+			_ = e.appendHistory(ctx, inst, &Event{Type: EventVariableChanged}, payload)
+		}
+		_ = e.appendHistory(ctx, inst, &Event{
+			Type: EventMessageReceived, NodeID: tk.NodeID,
+		}, Vars{"message": messageName})
+		e.fireListeners(ctx, &Event{
+			Type: EventMessageReceived, TenantID: inst.TenantID, InstanceID: inst.ID,
+			NodeID: tk.NodeID, Vars: inst.Variables.Clone(), At: e.clock.Now(),
+		})
+
+		out := def.OutEdges(tk.NodeID)
+		if len(out) != 1 {
+			return false, fmt.Errorf("message event %s has %d out edges", tk.NodeID, len(out))
+		}
+		tk.Status = TokenRunning
+		tk.NodeID = out[0].To
+		if err := e.store.Tokens().Update(ctx, tk); err != nil {
+			return false, err
+		}
+		if err := e.runToken(ctx, inst, tk, def); err != nil {
+			return true, err
+		}
+		return true, nil
+	}
+	return false, nil
+}
+
 // fireBoundaryTimer 边界定时器触发。返回参与续跑的令牌（非中断型返回 nil——
 // 派生分支另起令牌，边界令牌一次性删除）。
 func (e *Engine) fireBoundaryTimer(ctx context.Context, inst *Instance, tk *Token, def *Definition, node *Node) (*Token, error) {

@@ -119,12 +119,17 @@ type scriptBodyXML struct {
 	Inner string `xml:",innerxml"`
 }
 
-// catchEventXML 中间捕获事件（当前仅支持定时器定义）。
+// catchEventXML 中间捕获事件（定时器 / 消息定义）。
 type catchEventXML struct {
-	ID    string       `xml:"id,attr"`
-	Name  string       `xml:"name,attr"`
-	Doc   string       `xml:"documentation"`
-	Timer *timerDefXML `xml:"timerEventDefinition"`
+	ID      string         `xml:"id,attr"`
+	Name    string         `xml:"name,attr"`
+	Doc     string         `xml:"documentation"`
+	Timer   *timerDefXML   `xml:"timerEventDefinition"`
+	Message *messageDefXML `xml:"messageEventDefinition"`
+}
+
+type messageDefXML struct {
+	MessageRef string `xml:"messageRef,attr"`
 }
 
 type timerDefXML struct {
@@ -245,17 +250,31 @@ func Parse(data []byte) (*flow.Definition, error) {
 		add(node)
 	}
 	for _, ev := range p.TimerEvents {
-		node := &flow.Node{ID: ev.ID, Name: ev.Name, Type: flow.NodeTimerEvent}
+		node := &flow.Node{ID: ev.ID, Name: ev.Name}
 		node.Documentation = ev.Doc
-		if ev.Timer == nil || strings.TrimSpace(ev.Timer.Duration) == "" {
-			return nil, fmt.Errorf("%w: intermediateCatchEvent %s missing timerEventDefinition/timeDuration",
+		switch {
+		case ev.Timer != nil:
+			node.Type = flow.NodeTimerEvent
+			if strings.TrimSpace(ev.Timer.Duration) == "" {
+				return nil, fmt.Errorf("%w: intermediateCatchEvent %s missing timeDuration",
+					flow.ErrInvalidDefinition, ev.ID)
+			}
+			d, err := ParseISODuration(ev.Timer.Duration)
+			if err != nil {
+				return nil, fmt.Errorf("intermediateCatchEvent %s: %w", ev.ID, err)
+			}
+			node.Timer = &flow.TimerSpec{Duration: flow.Duration(d)}
+		case ev.Message != nil:
+			node.Type = flow.NodeMessageEvent
+			node.Message = strings.TrimSpace(ev.Message.MessageRef)
+			if node.Message == "" {
+				return nil, fmt.Errorf("%w: intermediateCatchEvent %s missing messageRef",
+					flow.ErrInvalidDefinition, ev.ID)
+			}
+		default:
+			return nil, fmt.Errorf("%w: intermediateCatchEvent %s has no supported eventDefinition (timer/message)",
 				flow.ErrInvalidDefinition, ev.ID)
 		}
-		d, err := ParseISODuration(ev.Timer.Duration)
-		if err != nil {
-			return nil, fmt.Errorf("intermediateCatchEvent %s: %w", ev.ID, err)
-		}
-		node.Timer = &flow.TimerSpec{Duration: flow.Duration(d)}
 		add(node)
 	}
 	for _, be := range p.BoundaryEvents {
@@ -468,16 +487,30 @@ func Write(def *flow.Definition) ([]byte, error) {
 				fmt.Fprintf(b, "    <parallelGateway id=%q name=%q/>\n", n.ID, n.Name)
 			case flow.NodeInclusiveGateway:
 				fmt.Fprintf(b, "    <inclusiveGateway id=%q name=%q/>\n", n.ID, n.Name)
-			case flow.NodeTimerEvent:
-				dur := ""
-				if n.Timer != nil {
-					dur = WriteISODuration(n.Timer.Duration.Std())
-				}
-				fmt.Fprintf(b, "    <intermediateCatchEvent id=%q name=%q>\n", n.ID, n.Name)
-				fmt.Fprintf(b, "      <timerEventDefinition>\n")
-				fmt.Fprintf(b, "        <timeDuration>%s</timeDuration>\n", dur)
-				fmt.Fprintf(b, "      </timerEventDefinition>\n")
-				fmt.Fprintf(b, "    </intermediateCatchEvent>\n")
+		case flow.NodeTimerEvent:
+			dur := ""
+			if n.Timer != nil {
+				dur = WriteISODuration(n.Timer.Duration.Std())
+			}
+			fmt.Fprintf(b, "    <intermediateCatchEvent id=%q name=%q>\n", n.ID, n.Name)
+			if n.Documentation != "" {
+				fmt.Fprintf(b, "      <documentation>%s</documentation>\n", escDoc(n.Documentation))
+			}
+			fmt.Fprintf(b, "      <timerEventDefinition>\n")
+			fmt.Fprintf(b, "        <timeDuration>%s</timeDuration>\n", dur)
+			fmt.Fprintf(b, "      </timerEventDefinition>\n")
+			fmt.Fprintf(b, "    </intermediateCatchEvent>\n")
+		case flow.NodeMessageEvent:
+			msg := ""
+			if n.Message != "" {
+				msg = n.Message
+			}
+			fmt.Fprintf(b, "    <intermediateCatchEvent id=%q name=%q>\n", n.ID, n.Name)
+			if n.Documentation != "" {
+				fmt.Fprintf(b, "      <documentation>%s</documentation>\n", escDoc(n.Documentation))
+			}
+			fmt.Fprintf(b, "      <messageEventDefinition messageRef=%q/>\n", msg)
+			fmt.Fprintf(b, "    </intermediateCatchEvent>\n")
 			case flow.NodeBoundaryEvent:
 				dur := ""
 				if n.Timer != nil {

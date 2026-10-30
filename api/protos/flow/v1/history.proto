@@ -40,6 +40,8 @@ enum FlowEventType {
   FLOW_EVENT_TYPE_INSTANCE_RETURNED = 11;
   // 定时器节点到期续跑
   FLOW_EVENT_TYPE_TIMER_FIRED = 12;
+  // 消息投递解锁令牌
+  FLOW_EVENT_TYPE_MESSAGE_RECEIVED = 13;
 }
 
 // 流转历史事件。

@@ -19,22 +19,42 @@ import (
 func newStore(t *testing.T) *Store {
 	t.Helper()
 	name := "entflow_" + strings.NewReplacer("/", "_", " ", "_", "#", "_").Replace(t.Name())
-	db, err := sql.Open("sqlite", "file:"+name+"?mode=memory&cache=shared")
-	if err != nil {
-		t.Fatalf("open sqlite: %v", err)
-	}
-	// ent migrate 要求外键开启；用语句设置比 DSN 参数更可靠（逐连接生效）。
-	if _, err := db.Exec("PRAGMA foreign_keys = ON"); err != nil {
-		t.Fatalf("enable foreign_keys: %v", err)
-	}
+	db := openBenchDB(name)
 	t.Cleanup(func() { _ = db.Close() })
-
-	drv := entsql.OpenDB("sqlite3", db)
-	client := gen.NewClient(gen.Driver(drv))
+	client := newClient(db)
 	if err := client.Schema.Create(context.Background()); err != nil {
 		t.Fatalf("migrate: %v", err)
 	}
 	return New(client)
+}
+
+// newBenchDB 基准用独立内存库。
+func newBenchDB(b *testing.B) *gen.Client {
+	b.Helper()
+	db := openBenchDB("entflow_bench")
+	b.Cleanup(func() { _ = db.Close() })
+	client := newClient(db)
+	if err := client.Schema.Create(context.Background()); err != nil {
+		b.Fatalf("migrate: %v", err)
+	}
+	return client
+}
+
+func openBenchDB(name string) *sql.DB {
+	db, err := sql.Open("sqlite", "file:"+name+"?mode=memory&cache=shared")
+	if err != nil {
+		panic(err)
+	}
+	// ent migrate 要求外键开启；用语句设置比 DSN 参数更可靠（逐连接生效）。
+	if _, err := db.Exec("PRAGMA foreign_keys = ON"); err != nil {
+		panic(err)
+	}
+	return db
+}
+
+func newClient(db *sql.DB) *gen.Client {
+	drv := entsql.OpenDB("sqlite3", db)
+	return gen.NewClient(gen.Driver(drv))
 }
 
 func sampleDef(tenant, key string, version int) *flow.Definition {

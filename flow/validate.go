@@ -26,7 +26,7 @@ func ValidateDefinition(def *Definition) error {
 			startCount++
 		case NodeEndEvent:
 			endCount++
-		case NodeUserTask, NodeScriptTask, NodeServiceTask, NodeCallActivity, NodeTimerEvent, NodeBoundaryEvent:
+		case NodeUserTask, NodeScriptTask, NodeServiceTask, NodeCallActivity, NodeTimerEvent, NodeBoundaryEvent, NodeMessageEvent:
 		case NodeExclusiveGateway, NodeParallelGateway, NodeInclusiveGateway:
 		default:
 			return fmt.Errorf("%w: unknown node type %q (%s)", ErrInvalidDefinition, n.Type, id)
@@ -74,6 +74,13 @@ func ValidateDefinition(def *Definition) error {
 			}
 			if n.Timer == nil || n.Timer.Duration.Std() <= 0 {
 				return fmt.Errorf("%w: timer event %s missing positive duration", ErrInvalidDefinition, id)
+			}
+		case NodeMessageEvent:
+			if in != 1 || len(out) != 1 {
+				return fmt.Errorf("%w: message event %s must have 1 in / 1 out", ErrInvalidDefinition, id)
+			}
+			if n.Message == "" {
+				return fmt.Errorf("%w: message event %s missing message name", ErrInvalidDefinition, id)
 			}
 		case NodeBoundaryEvent:
 			if in != 0 || len(out) < 1 {

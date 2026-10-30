@@ -15,6 +15,7 @@ const (
 	NodeScriptTask       NodeType = "scriptTask"
 	NodeServiceTask      NodeType = "serviceTask" // v0 与 ScriptTask 同语义（回调由宿主监听器承接）
 	NodeTimerEvent       NodeType = "intermediateTimerEvent" // 中间定时器：令牌阻塞至到期，宿主 cron 驱动续跑
+	NodeMessageEvent     NodeType = "intermediateMessageEvent" // 中间消息：令牌阻塞等外部投递（SendMessage 解锁）
 	NodeBoundaryEvent    NodeType = "boundaryEvent"          // 边界事件：挂接在 userTask 上，到期触发升级/接管分支
 	NodeExclusiveGateway NodeType = "exclusiveGateway"
 	NodeParallelGateway  NodeType = "parallelGateway" // 分叉/汇合同型，按出入度区分（BPMN 惯例）
@@ -131,6 +132,9 @@ type Node struct {
 	//（到期取消原任务并接管流程），false = 非中断（只派生升级分支，原任务照常）。
 	AttachedTo   string `json:"attachedTo,omitempty"`
 	Interrupting *bool  `json:"interrupting,omitempty"`
+
+	// MessageEvent 专用：消息名（SendMessage 按实例 + 消息名投递解锁）。
+	Message string `json:"message,omitempty"`
 
 	Documentation string `json:"documentation,omitempty"`
 }

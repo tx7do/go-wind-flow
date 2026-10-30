@@ -28,6 +28,9 @@ service FlowInstanceService {
 
   // 到期定时器扫描（宿主 cron 驱动；续跑到期定时器节点上的令牌）
   rpc ResumeDueTimers(ResumeDueTimersRequest) returns (ResumeDueTimersResponse) {}
+
+  // 消息投递：解锁阻塞在同名消息事件上的令牌（payload 并入实例变量）
+  rpc SendMessage(SendMessageRequest) returns (SendMessageResponse) {}
 }
 
 // 实例状态。
@@ -119,4 +122,17 @@ message ResumeDueTimersRequest {
 message ResumeDueTimersResponse {
   // 本次续跑的令牌
   repeated string token_ids = 1;
+}
+
+message SendMessageRequest {
+  string instance_id = 1 ;
+  // 消息名（与定义中 messageRef 一致）
+  string message = 2 ;
+  // 投递载荷（并入实例变量）
+  google.protobuf.Struct payload = 3;
+}
+
+message SendMessageResponse {
+  // false = 实例不在运行 / 无同名等待令牌（调用方自决重试或丢弃）
+  bool delivered = 1;
 }

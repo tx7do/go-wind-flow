@@ -320,3 +320,12 @@ func (s *Services) ResumeDueTimers(ctx context.Context, req *flowv1.ResumeDueTim
 	}
 	return out, nil
 }
+
+// SendMessage 消息投递（外部回调解锁消息事件）。
+func (s *Services) SendMessage(ctx context.Context, req *flowv1.SendMessageRequest) (*flowv1.SendMessageResponse, error) {
+	delivered, err := s.engine.SendMessage(ctx, req.GetInstanceId(), req.GetMessage(), structToVars(req.GetPayload()))
+	if err != nil {
+		return nil, mapError(err)
+	}
+	return &flowv1.SendMessageResponse{Delivered: delivered}, nil
+}

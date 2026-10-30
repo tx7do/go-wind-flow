@@ -142,6 +142,7 @@ const (
 	EventTaskApproverAdded EventType = "task.approver_added" // 加签
 	EventTaskDue           EventType = "task.due"
 	EventTimerFired        EventType = "timer.fired"       // 定时器节点到期续跑
+	EventMessageReceived   EventType = "message.received"  // 消息投递解锁令牌
 	EventInstanceReturned  EventType = "instance.returned" // 退回指定节点
 	EventVariableChanged   EventType = "variable.changed"
 )

@@ -52,7 +52,7 @@
       流程、非中断型派生升级分支（一次性触发）；主任务办结/实例终结时清理未触发
       边界令牌；BPMN 导入导出 attachedToRef/cancelActivity；可达性校验将边界
       事件作为扩散种子
-- [ ] 中间捕获/抛出事件（timer/message/signal）
+- [x] 中间捕获事件：timer（M1）与 message（M2，SendMessage 解锁 + message.received 事件）已落地；抛出事件/signal 跨实例广播归 M3
 - [x] 顺序多实例（isSequential=true）：解析序串行逐个审批（隐含 ALL），序列
       快照存令牌保留键 flow:miSeq/miDone（不进表达式环境），中途驳回走 RejectMode
 - [x] documentation 透传（双向，XML 转义）+ BPMN DI 坐标透传（导出回填
