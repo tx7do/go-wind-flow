@@ -9,13 +9,19 @@ import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "pagination/v1/pagination.proto";
 
-// 用户任务服务：办结（会签/或签/驳回语义由定义驱动）、转办、待办查询。
+// 用户任务服务：办结（会签/或签/驳回语义由定义驱动）、转办、加签、退回、待办查询。
 service FlowTaskService {
   // 办结任务（驳回按定义的 RejectMode：TERMINATE 终结实例 / STAY 停留）
   rpc CompleteTask(CompleteTaskRequest) returns (CompleteTaskResponse) {}
 
   // 转办：把待办任务移交他人
   rpc ForwardTask(ForwardTaskRequest) returns (FlowTask) {}
+
+  // 加签：向待办任务所在节点动态追加办理人（会签式，ALL/ANY 语义照常）
+  rpc AddSigners(AddSignersRequest) returns (ListTasksResponse) {}
+
+  // 退回指定节点：实例退回到更早的 userTask 重走（待办取消、历史保留）
+  rpc ReturnTo(ReturnToRequest) returns (CompleteTaskResponse) {}
 
   // 查询任务详情
   rpc GetTask(GetTaskRequest) returns (FlowTask) {}
@@ -113,6 +119,25 @@ message ListInstanceTasksRequest {
 message CheckDueTasksRequest {
   // 判定时刻（缺省 = 服务端当前时间）
   optional google.protobuf.Timestamp as_of = 1;
+}
+
+message AddSignersRequest {
+  // 锚点待办任务（同节点的任意一个待办）
+  string task_id = 1 ;
+  // 操作者（通常是发起加签的办理人）
+  string actor_id = 2;
+  // 追加的办理人（已是该节点待办办理人的自动去重；委托叠加后落任务）
+  repeated string user_ids = 3 ;
+}
+
+message ReturnToRequest {
+  // 锚点待办任务（所在实例退回）
+  string task_id = 1 ;
+  // 操作者
+  string actor_id = 2;
+  // 退回目标节点（必须是当前节点的 userTask 祖先；在途并行分支时拒绝）
+  string target_node_id = 3 ;
+  string comment = 4;
 }
 
 message ListTasksResponse {

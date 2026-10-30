@@ -128,15 +128,17 @@ type HistoryEvent struct {
 type EventType string
 
 const (
-	EventProcessStarted  EventType = "process.started"
-	EventProcessEnded    EventType = "process.ended"
-	EventTokenMoved      EventType = "token.moved"
-	EventGatewayDecided  EventType = "gateway.decided"
-	EventTaskCreated     EventType = "task.created"
-	EventTaskCompleted   EventType = "task.completed"
-	EventTaskForwarded   EventType = "task.forwarded"
-	EventTaskDue         EventType = "task.due"
-	EventVariableChanged EventType = "variable.changed"
+	EventProcessStarted    EventType = "process.started"
+	EventProcessEnded      EventType = "process.ended"
+	EventTokenMoved        EventType = "token.moved"
+	EventGatewayDecided    EventType = "gateway.decided"
+	EventTaskCreated       EventType = "task.created"
+	EventTaskCompleted     EventType = "task.completed"
+	EventTaskForwarded     EventType = "task.forwarded"
+	EventTaskApproverAdded EventType = "task.approver_added" // 加签
+	EventTaskDue           EventType = "task.due"
+	EventInstanceReturned  EventType = "instance.returned" // 退回指定节点
+	EventVariableChanged   EventType = "variable.changed"
 )
 
 // Event 监听器事件。

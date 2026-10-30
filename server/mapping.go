@@ -187,6 +187,10 @@ func eventTypeToProto(t flow.EventType) flowv1.FlowEventType {
 		return flowv1.FlowEventType_FLOW_EVENT_TYPE_TASK_FORWARDED
 	case flow.EventTaskDue:
 		return flowv1.FlowEventType_FLOW_EVENT_TYPE_TASK_DUE
+	case flow.EventTaskApproverAdded:
+		return flowv1.FlowEventType_FLOW_EVENT_TYPE_TASK_APPROVER_ADDED
+	case flow.EventInstanceReturned:
+		return flowv1.FlowEventType_FLOW_EVENT_TYPE_INSTANCE_RETURNED
 	case flow.EventVariableChanged:
 		return flowv1.FlowEventType_FLOW_EVENT_TYPE_VARIABLE_CHANGED
 	}

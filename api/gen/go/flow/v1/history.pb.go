@@ -46,33 +46,41 @@ const (
 	FlowEventType_FLOW_EVENT_TYPE_TASK_DUE FlowEventType = 8
 	// 实例变量变更
 	FlowEventType_FLOW_EVENT_TYPE_VARIABLE_CHANGED FlowEventType = 9
+	// 加签（节点追加办理人）
+	FlowEventType_FLOW_EVENT_TYPE_TASK_APPROVER_ADDED FlowEventType = 10
+	// 实例退回指定节点
+	FlowEventType_FLOW_EVENT_TYPE_INSTANCE_RETURNED FlowEventType = 11
 )
 
 // Enum value maps for FlowEventType.
 var (
 	FlowEventType_name = map[int32]string{
-		0: "FLOW_EVENT_TYPE_UNSPECIFIED",
-		1: "FLOW_EVENT_TYPE_PROCESS_STARTED",
-		2: "FLOW_EVENT_TYPE_PROCESS_ENDED",
-		3: "FLOW_EVENT_TYPE_TOKEN_MOVED",
-		4: "FLOW_EVENT_TYPE_GATEWAY_DECIDED",
-		5: "FLOW_EVENT_TYPE_TASK_CREATED",
-		6: "FLOW_EVENT_TYPE_TASK_COMPLETED",
-		7: "FLOW_EVENT_TYPE_TASK_FORWARDED",
-		8: "FLOW_EVENT_TYPE_TASK_DUE",
-		9: "FLOW_EVENT_TYPE_VARIABLE_CHANGED",
+		0:  "FLOW_EVENT_TYPE_UNSPECIFIED",
+		1:  "FLOW_EVENT_TYPE_PROCESS_STARTED",
+		2:  "FLOW_EVENT_TYPE_PROCESS_ENDED",
+		3:  "FLOW_EVENT_TYPE_TOKEN_MOVED",
+		4:  "FLOW_EVENT_TYPE_GATEWAY_DECIDED",
+		5:  "FLOW_EVENT_TYPE_TASK_CREATED",
+		6:  "FLOW_EVENT_TYPE_TASK_COMPLETED",
+		7:  "FLOW_EVENT_TYPE_TASK_FORWARDED",
+		8:  "FLOW_EVENT_TYPE_TASK_DUE",
+		9:  "FLOW_EVENT_TYPE_VARIABLE_CHANGED",
+		10: "FLOW_EVENT_TYPE_TASK_APPROVER_ADDED",
+		11: "FLOW_EVENT_TYPE_INSTANCE_RETURNED",
 	}
 	FlowEventType_value = map[string]int32{
-		"FLOW_EVENT_TYPE_UNSPECIFIED":      0,
-		"FLOW_EVENT_TYPE_PROCESS_STARTED":  1,
-		"FLOW_EVENT_TYPE_PROCESS_ENDED":    2,
-		"FLOW_EVENT_TYPE_TOKEN_MOVED":      3,
-		"FLOW_EVENT_TYPE_GATEWAY_DECIDED":  4,
-		"FLOW_EVENT_TYPE_TASK_CREATED":     5,
-		"FLOW_EVENT_TYPE_TASK_COMPLETED":   6,
-		"FLOW_EVENT_TYPE_TASK_FORWARDED":   7,
-		"FLOW_EVENT_TYPE_TASK_DUE":         8,
-		"FLOW_EVENT_TYPE_VARIABLE_CHANGED": 9,
+		"FLOW_EVENT_TYPE_UNSPECIFIED":         0,
+		"FLOW_EVENT_TYPE_PROCESS_STARTED":     1,
+		"FLOW_EVENT_TYPE_PROCESS_ENDED":       2,
+		"FLOW_EVENT_TYPE_TOKEN_MOVED":         3,
+		"FLOW_EVENT_TYPE_GATEWAY_DECIDED":     4,
+		"FLOW_EVENT_TYPE_TASK_CREATED":        5,
+		"FLOW_EVENT_TYPE_TASK_COMPLETED":      6,
+		"FLOW_EVENT_TYPE_TASK_FORWARDED":      7,
+		"FLOW_EVENT_TYPE_TASK_DUE":            8,
+		"FLOW_EVENT_TYPE_VARIABLE_CHANGED":    9,
+		"FLOW_EVENT_TYPE_TASK_APPROVER_ADDED": 10,
+		"FLOW_EVENT_TYPE_INSTANCE_RETURNED":   11,
 	}
 )
 
@@ -314,7 +322,7 @@ const file_flow_v1_history_proto_rawDesc = "" +
 	"\vinstance_id\x18\x01 \x01(\tR\n" +
 	"instanceId\"N\n" +
 	"\x1bListInstanceHistoryResponse\x12/\n" +
-	"\x05items\x18\x01 \x03(\v2\x19.flow.v1.FlowHistoryEventR\x05items*\xec\x02\n" +
+	"\x05items\x18\x01 \x03(\v2\x19.flow.v1.FlowHistoryEventR\x05items*\xbc\x03\n" +
 	"\rFlowEventType\x12\x1f\n" +
 	"\x1bFLOW_EVENT_TYPE_UNSPECIFIED\x10\x00\x12#\n" +
 	"\x1fFLOW_EVENT_TYPE_PROCESS_STARTED\x10\x01\x12!\n" +
@@ -325,7 +333,10 @@ const file_flow_v1_history_proto_rawDesc = "" +
 	"\x1eFLOW_EVENT_TYPE_TASK_COMPLETED\x10\x06\x12\"\n" +
 	"\x1eFLOW_EVENT_TYPE_TASK_FORWARDED\x10\a\x12\x1c\n" +
 	"\x18FLOW_EVENT_TYPE_TASK_DUE\x10\b\x12$\n" +
-	" FLOW_EVENT_TYPE_VARIABLE_CHANGED\x10\t2x\n" +
+	" FLOW_EVENT_TYPE_VARIABLE_CHANGED\x10\t\x12'\n" +
+	"#FLOW_EVENT_TYPE_TASK_APPROVER_ADDED\x10\n" +
+	"\x12%\n" +
+	"!FLOW_EVENT_TYPE_INSTANCE_RETURNED\x10\v2x\n" +
 	"\x12FlowHistoryService\x12b\n" +
 	"\x13ListInstanceHistory\x12#.flow.v1.ListInstanceHistoryRequest\x1a$.flow.v1.ListInstanceHistoryResponse\"\x00B9Z7github.com/tx7do/go-wind-flow/api/gen/go/flow/v1;flowv1b\x06proto3"
 

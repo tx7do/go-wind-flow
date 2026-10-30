@@ -661,6 +661,140 @@ func (x *CheckDueTasksRequest) GetAsOf() *timestamppb.Timestamp {
 	return nil
 }
 
+type AddSignersRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 锚点待办任务（同节点的任意一个待办）
+	TaskId string `protobuf:"bytes,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	// 操作者（通常是发起加签的办理人）
+	ActorId string `protobuf:"bytes,2,opt,name=actor_id,json=actorId,proto3" json:"actor_id,omitempty"`
+	// 追加的办理人（已是该节点待办办理人的自动去重；委托叠加后落任务）
+	UserIds       []string `protobuf:"bytes,3,rep,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AddSignersRequest) Reset() {
+	*x = AddSignersRequest{}
+	mi := &file_flow_v1_task_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AddSignersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddSignersRequest) ProtoMessage() {}
+
+func (x *AddSignersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_flow_v1_task_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AddSignersRequest.ProtoReflect.Descriptor instead.
+func (*AddSignersRequest) Descriptor() ([]byte, []int) {
+	return file_flow_v1_task_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *AddSignersRequest) GetTaskId() string {
+	if x != nil {
+		return x.TaskId
+	}
+	return ""
+}
+
+func (x *AddSignersRequest) GetActorId() string {
+	if x != nil {
+		return x.ActorId
+	}
+	return ""
+}
+
+func (x *AddSignersRequest) GetUserIds() []string {
+	if x != nil {
+		return x.UserIds
+	}
+	return nil
+}
+
+type ReturnToRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 锚点待办任务（所在实例退回）
+	TaskId string `protobuf:"bytes,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	// 操作者
+	ActorId string `protobuf:"bytes,2,opt,name=actor_id,json=actorId,proto3" json:"actor_id,omitempty"`
+	// 退回目标节点（必须是当前节点的 userTask 祖先；在途并行分支时拒绝）
+	TargetNodeId  string `protobuf:"bytes,3,opt,name=target_node_id,json=targetNodeId,proto3" json:"target_node_id,omitempty"`
+	Comment       string `protobuf:"bytes,4,opt,name=comment,proto3" json:"comment,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReturnToRequest) Reset() {
+	*x = ReturnToRequest{}
+	mi := &file_flow_v1_task_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReturnToRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReturnToRequest) ProtoMessage() {}
+
+func (x *ReturnToRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_flow_v1_task_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReturnToRequest.ProtoReflect.Descriptor instead.
+func (*ReturnToRequest) Descriptor() ([]byte, []int) {
+	return file_flow_v1_task_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ReturnToRequest) GetTaskId() string {
+	if x != nil {
+		return x.TaskId
+	}
+	return ""
+}
+
+func (x *ReturnToRequest) GetActorId() string {
+	if x != nil {
+		return x.ActorId
+	}
+	return ""
+}
+
+func (x *ReturnToRequest) GetTargetNodeId() string {
+	if x != nil {
+		return x.TargetNodeId
+	}
+	return ""
+}
+
+func (x *ReturnToRequest) GetComment() string {
+	if x != nil {
+		return x.Comment
+	}
+	return ""
+}
+
 type ListTasksResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Items         []*FlowTask            `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
@@ -671,7 +805,7 @@ type ListTasksResponse struct {
 
 func (x *ListTasksResponse) Reset() {
 	*x = ListTasksResponse{}
-	mi := &file_flow_v1_task_proto_msgTypes[8]
+	mi := &file_flow_v1_task_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -683,7 +817,7 @@ func (x *ListTasksResponse) String() string {
 func (*ListTasksResponse) ProtoMessage() {}
 
 func (x *ListTasksResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_flow_v1_task_proto_msgTypes[8]
+	mi := &file_flow_v1_task_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -696,7 +830,7 @@ func (x *ListTasksResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTasksResponse.ProtoReflect.Descriptor instead.
 func (*ListTasksResponse) Descriptor() ([]byte, []int) {
-	return file_flow_v1_task_proto_rawDescGZIP(), []int{8}
+	return file_flow_v1_task_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ListTasksResponse) GetItems() []*FlowTask {
@@ -761,7 +895,16 @@ const file_flow_v1_task_proto_rawDesc = "" +
 	"instanceId\"V\n" +
 	"\x14CheckDueTasksRequest\x124\n" +
 	"\x05as_of\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\x04asOf\x88\x01\x01B\b\n" +
-	"\x06_as_of\"R\n" +
+	"\x06_as_of\"b\n" +
+	"\x11AddSignersRequest\x12\x17\n" +
+	"\atask_id\x18\x01 \x01(\tR\x06taskId\x12\x19\n" +
+	"\bactor_id\x18\x02 \x01(\tR\aactorId\x12\x19\n" +
+	"\buser_ids\x18\x03 \x03(\tR\auserIds\"\x85\x01\n" +
+	"\x0fReturnToRequest\x12\x17\n" +
+	"\atask_id\x18\x01 \x01(\tR\x06taskId\x12\x19\n" +
+	"\bactor_id\x18\x02 \x01(\tR\aactorId\x12$\n" +
+	"\x0etarget_node_id\x18\x03 \x01(\tR\ftargetNodeId\x12\x18\n" +
+	"\acomment\x18\x04 \x01(\tR\acomment\"R\n" +
 	"\x11ListTasksResponse\x12'\n" +
 	"\x05items\x18\x01 \x03(\v2\x11.flow.v1.FlowTaskR\x05items\x12\x14\n" +
 	"\x05total\x18\x02 \x01(\x03R\x05total*\xce\x01\n" +
@@ -775,10 +918,13 @@ const file_flow_v1_task_proto_rawDesc = "" +
 	"\x0fFlowTaskOutcome\x12!\n" +
 	"\x1dFLOW_TASK_OUTCOME_UNSPECIFIED\x10\x00\x12\x1d\n" +
 	"\x19FLOW_TASK_OUTCOME_APPROVE\x10\x01\x12\x1c\n" +
-	"\x18FLOW_TASK_OUTCOME_REJECT\x10\x022\xd2\x03\n" +
+	"\x18FLOW_TASK_OUTCOME_REJECT\x10\x022\xe1\x04\n" +
 	"\x0fFlowTaskService\x12M\n" +
 	"\fCompleteTask\x12\x1c.flow.v1.CompleteTaskRequest\x1a\x1d.flow.v1.CompleteTaskResponse\"\x00\x12?\n" +
-	"\vForwardTask\x12\x1b.flow.v1.ForwardTaskRequest\x1a\x11.flow.v1.FlowTask\"\x00\x127\n" +
+	"\vForwardTask\x12\x1b.flow.v1.ForwardTaskRequest\x1a\x11.flow.v1.FlowTask\"\x00\x12F\n" +
+	"\n" +
+	"AddSigners\x12\x1a.flow.v1.AddSignersRequest\x1a\x1a.flow.v1.ListTasksResponse\"\x00\x12E\n" +
+	"\bReturnTo\x12\x18.flow.v1.ReturnToRequest\x1a\x1d.flow.v1.CompleteTaskResponse\"\x00\x127\n" +
 	"\aGetTask\x12\x17.flow.v1.GetTaskRequest\x1a\x11.flow.v1.FlowTask\"\x00\x12R\n" +
 	"\x10ListPendingTasks\x12 .flow.v1.ListPendingTasksRequest\x1a\x1a.flow.v1.ListTasksResponse\"\x00\x12T\n" +
 	"\x11ListInstanceTasks\x12!.flow.v1.ListInstanceTasksRequest\x1a\x1a.flow.v1.ListTasksResponse\"\x00\x12L\n" +
@@ -797,7 +943,7 @@ func file_flow_v1_task_proto_rawDescGZIP() []byte {
 }
 
 var file_flow_v1_task_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_flow_v1_task_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_flow_v1_task_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_flow_v1_task_proto_goTypes = []any{
 	(FlowTaskStatus)(0),              // 0: flow.v1.FlowTaskStatus
 	(FlowTaskOutcome)(0),             // 1: flow.v1.FlowTaskOutcome
@@ -809,37 +955,43 @@ var file_flow_v1_task_proto_goTypes = []any{
 	(*ListPendingTasksRequest)(nil),  // 7: flow.v1.ListPendingTasksRequest
 	(*ListInstanceTasksRequest)(nil), // 8: flow.v1.ListInstanceTasksRequest
 	(*CheckDueTasksRequest)(nil),     // 9: flow.v1.CheckDueTasksRequest
-	(*ListTasksResponse)(nil),        // 10: flow.v1.ListTasksResponse
-	(*timestamppb.Timestamp)(nil),    // 11: google.protobuf.Timestamp
-	(*structpb.Struct)(nil),          // 12: google.protobuf.Struct
-	(*FlowInstance)(nil),             // 13: flow.v1.FlowInstance
-	(*v1.PagingRequest)(nil),         // 14: pagination.PagingRequest
+	(*AddSignersRequest)(nil),        // 10: flow.v1.AddSignersRequest
+	(*ReturnToRequest)(nil),          // 11: flow.v1.ReturnToRequest
+	(*ListTasksResponse)(nil),        // 12: flow.v1.ListTasksResponse
+	(*timestamppb.Timestamp)(nil),    // 13: google.protobuf.Timestamp
+	(*structpb.Struct)(nil),          // 14: google.protobuf.Struct
+	(*FlowInstance)(nil),             // 15: flow.v1.FlowInstance
+	(*v1.PagingRequest)(nil),         // 16: pagination.PagingRequest
 }
 var file_flow_v1_task_proto_depIdxs = []int32{
 	0,  // 0: flow.v1.FlowTask.status:type_name -> flow.v1.FlowTaskStatus
-	11, // 1: flow.v1.FlowTask.due_at:type_name -> google.protobuf.Timestamp
-	11, // 2: flow.v1.FlowTask.created_at:type_name -> google.protobuf.Timestamp
-	11, // 3: flow.v1.FlowTask.ended_at:type_name -> google.protobuf.Timestamp
+	13, // 1: flow.v1.FlowTask.due_at:type_name -> google.protobuf.Timestamp
+	13, // 2: flow.v1.FlowTask.created_at:type_name -> google.protobuf.Timestamp
+	13, // 3: flow.v1.FlowTask.ended_at:type_name -> google.protobuf.Timestamp
 	1,  // 4: flow.v1.CompleteTaskRequest.outcome:type_name -> flow.v1.FlowTaskOutcome
-	12, // 5: flow.v1.CompleteTaskRequest.variables:type_name -> google.protobuf.Struct
-	13, // 6: flow.v1.CompleteTaskResponse.instance:type_name -> flow.v1.FlowInstance
-	14, // 7: flow.v1.ListPendingTasksRequest.paging:type_name -> pagination.PagingRequest
-	11, // 8: flow.v1.CheckDueTasksRequest.as_of:type_name -> google.protobuf.Timestamp
+	14, // 5: flow.v1.CompleteTaskRequest.variables:type_name -> google.protobuf.Struct
+	15, // 6: flow.v1.CompleteTaskResponse.instance:type_name -> flow.v1.FlowInstance
+	16, // 7: flow.v1.ListPendingTasksRequest.paging:type_name -> pagination.PagingRequest
+	13, // 8: flow.v1.CheckDueTasksRequest.as_of:type_name -> google.protobuf.Timestamp
 	2,  // 9: flow.v1.ListTasksResponse.items:type_name -> flow.v1.FlowTask
 	3,  // 10: flow.v1.FlowTaskService.CompleteTask:input_type -> flow.v1.CompleteTaskRequest
 	5,  // 11: flow.v1.FlowTaskService.ForwardTask:input_type -> flow.v1.ForwardTaskRequest
-	6,  // 12: flow.v1.FlowTaskService.GetTask:input_type -> flow.v1.GetTaskRequest
-	7,  // 13: flow.v1.FlowTaskService.ListPendingTasks:input_type -> flow.v1.ListPendingTasksRequest
-	8,  // 14: flow.v1.FlowTaskService.ListInstanceTasks:input_type -> flow.v1.ListInstanceTasksRequest
-	9,  // 15: flow.v1.FlowTaskService.CheckDueTasks:input_type -> flow.v1.CheckDueTasksRequest
-	4,  // 16: flow.v1.FlowTaskService.CompleteTask:output_type -> flow.v1.CompleteTaskResponse
-	2,  // 17: flow.v1.FlowTaskService.ForwardTask:output_type -> flow.v1.FlowTask
-	2,  // 18: flow.v1.FlowTaskService.GetTask:output_type -> flow.v1.FlowTask
-	10, // 19: flow.v1.FlowTaskService.ListPendingTasks:output_type -> flow.v1.ListTasksResponse
-	10, // 20: flow.v1.FlowTaskService.ListInstanceTasks:output_type -> flow.v1.ListTasksResponse
-	10, // 21: flow.v1.FlowTaskService.CheckDueTasks:output_type -> flow.v1.ListTasksResponse
-	16, // [16:22] is the sub-list for method output_type
-	10, // [10:16] is the sub-list for method input_type
+	10, // 12: flow.v1.FlowTaskService.AddSigners:input_type -> flow.v1.AddSignersRequest
+	11, // 13: flow.v1.FlowTaskService.ReturnTo:input_type -> flow.v1.ReturnToRequest
+	6,  // 14: flow.v1.FlowTaskService.GetTask:input_type -> flow.v1.GetTaskRequest
+	7,  // 15: flow.v1.FlowTaskService.ListPendingTasks:input_type -> flow.v1.ListPendingTasksRequest
+	8,  // 16: flow.v1.FlowTaskService.ListInstanceTasks:input_type -> flow.v1.ListInstanceTasksRequest
+	9,  // 17: flow.v1.FlowTaskService.CheckDueTasks:input_type -> flow.v1.CheckDueTasksRequest
+	4,  // 18: flow.v1.FlowTaskService.CompleteTask:output_type -> flow.v1.CompleteTaskResponse
+	2,  // 19: flow.v1.FlowTaskService.ForwardTask:output_type -> flow.v1.FlowTask
+	12, // 20: flow.v1.FlowTaskService.AddSigners:output_type -> flow.v1.ListTasksResponse
+	4,  // 21: flow.v1.FlowTaskService.ReturnTo:output_type -> flow.v1.CompleteTaskResponse
+	2,  // 22: flow.v1.FlowTaskService.GetTask:output_type -> flow.v1.FlowTask
+	12, // 23: flow.v1.FlowTaskService.ListPendingTasks:output_type -> flow.v1.ListTasksResponse
+	12, // 24: flow.v1.FlowTaskService.ListInstanceTasks:output_type -> flow.v1.ListTasksResponse
+	12, // 25: flow.v1.FlowTaskService.CheckDueTasks:output_type -> flow.v1.ListTasksResponse
+	18, // [18:26] is the sub-list for method output_type
+	10, // [10:18] is the sub-list for method input_type
 	10, // [10:10] is the sub-list for extension type_name
 	10, // [10:10] is the sub-list for extension extendee
 	0,  // [0:10] is the sub-list for field type_name
@@ -859,7 +1011,7 @@ func file_flow_v1_task_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_flow_v1_task_proto_rawDesc), len(file_flow_v1_task_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   9,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

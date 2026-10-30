@@ -28,7 +28,9 @@
       领域结构映射、错误码映射（NotFound/PermissionDenied/FailedPrecondition/…）、
       写路径 WithTx 事务接线；宿主任意 grpc.ServiceRegistrar 注册
       （kratos grpc server / 裸 grpc.Server）；HTTP 由宿主 BFF 层定义
-- [ ] 加签（动态增加办理人）、驳回指定节点（ReturnTo）
+- [x] 加签（AddTaskApprovers，会签式 + 委托叠加 + 去重）与驳回指定节点
+      （ReturnTo，userTask 祖先、并行在途 fail-closed）；契约 v0.1.1 增补
+      AddSigners / ReturnTo RPC（已推 BSR），server 层 RPC 级测试覆盖
 - [ ] 变量作用域（实例级 → 节点级局部变量）
 - [ ] 定时器节点（`intermediateTimerEvent`）+ 宿主调度器参考实现
 - [ ] 设计器协议定型：与 go-wind-ui 流程设计器（BPMN-JS 封装）的 JSON 契约

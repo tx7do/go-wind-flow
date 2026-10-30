@@ -12,6 +12,7 @@ import (
 	flowv1 "github.com/tx7do/go-wind-flow/api/gen/go/flow/v1"
 
 	bpmn "github.com/tx7do/go-wind-flow/format/bpmn"
+	windjson "github.com/tx7do/go-wind-flow/format/windjson"
 
 	"github.com/tx7do/go-wind-flow/flow"
 	"github.com/tx7do/go-wind-flow/store/memory"
@@ -206,5 +207,95 @@ func TestWithdrawAndForwardRPCs(t *testing.T) {
 	_, err = svc.WithdrawInstance(ctx, &flowv1.WithdrawInstanceRequest{Id: started.GetInstance().GetId(), ActorId: "u_emp"})
 	if status.Code(err) != codes.FailedPrecondition {
 		t.Fatalf("double withdraw code = %v, want FailedPrecondition", status.Code(err))
+	}
+}
+
+func TestAddSignersAndReturnToRPCs(t *testing.T) {
+	st := memory.New() // 引擎与服务共享同一存储
+	eng := flow.New(
+		flow.WithStore(st),
+		flow.WithIdentity(staticIdentity{}),
+		flow.WithImporters(windjson.Importer{}),
+	)
+	defJSON := []byte(`{
+		"version": 2,
+		"nodes": [
+			{"id": "start", "type": "START"},
+			{"id": "u1", "type": "TASK", "approvers": [{"type": "USER", "id": 11}]},
+			{"id": "u2", "type": "TASK", "approvers": [{"type": "USER", "id": 22}]},
+			{"id": "u3", "type": "TASK", "approvers": [{"type": "USER", "id": 33}]},
+			{"id": "end", "type": "END"}
+		],
+		"edges": [
+			{"from": "start", "to": "u1"},
+			{"from": "u1", "to": "u2"},
+			{"from": "u2", "to": "u3"},
+			{"from": "u3", "to": "end"}
+		]
+	}`)
+	ctx := context.Background()
+	if _, err := eng.Deploy(ctx, flow.DeployRequest{TenantID: "t1", Key: "linear", Data: defJSON}); err != nil {
+		t.Fatalf("deploy: %v", err)
+	}
+	svc := New(eng, st)
+
+	started, err := svc.StartInstance(ctx, &flowv1.StartInstanceRequest{
+		TenantId: "t1", Key: "linear", StarterId: "u0",
+	})
+	if err != nil {
+		t.Fatalf("start: %v", err)
+	}
+
+	// 加签 RPC → 两个新待办。
+	added, err := svc.AddSigners(ctx, &flowv1.AddSignersRequest{
+		TaskId: started.GetTaskIds()[0], ActorId: "11", UserIds: []string{"44", "55"},
+	})
+	if err != nil || added.GetTotal() != 2 {
+		t.Fatalf("AddSigners = %d, %v", added.GetTotal(), err)
+	}
+
+	// 会签全员通过推进到 u2。
+	for _, uid := range []string{"11", "44", "55"} {
+		pt, err := svc.ListPendingTasks(ctx, &flowv1.ListPendingTasksRequest{TenantId: "t1", Assignee: uid})
+		if err != nil || pt.GetTotal() == 0 {
+			t.Fatalf("pending for %s = %d, %v", uid, pt.GetTotal(), err)
+		}
+		if _, err := svc.CompleteTask(ctx, &flowv1.CompleteTaskRequest{
+			TaskId: pt.GetItems()[0].GetId(), ActorId: uid, Outcome: flowv1.FlowTaskOutcome_FLOW_TASK_OUTCOME_APPROVE,
+		}); err != nil {
+			t.Fatalf("complete %s: %v", uid, err)
+		}
+	}
+
+	// u2 退回 u1（RPC）→ 实例 RUNNING，u1 重新有待办。
+	pt22, _ := svc.ListPendingTasks(ctx, &flowv1.ListPendingTasksRequest{TenantId: "t1", Assignee: "22"})
+	ret, err := svc.ReturnTo(ctx, &flowv1.ReturnToRequest{
+		TaskId: pt22.GetItems()[0].GetId(), ActorId: "22", TargetNodeId: "u1", Comment: "退回补充",
+	})
+	if err != nil {
+		t.Fatalf("ReturnTo: %v", err)
+	}
+	if ret.GetInstance().GetStatus() != flowv1.FlowInstanceStatus_FLOW_INSTANCE_STATUS_RUNNING {
+		t.Fatalf("status = %s, want RUNNING", ret.GetInstance().GetStatus())
+	}
+	p11, _ := svc.ListPendingTasks(ctx, &flowv1.ListPendingTasksRequest{TenantId: "t1", Assignee: "11"})
+	if p11.GetTotal() != 1 || p11.GetItems()[0].GetNodeId() != "u1" {
+		t.Fatalf("after return, u1 pending wrong: %+v", p11)
+	}
+
+	// 历史含加签与退回事件（枚举映射验证）。
+	hist, err := svc.ListInstanceHistory(ctx, &flowv1.ListInstanceHistoryRequest{
+		InstanceId: started.GetInstance().GetId(),
+	})
+	if err != nil {
+		t.Fatalf("history: %v", err)
+	}
+	kind := map[flowv1.FlowEventType]bool{}
+	for _, ev := range hist.GetItems() {
+		kind[ev.GetType()] = true
+	}
+	if !kind[flowv1.FlowEventType_FLOW_EVENT_TYPE_TASK_APPROVER_ADDED] ||
+		!kind[flowv1.FlowEventType_FLOW_EVENT_TYPE_INSTANCE_RETURNED] {
+		t.Fatal("approver_added / instance_returned events missing in proto history")
 	}
 }

@@ -34,6 +34,10 @@ enum FlowEventType {
   FLOW_EVENT_TYPE_TASK_DUE = 8;
   // 实例变量变更
   FLOW_EVENT_TYPE_VARIABLE_CHANGED = 9;
+  // 加签（节点追加办理人）
+  FLOW_EVENT_TYPE_TASK_APPROVER_ADDED = 10;
+  // 实例退回指定节点
+  FLOW_EVENT_TYPE_INSTANCE_RETURNED = 11;
 }
 
 // 流转历史事件。

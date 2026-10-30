@@ -212,6 +212,40 @@ func (s *Services) GetTask(ctx context.Context, req *flowv1.GetTaskRequest) (*fl
 	return taskToProto(task), nil
 }
 
+func (s *Services) AddSigners(ctx context.Context, req *flowv1.AddSignersRequest) (*flowv1.ListTasksResponse, error) {
+	created, err := s.engine.AddTaskApprovers(ctx, req.GetTaskId(), req.GetActorId(), req.GetUserIds())
+	if err != nil {
+		return nil, mapError(err)
+	}
+	out := &flowv1.ListTasksResponse{Total: int64(len(created))}
+	for _, t := range created {
+		out.Items = append(out.Items, taskToProto(t))
+	}
+	return out, nil
+}
+
+func (s *Services) ReturnTo(ctx context.Context, req *flowv1.ReturnToRequest) (*flowv1.CompleteTaskResponse, error) {
+	task, err := s.store.Tasks().Get(ctx, req.GetTaskId())
+	if err != nil {
+		return nil, mapError(err)
+	}
+	err = s.tx(ctx, func(ctx context.Context) error {
+		return s.engine.ReturnTo(ctx, req.GetTaskId(), req.GetActorId(), req.GetTargetNodeId(), req.GetComment())
+	})
+	if err != nil {
+		return nil, mapError(err)
+	}
+	inst, err := s.engine.GetInstance(ctx, task.InstanceID)
+	if err != nil {
+		return nil, mapError(err)
+	}
+	pb, err := instToProto(inst)
+	if err != nil {
+		return nil, mapError(err)
+	}
+	return &flowv1.CompleteTaskResponse{Instance: pb}, nil
+}
+
 func (s *Services) ListPendingTasks(ctx context.Context, req *flowv1.ListPendingTasksRequest) (*flowv1.ListTasksResponse, error) {
 	tasks, err := s.engine.ListPendingTasks(ctx, req.GetTenantId(), req.GetAssignee())
 	if err != nil {

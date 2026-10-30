@@ -7,6 +7,14 @@
 
 ### Added
 
+- 引擎：**加签** `AddTaskApprovers`（向待办节点动态追加办理人，会签式、委托叠加、
+  自动去重）与 **退回指定节点** `ReturnTo`（退回 userTask 祖先重走，动态办理人
+  重新解析；非祖先 / 非 userTask / 在途并行分支均 fail-closed 拒绝）
+- 事件：`task.approver_added`、`instance.returned` 两个生命周期事件（历史 + 监听器）
+- `api` 契约 v0.1.1：`FlowTaskService` 新增 `AddSigners` / `ReturnTo` RPC 与
+  对应枚举值（已推 BSR）
+- `server`：两个 RPC 的服务实现与事件枚举映射，RPC 级端到端测试
+
 - `server`：api 契约的 gRPC 服务实现（独立子模块）——proto ↔ 领域结构映射、
   哨兵错误 → gRPC 状态码映射（NotFound / PermissionDenied / FailedPrecondition /
   InvalidArgument / Internal）、写路径 WithTx 事务接线；`RegisterAll` 一次注册

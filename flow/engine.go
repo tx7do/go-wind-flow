@@ -28,14 +28,14 @@ type Engine struct {
 
 type Option func(*Engine)
 
-func WithStore(s Store) Option          { return func(e *Engine) { e.store = s } }
+func WithStore(s Store) Option                   { return func(e *Engine) { e.store = s } }
 func WithEvaluator(v ExpressionEvaluator) Option { return func(e *Engine) { e.evaluator = v } }
-func WithScripts(s ScriptRunner) Option { return func(e *Engine) { e.scripts = s } }
-func WithIdentity(p IdentityProvider) Option { return func(e *Engine) { e.identity = p } }
-func WithClock(c Clock) Option          { return func(e *Engine) { e.clock = c } }
-func WithIDGen(g IDGen) Option          { return func(e *Engine) { e.idgen = g } }
-func WithLogger(l Logger) Option        { return func(e *Engine) { e.log = l } }
-func WithMaxSteps(n int) Option         { return func(e *Engine) { e.maxSteps = n } }
+func WithScripts(s ScriptRunner) Option          { return func(e *Engine) { e.scripts = s } }
+func WithIdentity(p IdentityProvider) Option     { return func(e *Engine) { e.identity = p } }
+func WithClock(c Clock) Option                   { return func(e *Engine) { e.clock = c } }
+func WithIDGen(g IDGen) Option                   { return func(e *Engine) { e.idgen = g } }
+func WithLogger(l Logger) Option                 { return func(e *Engine) { e.log = l } }
+func WithMaxSteps(n int) Option                  { return func(e *Engine) { e.maxSteps = n } }
 
 // WithImporters 注册定义导入器（bpmn.Importer、windjson.Importer 等）。
 func WithImporters(im ...Importer) Option {
@@ -162,13 +162,13 @@ func (e *Engine) ExportDefinition(ctx context.Context, tenantID, key string, ver
 // ============================================================
 
 type StartRequest struct {
-	TenantID    string
-	Key         string
-	Version     int // 0 = latest
-	BusinessKey string
+	TenantID     string
+	Key          string
+	Version      int // 0 = latest
+	BusinessKey  string
 	BusinessType string
-	StarterID   string
-	Variables   Vars
+	StarterID    string
+	Variables    Vars
 	// ParentInstanceID / ParentTokenID 子流程链接：由引擎在 callActivity
 	// 处自动填充；宿主直接调用时不应设置。
 	ParentInstanceID string
@@ -353,6 +353,218 @@ func (e *Engine) CompleteTask(ctx context.Context, req CompleteTaskRequest) erro
 		return err
 	}
 	return e.runToken(ctx, inst, tk, def)
+}
+
+// AddTaskApprovers 加签：向待办任务所在节点动态追加办理人（会签式——
+// 新任务与既有待办并行，ALL/ANY 语义照常）。
+//
+// 委托叠加与任务创建时的解析一致；已是该节点待办办理人的用户自动去重。
+// 返回本次新创建的任务。
+func (e *Engine) AddTaskApprovers(ctx context.Context, taskID, actorID string, userIDs []string) ([]*Task, error) {
+	task, err := e.store.Tasks().Get(ctx, taskID)
+	if err != nil {
+		return nil, err
+	}
+	if task.Status != TaskPending {
+		return nil, fmt.Errorf("%w: task %s not pending", ErrInvalidState, task.ID)
+	}
+	if len(userIDs) == 0 {
+		return nil, fmt.Errorf("flow: empty approvers")
+	}
+	inst, err := e.store.Instances().Get(ctx, task.InstanceID)
+	if err != nil {
+		return nil, err
+	}
+	if !inst.Status.Live() {
+		return nil, fmt.Errorf("%w: instance %s is %s", ErrInvalidState, inst.ID, inst.Status)
+	}
+	def, err := e.definitionOf(ctx, inst)
+	if err != nil {
+		return nil, err
+	}
+	node := def.Nodes[task.NodeID]
+
+	// 委托叠加（与 arriveAtApprovers 创建语义一致）。
+	if e.identity != nil {
+		for i, uid := range userIDs {
+			delegate, derr := e.identity.ResolveDelegate(ctx, inst.TenantID, uid)
+			if derr != nil {
+				e.log.Printf("flow: resolve delegation for %s failed: %v (keep original)", uid, derr)
+				continue
+			}
+			userIDs[i] = delegate
+		}
+	}
+
+	// 既有待办办理人去重。
+	siblings, err := e.store.Tasks().ListByToken(ctx, task.TokenID)
+	if err != nil {
+		return nil, err
+	}
+	existing := map[string]bool{}
+	for _, sib := range siblings {
+		if sib.Status == TaskPending {
+			existing[sib.Assignee] = true
+		}
+	}
+
+	now := e.clock.Now()
+	tk, err := e.store.Tokens().Get(ctx, task.TokenID)
+	if err != nil {
+		return nil, err
+	}
+	tk.Status = TokenWaiting // 令牌本就 WAITING，显式保持
+	if err := e.store.Tokens().Update(ctx, tk); err != nil {
+		return nil, err
+	}
+
+	var created []*Task
+	for _, uid := range userIDs {
+		if uid == "" || existing[uid] {
+			continue
+		}
+		existing[uid] = true
+		nt := &Task{
+			ID:         e.idgen(),
+			InstanceID: inst.ID,
+			TenantID:   inst.TenantID,
+			NodeID:     task.NodeID,
+			TokenID:    task.TokenID,
+			Name:       task.Name,
+			Assignee:   uid,
+			Status:     TaskPending,
+			CreatedAt:  now,
+		}
+		if node != nil && node.Timer != nil {
+			due := now.Add(node.Timer.Duration.Std())
+			nt.DueAt = &due
+		}
+		if err := e.store.Tasks().Save(ctx, nt); err != nil {
+			return nil, err
+		}
+		created = append(created, nt)
+		_ = e.appendHistory(ctx, inst, &Event{
+			Type: EventTaskApproverAdded, NodeID: task.NodeID, TaskID: nt.ID, ActorID: actorID,
+		}, Vars{"assignee": uid, "anchorTask": task.ID})
+		e.fireListeners(ctx, &Event{
+			Type: EventTaskApproverAdded, TenantID: inst.TenantID, InstanceID: inst.ID,
+			TaskID: nt.ID, NodeID: task.NodeID, ActorID: actorID,
+			Vars: inst.Variables.Clone(), At: now,
+		})
+	}
+	return created, nil
+}
+
+// ReturnTo 驳回指定节点：实例退回到更早的 userTask 重新走（如退回发起人重新提交）。
+//
+// 约束（fail-closed）：
+//   - 目标必须是当前节点的 userTask 祖先（当前节点自目标可达）；
+//   - 实例在途并行分支多于一条时不支持（避免 fork/汇合态回滚的语义难题）。
+//
+// 语义：取消全部待办与在途令牌，实例保持 RUNNING，自目标节点生成新令牌
+// 重走——动态办理人规则届时重新解析。历史完整保留。
+func (e *Engine) ReturnTo(ctx context.Context, taskID, actorID, targetNodeID, comment string) error {
+	task, err := e.store.Tasks().Get(ctx, taskID)
+	if err != nil {
+		return err
+	}
+	if task.Status != TaskPending {
+		return fmt.Errorf("%w: task %s not pending", ErrInvalidState, task.ID)
+	}
+	inst, err := e.store.Instances().Get(ctx, task.InstanceID)
+	if err != nil {
+		return err
+	}
+	if !inst.Status.Live() {
+		return fmt.Errorf("%w: instance %s is %s", ErrInvalidState, inst.ID, inst.Status)
+	}
+	def, err := e.definitionOf(ctx, inst)
+	if err != nil {
+		return err
+	}
+	target := def.Nodes[targetNodeID]
+	if target == nil {
+		return fmt.Errorf("%w: return-to target %q not in definition", ErrInvalidState, targetNodeID)
+	}
+	if target.Type != NodeUserTask {
+		return fmt.Errorf("%w: return-to target %s is %s, want userTask", ErrInvalidState, targetNodeID, target.Type)
+	}
+	if targetNodeID == task.NodeID || !reachableFrom(def, targetNodeID, task.NodeID) {
+		return fmt.Errorf("%w: node %s is not an ancestor of %s", ErrInvalidState, targetNodeID, task.NodeID)
+	}
+
+	// 在途并行分支 fail-closed。
+	tokens, err := e.store.Tokens().ListByInstance(ctx, inst.ID)
+	if err != nil {
+		return err
+	}
+	live := 0
+	for _, tk := range tokens {
+		if tk.Status != TokenEnded {
+			live++
+		}
+	}
+	if live > 1 {
+		return fmt.Errorf("%w: return-to unsupported with %d live tokens (parallel in flight)", ErrInvalidState, live)
+	}
+
+	// 取消全部待办、终结全部令牌。
+	tasks, _ := e.store.Tasks().ListByInstance(ctx, inst.ID)
+	for _, t := range tasks {
+		if t.Status == TaskPending {
+			now := e.clock.Now()
+			t.Status = TaskCancelled
+			t.EndedAt = &now
+			_ = e.store.Tasks().Update(ctx, t)
+		}
+	}
+	for _, tk := range tokens {
+		if tk.Status != TokenEnded {
+			tk.Status = TokenEnded
+			_ = e.store.Tokens().Update(ctx, tk)
+		}
+	}
+
+	_ = e.appendHistory(ctx, inst, &Event{
+		Type: EventInstanceReturned, NodeID: targetNodeID, ActorID: actorID,
+	}, Vars{"from": task.NodeID, "to": targetNodeID, "comment": comment})
+	e.fireListeners(ctx, &Event{
+		Type: EventInstanceReturned, TenantID: inst.TenantID, InstanceID: inst.ID,
+		NodeID: targetNodeID, ActorID: actorID, Vars: inst.Variables.Clone(), At: e.clock.Now(),
+	})
+
+	// 自目标节点生成新令牌重走。
+	nt := &Token{
+		ID:         e.idgen(),
+		InstanceID: inst.ID,
+		NodeID:     targetNodeID,
+		Status:     TokenRunning,
+		CreatedAt:  e.clock.Now(),
+	}
+	if err := e.store.Tokens().Save(ctx, nt); err != nil {
+		return err
+	}
+	return e.runToken(ctx, inst, nt, def)
+}
+
+// reachableFrom 判定 to 是否自 from 沿顺序流可达。
+func reachableFrom(def *Definition, from, to string) bool {
+	reached := map[string]bool{from: true}
+	queue := []string{from}
+	for len(queue) > 0 {
+		cur := queue[0]
+		queue = queue[1:]
+		if cur == to {
+			return true
+		}
+		for _, e := range def.OutEdges(cur) {
+			if !reached[e.To] {
+				reached[e.To] = true
+				queue = append(queue, e.To)
+			}
+		}
+	}
+	return false
 }
 
 // ForwardTask 转办：把待办任务移交他人。
