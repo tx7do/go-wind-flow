@@ -195,10 +195,6 @@ export const designerCSS = /* css */ `
 .gwf-designer .djs-segment-dragger .djs-dragger {
   fill: var(--gwf-accent);
 }
-.gwf-designer .djs-hit {
-  stroke: transparent;
-}
-
 
 .gwf-designer .bio-properties-panel {
   --color-grey-225-10-15: var(--gwf-text);
