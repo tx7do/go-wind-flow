@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/tx7do/go-wind-flow/flow"
 	"github.com/tx7do/go-wind-flow/store/ent/ent/predicate"
 	"github.com/tx7do/go-wind-flow/store/ent/ent/token"
 )
@@ -118,6 +119,12 @@ func (_u *TokenUpdate) ClearDueAt() *TokenUpdate {
 	return _u
 }
 
+// SetLocals sets the "locals" field.
+func (_u *TokenUpdate) SetLocals(v flow.Vars) *TokenUpdate {
+	_u.mutation.SetLocals(v)
+	return _u
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_u *TokenUpdate) SetCreatedAt(v time.Time) *TokenUpdate {
 	_u.mutation.SetCreatedAt(v)
@@ -193,6 +200,9 @@ func (_u *TokenUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.DueAtCleared() {
 		_spec.ClearField(token.FieldDueAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.Locals(); ok {
+		_spec.SetField(token.FieldLocals, field.TypeJSON, value)
 	}
 	if value, ok := _u.mutation.CreatedAt(); ok {
 		_spec.SetField(token.FieldCreatedAt, field.TypeTime, value)
@@ -307,6 +317,12 @@ func (_u *TokenUpdateOne) ClearDueAt() *TokenUpdateOne {
 	return _u
 }
 
+// SetLocals sets the "locals" field.
+func (_u *TokenUpdateOne) SetLocals(v flow.Vars) *TokenUpdateOne {
+	_u.mutation.SetLocals(v)
+	return _u
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_u *TokenUpdateOne) SetCreatedAt(v time.Time) *TokenUpdateOne {
 	_u.mutation.SetCreatedAt(v)
@@ -412,6 +428,9 @@ func (_u *TokenUpdateOne) sqlSave(ctx context.Context) (_node *Token, err error)
 	}
 	if _u.mutation.DueAtCleared() {
 		_spec.ClearField(token.FieldDueAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.Locals(); ok {
+		_spec.SetField(token.FieldLocals, field.TypeJSON, value)
 	}
 	if value, ok := _u.mutation.CreatedAt(); ok {
 		_spec.SetField(token.FieldCreatedAt, field.TypeTime, value)

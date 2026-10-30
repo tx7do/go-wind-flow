@@ -23,6 +23,8 @@ const (
 	FieldChildInstID = "child_inst_id"
 	// FieldDueAt holds the string denoting the due_at field in the database.
 	FieldDueAt = "due_at"
+	// FieldLocals holds the string denoting the locals field in the database.
+	FieldLocals = "locals"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// Table holds the table name of the token in the database.
@@ -38,6 +40,7 @@ var Columns = []string{
 	FieldParentID,
 	FieldChildInstID,
 	FieldDueAt,
+	FieldLocals,
 	FieldCreatedAt,
 }
 

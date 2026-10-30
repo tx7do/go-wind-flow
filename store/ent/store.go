@@ -345,6 +345,7 @@ func (t tokenStore) upsert(ctx context.Context, tk *flow.Token) error {
 			SetParentID(tk.ParentID).
 			SetChildInstID(tk.ChildInstID).
 			SetNillableDueAt(tk.DueAt).
+			SetLocals(tk.Locals).
 			Save(ctx)
 		return err
 	}
@@ -356,6 +357,7 @@ func (t tokenStore) upsert(ctx context.Context, tk *flow.Token) error {
 		SetParentID(tk.ParentID).
 		SetChildInstID(tk.ChildInstID).
 		SetNillableDueAt(tk.DueAt).
+		SetLocals(tk.Locals).
 		SetCreatedAt(tk.CreatedAt).
 		Save(ctx)
 	return err
@@ -374,6 +376,7 @@ func tokenToFlow(e *gen.Token) *flow.Token {
 		ParentID:    e.ParentID,
 		ChildInstID: e.ChildInstID,
 		DueAt:       e.DueAt,
+		Locals:      e.Locals,
 		CreatedAt:   e.CreatedAt,
 	}
 }

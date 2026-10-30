@@ -4,6 +4,8 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
+
+	"github.com/tx7do/go-wind-flow/flow"
 )
 
 // Token 执行令牌（go-wind-flow 新增实体，旧引擎没有）。
@@ -20,6 +22,7 @@ func (Token) Fields() []ent.Field {
 		field.String("parent_id").Default(""),
 		field.String("child_inst_id").Default(""),
 		field.Time("due_at").Optional().Nillable(),
+		field.JSON("locals", flow.Vars{}),
 		field.Time("created_at"),
 	}
 }

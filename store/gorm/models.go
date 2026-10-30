@@ -50,6 +50,7 @@ type Token struct {
 	ParentID    string     `gorm:"size:64"`
 	ChildInstID string     `gorm:"size:64"`
 	DueAt       *time.Time `gorm:"index:ix_token_due,priority:2"`
+	Locals      flow.Vars  `gorm:"serializer:json"`
 	CreatedAt   time.Time  `gorm:"index:ix_token_inst,priority:2"`
 }
 

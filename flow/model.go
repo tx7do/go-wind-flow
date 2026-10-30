@@ -95,9 +95,14 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 
 // ScriptSpec 脚本任务/监听器脚本规格。Lang 由 ScriptRunner 实现方约定
 // （contrib/goscripts: js/lua/python/go/cel/expr...）。
+//
+// Scope 决定脚本返回 map 的落点：
+//   - "" / "instance"（默认）→ 实例变量（业务数据可见）；
+//   - "local" → 令牌级局部变量（仅当前分支的后续节点可读，不污染业务数据）。
 type ScriptSpec struct {
-	Lang string `json:"lang,omitempty"`
-	Code string `json:"code,omitempty"`
+	Lang  string `json:"lang,omitempty"`
+	Code  string `json:"code,omitempty"`
+	Scope string `json:"scope,omitempty"` // "" | "instance" | "local"
 }
 
 // Node 定义图中的节点。

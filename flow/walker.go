@@ -31,7 +31,7 @@ func (e *Engine) runToken(ctx context.Context, inst *Instance, tk *Token, def *D
 			return e.arriveAtUserTask(ctx, inst, tk, node, def)
 
 		case NodeScriptTask, NodeServiceTask:
-			if err := e.execScriptTask(ctx, inst, node); err != nil {
+			if err := e.execScriptTask(ctx, inst, tk, node); err != nil {
 				return err
 			}
 			out := def.OutEdges(tk.NodeID)
@@ -43,7 +43,7 @@ func (e *Engine) runToken(ctx context.Context, inst *Instance, tk *Token, def *D
 			}
 
 		case NodeExclusiveGateway:
-			edge, err := e.selectExclusive(ctx, inst, def, node)
+			edge, err := e.selectExclusive(ctx, inst, tk, def, node)
 			if err != nil {
 				return err
 			}
@@ -125,9 +125,19 @@ func (e *Engine) finishTokenAtEnd(ctx context.Context, inst *Instance, tk *Token
 	return nil
 }
 
+// mergedEnv 读侧变量环境：实例变量为底，令牌局部叠加（同名覆盖）。
+// 返回副本，求值方无法改动引擎状态。
+func mergedEnv(inst *Instance, tk *Token) Vars {
+	env := inst.Variables.Clone()
+	for k, v := range tk.Locals {
+		env[k] = v
+	}
+	return env
+}
+
 // arriveAtUserTask 到达用户任务：解析办理人、创建任务、令牌阻塞。
 func (e *Engine) arriveAtUserTask(ctx context.Context, inst *Instance, tk *Token, node *Node, def *Definition) error {
-	assignees, err := e.resolveApprovers(ctx, inst, node)
+	assignees, err := e.resolveApprovers(ctx, inst, tk, node)
 	if err != nil {
 		// fail-closed：解析失败不创建任务，令牌留在原地（RUNNING），
 		// 由宿主决定重试或终止。
@@ -172,7 +182,8 @@ func (e *Engine) arriveAtUserTask(ctx context.Context, inst *Instance, tk *Token
 }
 
 // resolveApprovers 解析任务办理人：去重保序 + 委托叠加。
-func (e *Engine) resolveApprovers(ctx context.Context, inst *Instance, node *Node) ([]string, error) {
+// 动态规则（EXPR）的求值环境为实例变量 + 令牌局部叠加。
+func (e *Engine) resolveApprovers(ctx context.Context, inst *Instance, tk *Token, node *Node) ([]string, error) {
 	if node.Approver == nil || len(node.Approver.Rules) == 0 {
 		return nil, fmt.Errorf("%w: node %s has no approver rules", ErrInvalidDefinition, node.ID)
 	}
@@ -185,6 +196,7 @@ func (e *Engine) resolveApprovers(ctx context.Context, inst *Instance, node *Nod
 		}
 	}
 
+	env := mergedEnv(inst, tk)
 	var ids []string
 	switch {
 	case e.identity != nil:
@@ -194,7 +206,7 @@ func (e *Engine) resolveApprovers(ctx context.Context, inst *Instance, node *Nod
 			DefinitionID: inst.DefinitionKey,
 			NodeID:       node.ID,
 			StarterID:    inst.StarterID,
-			InstanceVars: inst.Variables,
+			InstanceVars: env,
 			Rules:        node.Approver.Rules,
 		})
 		if err != nil {
@@ -237,49 +249,63 @@ func (e *Engine) resolveApprovers(ctx context.Context, inst *Instance, node *Nod
 	return ids, nil
 }
 
-// execScriptTask 执行脚本任务；返回 map 时把键值合并进实例变量。
-func (e *Engine) execScriptTask(ctx context.Context, inst *Instance, node *Node) error {
+// execScriptTask 执行脚本任务；返回 map 时按键值落点合并——
+// scope "local" → 令牌局部变量（仅当前分支后续节点可读），
+// 默认 → 实例变量（业务数据可见）。求值环境为实例 + 局部叠加。
+func (e *Engine) execScriptTask(ctx context.Context, inst *Instance, tk *Token, node *Node) error {
 	if node.Script == nil || node.Script.Code == "" {
 		return fmt.Errorf("%w: script task %s has no script", ErrInvalidDefinition, node.ID)
 	}
 	if e.scripts == nil {
 		return fmt.Errorf("%w: ScriptRunner is nil (node %s)", ErrNotConfigured, node.ID)
 	}
-	result, err := e.scripts.Run(ctx, node.Script, inst.Variables.Clone())
+	result, err := e.scripts.Run(ctx, node.Script, mergedEnv(inst, tk))
 	if err != nil {
 		_ = e.appendHistory(ctx, inst, &Event{Type: EventTokenMoved, NodeID: node.ID}, Vars{"scriptError": err.Error()})
 		return fmt.Errorf("%w: node %s: %v", ErrScript, node.ID, err)
 	}
-	switch m := result.(type) {
+
+	var m Vars
+	switch r := result.(type) {
 	case map[string]any:
-		if len(m) > 0 {
-			inst.Variables.Merge(m)
-			if err := e.store.Instances().Update(ctx, inst); err != nil {
-				return err
-			}
-			_ = e.appendHistory(ctx, inst, &Event{Type: EventVariableChanged}, m)
-		}
+		m = Vars(r)
 	case Vars:
-		if len(m) > 0 {
-			inst.Variables.Merge(m)
-			if err := e.store.Instances().Update(ctx, inst); err != nil {
-				return err
-			}
-			_ = e.appendHistory(ctx, inst, &Event{Type: EventVariableChanged}, m)
-		}
+		m = r
 	}
+	if len(m) == 0 {
+		return nil
+	}
+
+	if node.Script.Scope == "local" {
+		if tk.Locals == nil {
+			tk.Locals = Vars{}
+		}
+		tk.Locals.Merge(m)
+		if err := e.store.Tokens().Update(ctx, tk); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	inst.Variables.Merge(m)
+	if err := e.store.Instances().Update(ctx, inst); err != nil {
+		return err
+	}
+	_ = e.appendHistory(ctx, inst, &Event{Type: EventVariableChanged}, m)
 	return nil
 }
 
 // selectExclusive 排他网关选边：按定义顺序求值，命中即走；全不中走默认；无默认 fail-closed。
-func (e *Engine) selectExclusive(ctx context.Context, inst *Instance, def *Definition, node *Node) (*Edge, error) {
+// 求值环境为实例变量 + 令牌局部叠加。
+func (e *Engine) selectExclusive(ctx context.Context, inst *Instance, tk *Token, def *Definition, node *Node) (*Edge, error) {
+	env := mergedEnv(inst, tk)
 	var defEdge *Edge
 	for _, edge := range def.OutEdges(node.ID) {
 		if edge.IsDefault || edge.Condition == "default" {
 			defEdge = edge
 			continue
 		}
-		ok, err := e.evaluator.EvalBool(ctx, edge.Condition, inst.Variables)
+		ok, err := e.evaluator.EvalBool(ctx, edge.Condition, env)
 		if err != nil {
 			return nil, fmt.Errorf("%w: gateway %s edge %s: %v (fail-closed)", ErrExpression, node.ID, edge.ID, err)
 		}
@@ -343,6 +369,7 @@ func (e *Engine) walkGateway(ctx context.Context, inst *Instance, tk *Token, def
 
 	// ---- 分叉 ----
 	if len(out) >= 2 {
+		env := mergedEnv(inst, tk)
 		if node.Type == NodeInclusiveGateway {
 			var chosen []*Edge
 			var defEdge *Edge
@@ -354,7 +381,7 @@ func (e *Engine) walkGateway(ctx context.Context, inst *Instance, tk *Token, def
 					}
 					continue
 				}
-				ok, err := e.evaluator.EvalBool(ctx, edge.Condition, inst.Variables)
+				ok, err := e.evaluator.EvalBool(ctx, edge.Condition, env)
 				if err != nil {
 					return fmt.Errorf("%w: inclusive gateway %s edge %s: %v", ErrExpression, node.ID, edge.ID, err)
 				}
@@ -389,6 +416,7 @@ func (e *Engine) walkGateway(ctx context.Context, inst *Instance, tk *Token, def
 				NodeID:     edge.To,
 				Status:     TokenRunning,
 				ParentID:   tk.ID,
+				Locals:     tk.Locals.Clone(), // 分支隔离：fork 快照克隆局部变量
 				CreatedAt:  e.clock.Now(),
 			}
 			if err := e.store.Tokens().Save(ctx, child); err != nil {

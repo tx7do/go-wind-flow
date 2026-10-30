@@ -3,12 +3,14 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/tx7do/go-wind-flow/flow"
 	"github.com/tx7do/go-wind-flow/store/ent/ent/token"
 )
 
@@ -29,6 +31,8 @@ type Token struct {
 	ChildInstID string `json:"child_inst_id,omitempty"`
 	// DueAt holds the value of the "due_at" field.
 	DueAt *time.Time `json:"due_at,omitempty"`
+	// Locals holds the value of the "locals" field.
+	Locals flow.Vars `json:"locals,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt    time.Time `json:"created_at,omitempty"`
 	selectValues sql.SelectValues
@@ -39,6 +43,8 @@ func (*Token) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case token.FieldLocals:
+			values[i] = new([]byte)
 		case token.FieldID, token.FieldInstanceID, token.FieldNodeID, token.FieldStatus, token.FieldParentID, token.FieldChildInstID:
 			values[i] = new(sql.NullString)
 		case token.FieldDueAt, token.FieldCreatedAt:
@@ -101,6 +107,14 @@ func (_m *Token) assignValues(columns []string, values []any) error {
 				_m.DueAt = new(time.Time)
 				*_m.DueAt = value.Time
 			}
+		case token.FieldLocals:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field locals", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.Locals); err != nil {
+					return fmt.Errorf("unmarshal field locals: %w", err)
+				}
+			}
 		case token.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
@@ -162,6 +176,9 @@ func (_m *Token) String() string {
 		builder.WriteString("due_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
+	builder.WriteString(", ")
+	builder.WriteString("locals=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Locals))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

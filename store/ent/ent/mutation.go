@@ -3471,6 +3471,7 @@ type TokenMutation struct {
 	parent_id     *string
 	child_inst_id *string
 	due_at        *time.Time
+	locals        *flow.Vars
 	created_at    *time.Time
 	clearedFields map[string]struct{}
 	done          bool
@@ -3811,6 +3812,42 @@ func (m *TokenMutation) ResetDueAt() {
 	delete(m.clearedFields, token.FieldDueAt)
 }
 
+// SetLocals sets the "locals" field.
+func (m *TokenMutation) SetLocals(f flow.Vars) {
+	m.locals = &f
+}
+
+// Locals returns the value of the "locals" field in the mutation.
+func (m *TokenMutation) Locals() (r flow.Vars, exists bool) {
+	v := m.locals
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLocals returns the old "locals" field's value of the Token entity.
+// If the Token object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TokenMutation) OldLocals(ctx context.Context) (v flow.Vars, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLocals is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLocals requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLocals: %w", err)
+	}
+	return oldValue.Locals, nil
+}
+
+// ResetLocals resets all changes to the "locals" field.
+func (m *TokenMutation) ResetLocals() {
+	m.locals = nil
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *TokenMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -3881,7 +3918,7 @@ func (m *TokenMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TokenMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 8)
 	if m.instance_id != nil {
 		fields = append(fields, token.FieldInstanceID)
 	}
@@ -3899,6 +3936,9 @@ func (m *TokenMutation) Fields() []string {
 	}
 	if m.due_at != nil {
 		fields = append(fields, token.FieldDueAt)
+	}
+	if m.locals != nil {
+		fields = append(fields, token.FieldLocals)
 	}
 	if m.created_at != nil {
 		fields = append(fields, token.FieldCreatedAt)
@@ -3923,6 +3963,8 @@ func (m *TokenMutation) Field(name string) (ent.Value, bool) {
 		return m.ChildInstID()
 	case token.FieldDueAt:
 		return m.DueAt()
+	case token.FieldLocals:
+		return m.Locals()
 	case token.FieldCreatedAt:
 		return m.CreatedAt()
 	}
@@ -3946,6 +3988,8 @@ func (m *TokenMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldChildInstID(ctx)
 	case token.FieldDueAt:
 		return m.OldDueAt(ctx)
+	case token.FieldLocals:
+		return m.OldLocals(ctx)
 	case token.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	}
@@ -3998,6 +4042,13 @@ func (m *TokenMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDueAt(v)
+		return nil
+	case token.FieldLocals:
+		v, ok := value.(flow.Vars)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLocals(v)
 		return nil
 	case token.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -4081,6 +4132,9 @@ func (m *TokenMutation) ResetField(name string) error {
 		return nil
 	case token.FieldDueAt:
 		m.ResetDueAt()
+		return nil
+	case token.FieldLocals:
+		m.ResetLocals()
 		return nil
 	case token.FieldCreatedAt:
 		m.ResetCreatedAt()

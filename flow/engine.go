@@ -245,8 +245,10 @@ type CompleteTaskRequest struct {
 	// Outcome: OutcomeApprove / OutcomeReject
 	Outcome string
 	Comment string
-	// Variables 办结时回写的业务变量（如表单字段）。
+	// Variables 办结时回写的业务变量（如表单字段），进实例级。
 	Variables Vars
+	// LocalVariables 办结时写入令牌级局部变量（仅当前分支后续节点可读）。
+	LocalVariables Vars
 }
 
 // CompleteTask 办结用户任务。会签/或签语义由定义驱动；驳回按 RejectMode 处理。
@@ -300,6 +302,15 @@ func (e *Engine) CompleteTask(ctx context.Context, req CompleteTaskRequest) erro
 	tk, err := e.store.Tokens().Get(ctx, task.TokenID)
 	if err != nil {
 		return err
+	}
+	if len(req.LocalVariables) > 0 {
+		if tk.Locals == nil {
+			tk.Locals = Vars{}
+		}
+		tk.Locals.Merge(req.LocalVariables)
+		if err := e.store.Tokens().Update(ctx, tk); err != nil {
+			return err
+		}
 	}
 	def, err := e.definitionOf(ctx, inst)
 	if err != nil {

@@ -91,10 +91,23 @@ type multiXML struct {
 }
 
 type scriptTaskXML struct {
-	ID           string         `xml:"id,attr"`
-	Name         string         `xml:"name,attr"`
-	ScriptFormat string         `xml:"scriptFormat,attr"`
-	Script       *scriptBodyXML `xml:"script"`
+	ID           string `xml:"id,attr"`
+	Name         string `xml:"name,attr"`
+	ScriptFormat string `xml:"scriptFormat,attr"`
+	// Scope go-wind-flow 扩展："" / instance / local。
+	// 前缀声明与否会改变 Go xml 的属性名解析（Local=scope + Space=URL vs
+	// 字面 "flow:scope"），两个字段都接，取先到。
+	ScopeNS string `xml:"https://github.com/tx7do/go-wind-flow scope,attr"`
+	Scope   string `xml:"flow:scope,attr"`
+	Script  *scriptBodyXML `xml:"script"`
+}
+
+// scopeAttr 归一化后的作用域。
+func (t scriptTaskXML) scopeAttr() string {
+	if t.ScopeNS != "" {
+		return t.ScopeNS
+	}
+	return t.Scope
 }
 
 type scriptBodyXML struct {
@@ -199,14 +212,14 @@ func Parse(data []byte) (*flow.Definition, error) {
 	for _, t := range p.ScriptTasks {
 		node := &flow.Node{ID: t.ID, Name: t.Name, Type: flow.NodeScriptTask}
 		if t.Script != nil {
-			node.Script = &flow.ScriptSpec{Lang: t.ScriptFormat, Code: strings.TrimSpace(t.Script.Inner)}
+			node.Script = &flow.ScriptSpec{Lang: t.ScriptFormat, Code: strings.TrimSpace(t.Script.Inner), Scope: t.scopeAttr()}
 		}
 		add(node)
 	}
 	for _, t := range p.ServiceTasks {
 		node := &flow.Node{ID: t.ID, Name: t.Name, Type: flow.NodeServiceTask}
 		if t.Script != nil {
-			node.Script = &flow.ScriptSpec{Lang: t.ScriptFormat, Code: strings.TrimSpace(t.Script.Inner)}
+			node.Script = &flow.ScriptSpec{Lang: t.ScriptFormat, Code: strings.TrimSpace(t.Script.Inner), Scope: t.scopeAttr()}
 		}
 		add(node)
 	}
@@ -380,11 +393,14 @@ func Write(def *flow.Definition) ([]byte, error) {
 			if n.Type == flow.NodeServiceTask {
 				tag = "serviceTask"
 			}
-			lang := ""
+			lang, scope := "", ""
 			if n.Script != nil {
 				lang = n.Script.Lang
+				if n.Script.Scope == "local" {
+					scope = ` flow:scope="local"`
+				}
 			}
-			fmt.Fprintf(&b, "    <%s id=%q name=%q scriptFormat=%q>\n", tag, n.ID, n.Name, lang)
+			fmt.Fprintf(&b, "    <%s id=%q name=%q scriptFormat=%q%s>\n", tag, n.ID, n.Name, lang, scope)
 			if n.Script != nil {
 				fmt.Fprintf(&b, "      <script><![CDATA[%s]]></script>\n", n.Script.Code)
 			}

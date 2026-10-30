@@ -155,6 +155,7 @@ var (
 		{Name: "parent_id", Type: field.TypeString, Default: ""},
 		{Name: "child_inst_id", Type: field.TypeString, Default: ""},
 		{Name: "due_at", Type: field.TypeTime, Nullable: true},
+		{Name: "locals", Type: field.TypeJSON},
 		{Name: "created_at", Type: field.TypeTime},
 	}
 	// TokensTable holds the schema information for the "tokens" table.

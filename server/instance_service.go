@@ -169,11 +169,12 @@ func (s *Services) CompleteTask(ctx context.Context, req *flowv1.CompleteTaskReq
 	}
 	err = s.tx(ctx, func(ctx context.Context) error {
 		return s.engine.CompleteTask(ctx, flow.CompleteTaskRequest{
-			TaskID:    req.GetTaskId(),
-			ActorID:   req.GetActorId(),
-			Outcome:   outcomeToDomain(req.GetOutcome()),
-			Comment:   req.GetComment(),
-			Variables: structToVars(req.GetVariables()),
+			TaskID:         req.GetTaskId(),
+			ActorID:        req.GetActorId(),
+			Outcome:        outcomeToDomain(req.GetOutcome()),
+			Comment:        req.GetComment(),
+			Variables:      structToVars(req.GetVariables()),
+			LocalVariables: structToVars(req.GetLocalVariables()),
 		})
 	})
 	if err != nil {

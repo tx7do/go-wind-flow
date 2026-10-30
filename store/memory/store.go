@@ -268,6 +268,7 @@ func (t tokenStore) ListDueTimers(_ context.Context, now time.Time) ([]*flow.Tok
 
 func cloneToken(in *flow.Token) *flow.Token {
 	cp := *in
+	cp.Locals = in.Locals.Clone()
 	return &cp
 }
 

@@ -7,6 +7,12 @@
 
 ### Added
 
+- 引擎：**变量作用域**——令牌级局部变量（Token.Locals）：并行分支 fork 快照
+  克隆实现隔离；读侧环境 = 实例 + 局部叠加（局部覆盖），网关条件/动态办理人/
+  脚本任务统一生效；写侧经脚本任务 `flow:scope="local"` 或 CompleteTask 的
+  LocalVariables；局部不回写业务数据、不产生 variable.changed、随令牌消亡。
+  BPMN 导入导出 `flow:scope` 扩展属性（兼容带/不带命名空间声明两种形态）。
+  契约 v0.1.3：CompleteTask 增 local_variables（已推 BSR）
 - 设计器契约：`format/designer`（designer-json-v1）——领域字段 + UI 元数据
   （节点坐标/边拐点），设计器文档可直连 Deploy；契约与交互协议文档
   `docs/designer_contract.md`（草稿/发布分离、错误回传、坐标保鲜、演进规则）

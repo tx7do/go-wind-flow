@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/tx7do/go-wind-flow/flow"
 	"github.com/tx7do/go-wind-flow/store/ent/ent/token"
 )
 
@@ -77,6 +78,12 @@ func (_c *TokenCreate) SetNillableDueAt(v *time.Time) *TokenCreate {
 	if v != nil {
 		_c.SetDueAt(*v)
 	}
+	return _c
+}
+
+// SetLocals sets the "locals" field.
+func (_c *TokenCreate) SetLocals(v flow.Vars) *TokenCreate {
+	_c.mutation.SetLocals(v)
 	return _c
 }
 
@@ -154,6 +161,9 @@ func (_c *TokenCreate) check() error {
 	if _, ok := _c.mutation.ChildInstID(); !ok {
 		return &ValidationError{Name: "child_inst_id", err: errors.New(`ent: missing required field "Token.child_inst_id"`)}
 	}
+	if _, ok := _c.mutation.Locals(); !ok {
+		return &ValidationError{Name: "locals", err: errors.New(`ent: missing required field "Token.locals"`)}
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Token.created_at"`)}
 	}
@@ -215,6 +225,10 @@ func (_c *TokenCreate) createSpec() (*Token, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.DueAt(); ok {
 		_spec.SetField(token.FieldDueAt, field.TypeTime, value)
 		_node.DueAt = &value
+	}
+	if value, ok := _c.mutation.Locals(); ok {
+		_spec.SetField(token.FieldLocals, field.TypeJSON, value)
+		_node.Locals = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(token.FieldCreatedAt, field.TypeTime, value)

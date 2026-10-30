@@ -290,10 +290,12 @@ type CompleteTaskRequest struct {
 	ActorId string          `protobuf:"bytes,2,opt,name=actor_id,json=actorId,proto3" json:"actor_id,omitempty"`
 	Outcome FlowTaskOutcome `protobuf:"varint,3,opt,name=outcome,proto3,enum=flow.v1.FlowTaskOutcome" json:"outcome,omitempty"`
 	Comment string          `protobuf:"bytes,4,opt,name=comment,proto3" json:"comment,omitempty"`
-	// 办结时回写的业务变量（如审批表单字段）
-	Variables     *structpb.Struct `protobuf:"bytes,5,opt,name=variables,proto3" json:"variables,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// 办结时回写的业务变量（如审批表单字段），进实例级
+	Variables *structpb.Struct `protobuf:"bytes,5,opt,name=variables,proto3" json:"variables,omitempty"`
+	// 办结时写入令牌级局部变量（仅当前分支后续节点可读，不进业务数据）
+	LocalVariables *structpb.Struct `protobuf:"bytes,6,opt,name=local_variables,json=localVariables,proto3,oneof" json:"local_variables,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *CompleteTaskRequest) Reset() {
@@ -357,6 +359,13 @@ func (x *CompleteTaskRequest) GetComment() string {
 func (x *CompleteTaskRequest) GetVariables() *structpb.Struct {
 	if x != nil {
 		return x.Variables
+	}
+	return nil
+}
+
+func (x *CompleteTaskRequest) GetLocalVariables() *structpb.Struct {
+	if x != nil {
+		return x.LocalVariables
 	}
 	return nil
 }
@@ -870,13 +879,15 @@ const file_flow_v1_task_proto_rawDesc = "" +
 	"created_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12:\n" +
 	"\bended_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampH\x01R\aendedAt\x88\x01\x01B\t\n" +
 	"\a_due_atB\v\n" +
-	"\t_ended_at\"\xce\x01\n" +
+	"\t_ended_at\"\xa9\x02\n" +
 	"\x13CompleteTaskRequest\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\tR\x06taskId\x12\x19\n" +
 	"\bactor_id\x18\x02 \x01(\tR\aactorId\x122\n" +
 	"\aoutcome\x18\x03 \x01(\x0e2\x18.flow.v1.FlowTaskOutcomeR\aoutcome\x12\x18\n" +
 	"\acomment\x18\x04 \x01(\tR\acomment\x125\n" +
-	"\tvariables\x18\x05 \x01(\v2\x17.google.protobuf.StructR\tvariables\"I\n" +
+	"\tvariables\x18\x05 \x01(\v2\x17.google.protobuf.StructR\tvariables\x12E\n" +
+	"\x0flocal_variables\x18\x06 \x01(\v2\x17.google.protobuf.StructH\x00R\x0elocalVariables\x88\x01\x01B\x12\n" +
+	"\x10_local_variables\"I\n" +
 	"\x14CompleteTaskResponse\x121\n" +
 	"\binstance\x18\x01 \x01(\v2\x15.flow.v1.FlowInstanceR\binstance\"f\n" +
 	"\x12ForwardTaskRequest\x12\x17\n" +
@@ -970,31 +981,32 @@ var file_flow_v1_task_proto_depIdxs = []int32{
 	13, // 3: flow.v1.FlowTask.ended_at:type_name -> google.protobuf.Timestamp
 	1,  // 4: flow.v1.CompleteTaskRequest.outcome:type_name -> flow.v1.FlowTaskOutcome
 	14, // 5: flow.v1.CompleteTaskRequest.variables:type_name -> google.protobuf.Struct
-	15, // 6: flow.v1.CompleteTaskResponse.instance:type_name -> flow.v1.FlowInstance
-	16, // 7: flow.v1.ListPendingTasksRequest.paging:type_name -> pagination.PagingRequest
-	13, // 8: flow.v1.CheckDueTasksRequest.as_of:type_name -> google.protobuf.Timestamp
-	2,  // 9: flow.v1.ListTasksResponse.items:type_name -> flow.v1.FlowTask
-	3,  // 10: flow.v1.FlowTaskService.CompleteTask:input_type -> flow.v1.CompleteTaskRequest
-	5,  // 11: flow.v1.FlowTaskService.ForwardTask:input_type -> flow.v1.ForwardTaskRequest
-	10, // 12: flow.v1.FlowTaskService.AddSigners:input_type -> flow.v1.AddSignersRequest
-	11, // 13: flow.v1.FlowTaskService.ReturnTo:input_type -> flow.v1.ReturnToRequest
-	6,  // 14: flow.v1.FlowTaskService.GetTask:input_type -> flow.v1.GetTaskRequest
-	7,  // 15: flow.v1.FlowTaskService.ListPendingTasks:input_type -> flow.v1.ListPendingTasksRequest
-	8,  // 16: flow.v1.FlowTaskService.ListInstanceTasks:input_type -> flow.v1.ListInstanceTasksRequest
-	9,  // 17: flow.v1.FlowTaskService.CheckDueTasks:input_type -> flow.v1.CheckDueTasksRequest
-	4,  // 18: flow.v1.FlowTaskService.CompleteTask:output_type -> flow.v1.CompleteTaskResponse
-	2,  // 19: flow.v1.FlowTaskService.ForwardTask:output_type -> flow.v1.FlowTask
-	12, // 20: flow.v1.FlowTaskService.AddSigners:output_type -> flow.v1.ListTasksResponse
-	4,  // 21: flow.v1.FlowTaskService.ReturnTo:output_type -> flow.v1.CompleteTaskResponse
-	2,  // 22: flow.v1.FlowTaskService.GetTask:output_type -> flow.v1.FlowTask
-	12, // 23: flow.v1.FlowTaskService.ListPendingTasks:output_type -> flow.v1.ListTasksResponse
-	12, // 24: flow.v1.FlowTaskService.ListInstanceTasks:output_type -> flow.v1.ListTasksResponse
-	12, // 25: flow.v1.FlowTaskService.CheckDueTasks:output_type -> flow.v1.ListTasksResponse
-	18, // [18:26] is the sub-list for method output_type
-	10, // [10:18] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	14, // 6: flow.v1.CompleteTaskRequest.local_variables:type_name -> google.protobuf.Struct
+	15, // 7: flow.v1.CompleteTaskResponse.instance:type_name -> flow.v1.FlowInstance
+	16, // 8: flow.v1.ListPendingTasksRequest.paging:type_name -> pagination.PagingRequest
+	13, // 9: flow.v1.CheckDueTasksRequest.as_of:type_name -> google.protobuf.Timestamp
+	2,  // 10: flow.v1.ListTasksResponse.items:type_name -> flow.v1.FlowTask
+	3,  // 11: flow.v1.FlowTaskService.CompleteTask:input_type -> flow.v1.CompleteTaskRequest
+	5,  // 12: flow.v1.FlowTaskService.ForwardTask:input_type -> flow.v1.ForwardTaskRequest
+	10, // 13: flow.v1.FlowTaskService.AddSigners:input_type -> flow.v1.AddSignersRequest
+	11, // 14: flow.v1.FlowTaskService.ReturnTo:input_type -> flow.v1.ReturnToRequest
+	6,  // 15: flow.v1.FlowTaskService.GetTask:input_type -> flow.v1.GetTaskRequest
+	7,  // 16: flow.v1.FlowTaskService.ListPendingTasks:input_type -> flow.v1.ListPendingTasksRequest
+	8,  // 17: flow.v1.FlowTaskService.ListInstanceTasks:input_type -> flow.v1.ListInstanceTasksRequest
+	9,  // 18: flow.v1.FlowTaskService.CheckDueTasks:input_type -> flow.v1.CheckDueTasksRequest
+	4,  // 19: flow.v1.FlowTaskService.CompleteTask:output_type -> flow.v1.CompleteTaskResponse
+	2,  // 20: flow.v1.FlowTaskService.ForwardTask:output_type -> flow.v1.FlowTask
+	12, // 21: flow.v1.FlowTaskService.AddSigners:output_type -> flow.v1.ListTasksResponse
+	4,  // 22: flow.v1.FlowTaskService.ReturnTo:output_type -> flow.v1.CompleteTaskResponse
+	2,  // 23: flow.v1.FlowTaskService.GetTask:output_type -> flow.v1.FlowTask
+	12, // 24: flow.v1.FlowTaskService.ListPendingTasks:output_type -> flow.v1.ListTasksResponse
+	12, // 25: flow.v1.FlowTaskService.ListInstanceTasks:output_type -> flow.v1.ListTasksResponse
+	12, // 26: flow.v1.FlowTaskService.CheckDueTasks:output_type -> flow.v1.ListTasksResponse
+	19, // [19:27] is the sub-list for method output_type
+	11, // [11:19] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_flow_v1_task_proto_init() }
@@ -1004,6 +1016,7 @@ func file_flow_v1_task_proto_init() {
 	}
 	file_flow_v1_instance_proto_init()
 	file_flow_v1_task_proto_msgTypes[0].OneofWrappers = []any{}
+	file_flow_v1_task_proto_msgTypes[1].OneofWrappers = []any{}
 	file_flow_v1_task_proto_msgTypes[7].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

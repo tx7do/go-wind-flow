@@ -85,8 +85,10 @@ message CompleteTaskRequest {
   string actor_id = 2 ;
   FlowTaskOutcome outcome = 3 ;
   string comment = 4;
-  // 办结时回写的业务变量（如审批表单字段）
+  // 办结时回写的业务变量（如审批表单字段），进实例级
   google.protobuf.Struct variables = 5;
+  // 办结时写入令牌级局部变量（仅当前分支后续节点可读，不进业务数据）
+  optional google.protobuf.Struct local_variables = 6;
 }
 
 message CompleteTaskResponse {

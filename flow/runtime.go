@@ -93,7 +93,10 @@ type Token struct {
 	ParentID    string     // fork 产生的子令牌指向分叉源令牌
 	ChildInstID string     // 阻塞于 callActivity 时记录子流程实例
 	DueAt       *time.Time // 阻塞于定时器节点时的到期时刻
-	CreatedAt   time.Time
+	// Locals 令牌级局部变量（变量作用域）：并行分支各持一份（fork 时快照
+	// 克隆），读取时叠加在实例变量之上（同名覆盖），不回写业务数据。
+	Locals    Vars
+	CreatedAt time.Time
 }
 
 // Task 用户任务。

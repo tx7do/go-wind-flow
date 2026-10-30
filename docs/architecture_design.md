@@ -94,7 +94,25 @@ Instance (1) ──< Token (n)          Token：实例在图中的游标
 | 脚本任务执行失败 | 错误 + 历史记录，令牌不推进 |
 | 子流程 REJECTED/WITHDRAWN/ABORTED | 父实例 REJECTED（与 OA/IM 现行为一致） |
 
-## 6. 与 go-scripts 的结合点
+## 6. 变量作用域
+
+两级作用域，**局部变量按令牌隔离**（而非按节点共享——并行分支天然各持一份，fork 时快照克隆）：
+
+| 层 | 载体 | 写入途径 | 可见性 |
+|---|---|---|---|
+| 实例级 | `Instance.Variables` | CompleteTask.Variables、脚本任务（默认）、包容网关计数 | 全实例 + 历史审计（variable.changed） |
+| 令牌级（局部） | `Token.Locals` | 脚本任务 `scope=local`、CompleteTask.LocalVariables | 仅当前分支的后续节点 |
+
+- **读侧**：网关条件、动态办理人（EXPR）、脚本任务环境的求值环境 = 实例变量为底、
+  令牌局部叠加（同名覆盖），`mergedEnv` 返回副本，求值方不可变更引擎状态；
+- **写侧**：局部变量不回写业务数据、不产生 variable.changed 历史——适合中间
+  计算值（如分支内计数、暂存决策）；
+- **生命周期**：随令牌终结而消亡；fork 快照克隆实现分支隔离；子流程不继承
+  父令牌局部（子实例只拿实例变量副本）。
+- BPMN 表达：脚本任务扩展属性 `flow:scope="local"`（go-wind-flow 命名空间），
+  解析器同时兼容带/不带命名空间声明的两种形态。
+
+## 7. 与 go-scripts 的结合点
 
 - 引擎核心只认 `ExpressionEvaluator` / `ScriptRunner` 两个小接口，**不 import go-scripts**；
 - 脚本环境仅注入实例变量 + 宿主注册的白名单函数；控时走 context deadline；
@@ -102,7 +120,7 @@ Instance (1) ──< Token (n)          Token：实例在图中的游标
 - 超时任务：定义带 `timer` 时任务打 `DueAt` 标，宿主 cron 驱动
   `CheckDueTasks` 广播 `task.due` 事件，催办/升级/自动处理交给监听器。
 
-## 7. 目录结构
+## 8. 目录结构
 
 ```
 flow/            核心引擎（零依赖）

@@ -31,7 +31,10 @@
 - [x] 加签（AddTaskApprovers，会签式 + 委托叠加 + 去重）与驳回指定节点
       （ReturnTo，userTask 祖先、并行在途 fail-closed）；契约 v0.1.1 增补
       AddSigners / ReturnTo RPC（已推 BSR），server 层 RPC 级测试覆盖
-- [ ] 变量作用域（实例级 → 节点级局部变量）
+- [x] 变量作用域：令牌级局部变量（Token.Locals，fork 快照克隆实现分支隔离）——
+      读侧叠加（局部 > 实例），写侧脚本 `flow:scope="local"` / CompleteTask
+      local_variables；不回写业务数据、随令牌消亡；契约 v0.1.3 增补
+      local_variables（已推 BSR）
 - [x] 定时器节点（`intermediateTimerEvent`，ISO8601 时长；令牌阻塞 + DueAt 打标，
       `ResumeDueTimers` 续跑）+ 调度参考实现 `examples/scheduler`（单 cron 循环
       同时驱动定时器续跑与任务到期扫描，经服务层走生产路径）；契约 v0.1.2
