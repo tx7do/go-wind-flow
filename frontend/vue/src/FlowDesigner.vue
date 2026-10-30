@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { createDesigner, type DesignerDocument, type DesignerHandle } from '@go-wind/flow-designer-core';
+import { createDesigner, type DesignerDocument, type DesignerHandle, type Theme } from '@go-wind/flow-designer-core';
 
 const props = defineProps<{
   /** BPMN XML 或 designer-json-v1 文档（自动嗅探：'<' 开头为 XML）。 */
@@ -8,6 +8,10 @@ const props = defineProps<{
   document?: DesignerDocument;
   /** 画布高度（CSS 值，缺省 600px）。 */
   height?: string;
+  /** 主题：light / dark / auto（缺省跟随系统）。 */
+  theme?: Theme;
+  /** 自定义主题色（--gwf-accent）。 */
+  accent?: string;
 }>();
 
 const emit = defineEmits<{
@@ -21,7 +25,12 @@ let handle: DesignerHandle | null = null;
 
 onMounted(async () => {
   if (!canvasRef.value || !panelRef.value) return;
-  handle = createDesigner({ canvas: canvasRef.value, panel: panelRef.value });
+  handle = createDesigner({
+    canvas: canvasRef.value,
+    panel: panelRef.value,
+    theme: props.theme ?? 'auto',
+    accent: props.accent,
+  });
   emit('ready', handle);
   try {
     if (props.xml) {
@@ -37,6 +46,14 @@ onMounted(async () => {
   }
 });
 
+watch(
+  () => props.theme,
+  (t) => handle?.setTheme(t ?? 'auto'),
+);
+watch(
+  () => props.accent,
+  (c) => { if (c) handle?.setAccent(c); },
+);
 watch(
   () => props.xml,
   async (xml) => {
@@ -92,11 +109,11 @@ function emptyXML(): string {
 }
 .gwf-canvas {
   flex: 1;
-  border: 1px solid #dcdfe6;
+  border: 1px solid var(--gwf-border);
 }
 .gwf-panel {
   width: 320px;
-  border: 1px solid #dcdfe6;
+  border: 1px solid var(--gwf-border);
   overflow-y: auto;
 }
 </style>

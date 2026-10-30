@@ -65,8 +65,7 @@ export const designerCSS = /* css */ `
   font-size: 14px;
 }
 
-.gwf-designer[data-gwf-theme='dark'],
-.gwf-designer[data-gwf-theme='auto'] {
+.gwf-designer[data-gwf-theme='dark'] {
   --gwf-bg: #14161a;
   --gwf-canvas-bg: #191c21;
   --gwf-border: #2c313a;
@@ -84,7 +83,7 @@ export const designerCSS = /* css */ `
   --gwf-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
 }
 
-/* auto 主题跟随系统：dark 系统下应用暗色 tokens 与画布覆盖。 */
+/* auto 主题跟随系统：仅当系统为暗色时切换 token，亮色系统保持上面的一套。 */
 @media (prefers-color-scheme: dark) {
   .gwf-designer[data-gwf-theme='auto'] {
     --gwf-bg: #14161a;
@@ -103,61 +102,51 @@ export const designerCSS = /* css */ `
     --gwf-danger: #f87171;
     --gwf-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
   }
-  .gwf-designer[data-gwf-theme='auto'] .djs-container {
-    background: var(--gwf-canvas-bg);
-  }
-  .gwf-designer[data-gwf-theme='auto'] .djs-visual rect,
-  .gwf-designer[data-gwf-theme='auto'] .djs-visual circle,
-  .gwf-designer[data-gwf-theme='auto'] .djs-visual ellipse,
-  .gwf-designer[data-gwf-theme='auto'] .djs-visual polygon {
-    fill: var(--gwf-shape-fill) !important;
-  }
-  .gwf-designer[data-gwf-theme='auto'] .djs-visual :is(path, rect, circle, polygon, polyline) {
-    stroke: var(--gwf-shape-stroke) !important;
-  }
-  .gwf-designer[data-gwf-theme='auto'] .djs-visual text,
-  .gwf-designer[data-gwf-theme='auto'] .djs-label {
-    fill: var(--gwf-text) !important;
-    stroke: none !important;
-  }
-}
 }
 
-/* ---------- bpmn-js 画布（暗色覆盖 diagram-js 内联视觉） ---------- */
+/* ---------- bpmn-js 画布 ----------
+ * 以下覆盖只依赖 token、不区分主题：token 随 light/dark/auto 切换，
+ * 避免「auto 有暗色 token 却没有暗色覆盖规则」这类半暗半亮状态。 */
+/* diagram-js 自身主题变量映射。必须挂在 .djs-container（即 .djs-parent，
+ * diagram-js 在此声明默认值）上——挂在 .gwf-designer 会被内层声明压住。 */
 .gwf-designer .djs-container {
+  --palette-background-color: var(--gwf-node-bg);
+  --palette-border-color: var(--gwf-border);
+  --palette-entry-color: var(--gwf-text);
+  --palette-entry-hover-color: var(--gwf-accent);
+  --palette-entry-selected-color: var(--gwf-accent);
+  --palette-separator-color: var(--gwf-border);
+  --palette-toggle-hover-background-color: var(--gwf-accent-weak);
+  --context-pad-entry-background-color: var(--gwf-node-bg);
+  --context-pad-entry-hover-background-color: var(--gwf-accent-weak);
+  --popup-background-color: var(--gwf-node-bg);
+  --popup-border-color: var(--gwf-border);
+  --bendpoint-fill-color: var(--gwf-accent);
+  --tooltip-error-background-color: color-mix(in srgb, var(--gwf-danger) 16%, var(--gwf-node-bg));
+  --tooltip-error-border-color: var(--gwf-danger);
+  --tooltip-error-color: var(--gwf-danger);
+
   background: var(--gwf-canvas-bg);
 }
-.gwf-designer[data-gwf-theme='dark'] .djs-visual rect,
-.gwf-designer[data-gwf-theme='dark'] .djs-visual circle,
-.gwf-designer[data-gwf-theme='dark'] .djs-visual polygon {
+.gwf-designer .djs-visual rect,
+.gwf-designer .djs-visual circle,
+.gwf-designer .djs-visual ellipse,
+.gwf-designer .djs-visual polygon {
   fill: var(--gwf-shape-fill) !important;
 }
-.gwf-designer[data-gwf-theme='dark'] .djs-visual :is(path, rect, circle, polygon, polyline) {
+.gwf-designer .djs-visual :is(path, rect, circle, ellipse, polygon, polyline) {
   stroke: var(--gwf-shape-stroke) !important;
 }
-.gwf-designer[data-gwf-theme='dark'] .djs-visual text,
-.gwf-designer[data-gwf-theme='dark'] .djs-label {
+.gwf-designer .djs-visual text,
+.gwf-designer .djs-label {
   fill: var(--gwf-text) !important;
   stroke: none !important;
 }
-.gwf-designer[data-gwf-theme='dark'] .djs-visual path[data-corner] { stroke: none !important; }
-.gwf-designer[data-gwf-theme='dark'] .djs-palette,
-.gwf-designer[data-gwf-theme='dark'] .djs-context-pad {
-  background: var(--gwf-node-bg);
-  border-color: var(--gwf-border);
-}
-.gwf-designer[data-gwf-theme='dark'] .djs-palette .entry,
-.gwf-designer[data-gwf-theme='dark'] .djs-context-pad .entry {
-  color: var(--gwf-text);
-  border-color: var(--gwf-border);
-}
-.gwf-designer[data-gwf-theme='dark'] .djs-palette .entry:hover,
-.gwf-designer[data-gwf-theme='dark'] .djs-context-pad .entry:hover {
-  background: var(--gwf-accent-weak);
-}
-.gwf-designer[data-gwf-theme='dark'] .djs-palette .separator {
-  border-color: var(--gwf-border);
-}
+.gwf-designer .djs-visual path[data-corner] { stroke: none !important; }
+
+/* palette / context-pad 的底色与描边由上面的 diagram-js 变量映射统一驱动，
+ * 这里只管尺寸与交互（容器背景尤其不要画：context-pad 容器比条目宽，
+ * 上色会露出一条空槽）。 */
 .gwf-designer .djs-palette .entry {
   width: 46px;
   height: 46px;
@@ -165,37 +154,33 @@ export const designerCSS = /* css */ `
   align-items: center;
   justify-content: center;
   font-size: 22px;
-  color: var(--gwf-text);
 }
 .gwf-designer .djs-palette .entry:hover {
-  color: var(--gwf-accent);
   background: var(--gwf-accent-weak);
 }
+/* context pad：diagram-js 把容器固定为 72px 宽、条目 22px。条目须保持行内
+ * 排布（3 列 × 24px 正好铺满），改成块级会在右侧留下空槽。 */
 .gwf-designer .djs-context-pad .entry {
+  box-sizing: border-box;
   width: 22px;
   height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-block;
+  text-align: center;
+  line-height: 20px;
   font-size: 13px;
-  color: var(--gwf-text);
-  background: var(--gwf-node-bg);
   border: 1px solid var(--gwf-border);
   border-radius: 4px;
   box-shadow: var(--gwf-shadow);
 }
 .gwf-designer .djs-context-pad .entry:hover {
-  color: var(--gwf-accent);
   border-color: var(--gwf-accent);
 }
-.gwf-designer[data-gwf-theme='dark'] .djs-tooltip,
-.gwf-designer[data-gwf-theme='dark'] .djs-popup {
-  background: var(--gwf-node-bg);
-  color: var(--gwf-text);
+.gwf-designer .djs-tooltip,
+.gwf-designer .djs-popup {
   border: 1px solid var(--gwf-border);
 }
-.gwf-designer[data-gwf-theme='dark'] .djs-bendpoint,
-.gwf-designer[data-gwf-theme='dark'] .djs-segment-dragger .handle {
+.gwf-designer .djs-bendpoint,
+.gwf-designer .djs-segment-dragger .handle {
   fill: var(--gwf-accent);
   stroke: var(--gwf-accent);
 }
@@ -231,7 +216,37 @@ export const designerCSS = /* css */ `
   fill: var(--gwf-accent);
 }
 
+/* properties-panel：新版（@bpmn-io/theme）在 .bio-theme-parent 声明 --bio-* 语义
+ * token，旧版用 --color-grey-*；两套都映射到 gwf token，版本升级不用改样式。 */
+.gwf-designer .bio-theme-parent,
 .gwf-designer .bio-properties-panel {
+  --bio-surface: var(--gwf-node-bg);
+  --bio-surface-overlay: var(--gwf-node-bg);
+  --bio-surface-subtle: var(--gwf-bg);
+  --bio-surface-medium: var(--gwf-bg);
+  --bio-surface-strong: var(--gwf-border);
+  --bio-surface-inverted: var(--gwf-text);
+  --bio-text: var(--gwf-text);
+  --bio-text-subtle: var(--gwf-text-secondary);
+  --bio-text-subtlest: var(--gwf-text-secondary);
+  --bio-text-on-primary: #ffffff;
+  --bio-text-on-inverted: var(--gwf-bg);
+  --bio-border: var(--gwf-border);
+  --bio-border-subtle: var(--gwf-border);
+  --bio-border-disabled: var(--gwf-border);
+  --bio-border-input: var(--gwf-border-strong);
+  --bio-primary: var(--gwf-accent);
+  --bio-primary-hover: var(--gwf-accent);
+  --bio-primary-surface: var(--gwf-accent-weak);
+  --bio-primary-surface-strong: var(--gwf-accent-weak);
+  --bio-neutral: var(--gwf-text-secondary);
+  --bio-danger: var(--gwf-danger);
+  --bio-danger-surface: color-mix(in srgb, var(--gwf-danger) 16%, transparent);
+  --bio-danger-surface-subtle: var(--gwf-danger-surface);
+  --bio-info: var(--gwf-accent);
+  --bio-focus: var(--gwf-accent);
+  --bio-focus-ring: color-mix(in srgb, var(--gwf-accent) 35%, transparent);
+
   --color-grey-225-10-15: var(--gwf-text);
   --color-grey-225-10-35: var(--gwf-text-secondary);
   --color-grey-225-10-55: var(--gwf-text-secondary);
@@ -246,6 +261,8 @@ export const designerCSS = /* css */ `
   --color-red-360-100-45: var(--gwf-danger);
   --color-white: var(--gwf-node-bg);
   --text-base-color: var(--gwf-text);
+}
+.gwf-designer .bio-properties-panel {
   background: var(--gwf-node-bg);
   color: var(--gwf-text);
 }

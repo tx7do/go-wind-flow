@@ -1,5 +1,5 @@
 import { useEffect, useImperativeHandle, useRef, forwardRef } from 'react';
-import { createDesigner, type DesignerDocument, type DesignerHandle } from '@go-wind/flow-designer-core';
+import { createDesigner, type DesignerDocument, type DesignerHandle, type Theme } from '@go-wind/flow-designer-core';
 
 export interface FlowDesignerProps {
   /** BPMN XML 或 designer-json-v1 文档（自动嗅探：'<' 开头为 XML）。 */
@@ -7,6 +7,10 @@ export interface FlowDesignerProps {
   document?: DesignerDocument;
   /** 画布高度（CSS 值，缺省 600px）。 */
   height?: string;
+  /** 主题：light / dark / auto（缺省跟随系统）。 */
+  theme?: Theme;
+  /** 自定义主题色（--gwf-accent）。 */
+  accent?: string;
   onReady?: (handle: DesignerHandle) => void;
   onError?: (err: unknown) => void;
 }
@@ -17,7 +21,7 @@ export interface FlowDesignerRef {
 }
 
 export const FlowDesigner = forwardRef<FlowDesignerRef, FlowDesignerProps>(function FlowDesigner(
-  { xml, document, height, onReady, onError },
+  { xml, document, height, theme = 'auto', accent, onReady, onError },
   ref,
 ) {
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -36,7 +40,7 @@ export const FlowDesigner = forwardRef<FlowDesignerRef, FlowDesignerProps>(funct
 
   useEffect(() => {
     if (!canvasRef.current || !panelRef.current) return;
-    const handle = createDesigner({ canvas: canvasRef.current, panel: panelRef.current });
+    const handle = createDesigner({ canvas: canvasRef.current, panel: panelRef.current, theme, accent });
     handleRef.current = handle;
     onReady?.(handle);
     return () => {
@@ -45,6 +49,14 @@ export const FlowDesigner = forwardRef<FlowDesignerRef, FlowDesignerProps>(funct
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    handleRef.current?.setTheme(theme ?? 'auto');
+  }, [theme]);
+
+  useEffect(() => {
+    if (accent) handleRef.current?.setAccent(accent);
+  }, [accent]);
 
   useEffect(() => {
     const handle = handleRef.current;
@@ -68,8 +80,8 @@ export const FlowDesigner = forwardRef<FlowDesignerRef, FlowDesignerProps>(funct
 
   return (
     <div className="gwf-designer" style={{ display: 'flex', gap: 8 }}>
-      <div ref={canvasRef} className="gwf-canvas" style={{ flex: 1, border: '1px solid #dcdfe6', height: height ?? '600px' }} />
-      <div ref={panelRef} className="gwf-panel" style={{ width: 320, border: '1px solid #dcdfe6', overflowY: 'auto' }} />
+      <div ref={canvasRef} className="gwf-canvas" style={{ flex: 1, border: '1px solid var(--gwf-border)', height: height ?? '600px' }} />
+      <div ref={panelRef} className="gwf-panel" style={{ width: 320, border: '1px solid var(--gwf-border)', overflowY: 'auto' }} />
     </div>
   );
 });

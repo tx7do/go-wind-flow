@@ -20,8 +20,8 @@ import type { DesignerDocument } from './types';
 export interface DesignerOptions {
   /** 画布容器（元素或选择器）。 */
   canvas: string | HTMLElement;
-  /** 属性面板容器。 */
-  panel: string | HTMLElement;
+  /** 属性面板容器（元素或选择器）；省略时面板渲染在画布内。 */
+  panel?: string | HTMLElement;
   /** 主题：亮色 / 暗色 / 跟随系统（缺省 auto）。 */
   theme?: Theme;
   /** 自定义主题色（--gwf-accent，弱色/高亮经 color-mix 自动派生）。 */
@@ -63,11 +63,17 @@ function injectStylesOnce(): void {
 
 export function createDesigner(opts: DesignerOptions): DesignerHandle {
   const canvas = resolveEl(opts.canvas);
-  const panel = resolveEl(opts.panel);
-  canvas.classList.add("gwf-designer"); // 主题选择器以 .gwf-designer 为根
+  const panel = opts.panel ? resolveEl(opts.panel) : canvas;
+  canvas.classList.add('gwf-designer'); // 主题选择器以 .gwf-designer 为根
+  // 属性面板通常挂在画布之外，同样要作为主题根才能拿到 token。
+  if (panel && panel !== canvas) panel.classList.add('gwf-designer');
   injectStylesOnce();
   applyTheme(canvas, opts.theme ?? 'auto');
-  if (opts.accent) applyAccent(canvas, opts.accent);
+  if (panel && panel !== canvas) applyTheme(panel, opts.theme ?? 'auto');
+  if (opts.accent) {
+    applyAccent(canvas, opts.accent);
+    if (panel && panel !== canvas) applyAccent(panel, opts.accent);
+  }
 
   const modeler = new Modeler({
     container: canvas,
@@ -106,9 +112,11 @@ export function createDesigner(opts: DesignerOptions): DesignerHandle {
     },
     setTheme(theme: Theme) {
       applyTheme(canvas, theme);
+      if (panel && panel !== canvas) applyTheme(panel, theme);
     },
     setAccent(color: string) {
       applyAccent(canvas, color);
+      if (panel && panel !== canvas) applyAccent(panel, color);
     },
     destroy() {
       modeler.destroy();

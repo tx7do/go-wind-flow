@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client';
-import { createElement, useRef, useState } from 'react';
+import { createElement, useEffect, useRef, useState } from 'react';
 import {
   createDesigner,
   ensureStyles,
@@ -42,12 +42,19 @@ function App() {
   };
 
   const onCanvasMount = (el: HTMLDivElement | null) => {
+    canvasRef.current = el;
+  };
+  // 等整棵子树挂载完再建（ref 回调触发时同级面板尚未插入 DOM）。
+  useEffect(() => {
+    const el = canvasRef.current;
     if (!el || designerRef.current) return;
     const wrap = el.parentElement!;
-    const panel = wrap.querySelector('.gwf-panel') as HTMLElement;
-    designerRef.current = createDesigner({ canvas: el, panel, theme, accent });
+    const panel = wrap.querySelector('.gwf-panel') as HTMLElement | null;
+    designerRef.current = createDesigner({ canvas: el, panel: panel ?? undefined, theme, accent });
     void designerRef.current.loadXML(leaveApprovalXML).then(() => designerRef.current?.zoom('fit-viewport'));
-  };
+    // 仅在首次挂载时创建；主题/主题色另有 effect 同步。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return createElement(
     'div',

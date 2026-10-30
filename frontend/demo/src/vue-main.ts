@@ -1,4 +1,4 @@
-import { createApp, h, ref } from 'vue';
+import { createApp, h, onMounted, ref } from 'vue';
 import {
   createDesigner,
   ensureStyles,
@@ -24,14 +24,18 @@ const app = createApp({
     let treeDoc = structuredClone(treeSampleDoc);
     let designer: ReturnType<typeof createDesigner> | null = null;
 
-    // 画布容器挂载回调（首次挂载时创建设计器）。
+    // 画布容器 ref：保留元素，等整个子树挂载完再创建（同级面板此刻才在 DOM 里）。
+    let canvasEl: HTMLElement | null = null;
     const canvasRef = (el: unknown) => {
-      if (!el || designer) return;
-      const wrap = (el as HTMLElement).parentElement!;
-      const panel = wrap.querySelector('.gwf-panel') as HTMLElement;
-      designer = createDesigner({ canvas: el as HTMLElement, panel, theme: theme.value, accent: accent.value });
-      void designer.loadXML(leaveApprovalXML).then(() => designer?.zoom('fit-viewport'));
+      if (el) canvasEl = el as HTMLElement;
     };
+    onMounted(() => {
+      if (!canvasEl || designer) return;
+      const wrap = canvasEl.parentElement!;
+      const panel = wrap.querySelector('.gwf-panel') as HTMLElement | null;
+      designer = createDesigner({ canvas: canvasEl, panel: panel ?? undefined, theme: theme.value, accent: accent.value });
+      void designer.loadXML(leaveApprovalXML).then(() => designer?.zoom('fit-viewport'));
+    });
 
     const setTheme = (t: Theme) => {
       theme.value = t;
