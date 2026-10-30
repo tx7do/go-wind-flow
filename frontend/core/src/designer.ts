@@ -64,6 +64,7 @@ function injectStylesOnce(): void {
 export function createDesigner(opts: DesignerOptions): DesignerHandle {
   const canvas = resolveEl(opts.canvas);
   const panel = resolveEl(opts.panel);
+  canvas.classList.add("gwf-designer"); // 主题选择器以 .gwf-designer 为根
   injectStylesOnce();
   applyTheme(canvas, opts.theme ?? 'auto');
   if (opts.accent) applyAccent(canvas, opts.accent);

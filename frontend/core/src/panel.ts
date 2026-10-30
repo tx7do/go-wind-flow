@@ -188,26 +188,28 @@ function entriesFor(env: PanelEnv, cfg: AssigneesConfig): PanelEntry[] {
 /** bpmn-js additionalModules：注册 go-wind-flow 属性面板 Provider。 */
 export const FlowPropertiesModule = {
   __init__: ['flowPropertiesProvider'],
-  flowPropertiesProvider: [
-    'type',
-    function FlowPropertiesProvider(this: Record<string, unknown>, propertiesPanel: PropertiesPanelInstance, translate: (s: string) => string) {
-      this.getGroups = function (element: FlowElement) {
-        return function (entries: PanelEntry[][]) {
-          if (element.type !== 'bpmn:UserTask') return entries;
-          const modeling = propertiesPanel._modeling;
-          if (!modeling) return entries;
-          const cfg = readAssignees(element);
-          return [
-            {
-              id: 'flow-assignees-group',
-              label: translate('go-wind-flow 审批配置'),
-              entries: entriesFor({ modeling, element, translate }, cfg),
-            },
-            ...entries,
-          ];
-        };
-      };
-      propertiesPanel.registerProvider(1500, this);
-    },
-  ],
+  flowPropertiesProvider: ["type", FlowPropertiesProvider],
 };
+
+/** $inject 显式声明：pre-bundle 压缩改写参数名，diagram-js 注入器按参数名解析会失败。 */
+function FlowPropertiesProvider(this: Record<string, unknown>, propertiesPanel: PropertiesPanelInstance, translate: (s: string) => string): void {
+  this.getGroups = function (element: FlowElement) {
+    return function (entries: PanelEntry[][]) {
+      if (element.type !== 'bpmn:UserTask') return entries;
+      const modeling = propertiesPanel._modeling;
+      if (!modeling) return entries;
+      const cfg = readAssignees(element);
+      return [
+        {
+          id: 'flow-assignees-group',
+          label: translate('go-wind-flow 审批配置'),
+          entries: entriesFor({ modeling, element, translate }, cfg),
+        },
+        ...entries,
+      ];
+    };
+  };
+  propertiesPanel.registerProvider(1500, this);
+}
+
+(FlowPropertiesProvider as unknown as { $inject: string[] }).$inject = ['propertiesPanel', 'translate'];

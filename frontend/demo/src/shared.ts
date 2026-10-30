@@ -2,6 +2,9 @@
 
 export const leaveApprovalXML = `<?xml version="1.0" encoding="UTF-8"?>
 <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
              xmlns:flow="https://github.com/tx7do/go-wind-flow"
              targetNamespace="https://github.com/tx7do/go-wind-flow">
   <process id="leave" name="请假审批" isExecutable="true">
@@ -26,6 +29,20 @@ export const leaveApprovalXML = `<?xml version="1.0" encoding="UTF-8"?>
     <sequenceFlow id="gwd" sourceRef="gw" targetRef="end"/>
     <sequenceFlow id="f4" sourceRef="director" targetRef="end"/>
   </process>
+  <bpmndi:BPMNDiagram id="Diagram_1">
+    <bpmndi:BPMNPlane id="Plane_1" bpmnElement="leave">
+      <bpmndi:BPMNShape id="start_di" bpmnElement="start"><dc:Bounds x="160" y="180" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="leader_di" bpmnElement="leader"><dc:Bounds x="260" y="158" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gw_di" bpmnElement="gw"><dc:Bounds x="420" y="173" width="50" height="50"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="director_di" bpmnElement="director"><dc:Bounds x="530" y="158" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_di" bpmnElement="end"><dc:Bounds x="692" y="180" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="f1_di" bpmnElement="f1"><di:waypoint x="196" y="198"/><di:waypoint x="260" y="198"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f2_di" bpmnElement="f2"><di:waypoint x="360" y="198"/><di:waypoint x="420" y="198"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f3_di" bpmnElement="f3"><di:waypoint x="470" y="173"/><di:waypoint x="470" y="140"/><di:waypoint x="580" y="140"/><di:waypoint x="580" y="158"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="gwd_di" bpmnElement="gwd"><di:waypoint x="445" y="223"/><di:waypoint x="445" y="260"/><di:waypoint x="710" y="260"/><di:waypoint x="710" y="216"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f4_di" bpmnElement="f4"><di:waypoint x="630" y="198"/><di:waypoint x="692" y="198"/></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
 </definitions>`;
 
 /** 审批树示例文档（含条件分支）。 */

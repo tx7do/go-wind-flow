@@ -84,24 +84,43 @@ export const designerCSS = /* css */ `
   --gwf-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
 }
 
-@media (prefers-color-scheme: light) {
+/* auto 主题跟随系统：dark 系统下应用暗色 tokens 与画布覆盖。 */
+@media (prefers-color-scheme: dark) {
   .gwf-designer[data-gwf-theme='auto'] {
-    --gwf-bg: #ffffff;
-    --gwf-canvas-bg: #f7f8fa;
-    --gwf-border: #dcdfe6;
-    --gwf-border-strong: #c0c4cc;
-    --gwf-text: #303133;
-    --gwf-text-secondary: #909399;
-    --gwf-accent: #00add8;
-    --gwf-accent-weak: color-mix(in srgb, var(--gwf-accent) 12%, transparent);
-    --gwf-node-bg: #ffffff;
-    --gwf-node-border: #b1b7bd;
-    --gwf-shape-fill: #ffffff;
-    --gwf-shape-stroke: #34404d;
-    --gwf-edge: #34404d;
-    --gwf-danger: #f56c6c;
-    --gwf-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+    --gwf-bg: #14161a;
+    --gwf-canvas-bg: #191c21;
+    --gwf-border: #2c313a;
+    --gwf-border-strong: #3d434e;
+    --gwf-text: #e5e7eb;
+    --gwf-text-secondary: #9ca3af;
+    --gwf-accent: #29c1e8;
+    --gwf-accent-weak: color-mix(in srgb, var(--gwf-accent) 14%, transparent);
+    --gwf-node-bg: #1e2228;
+    --gwf-node-border: #4b5563;
+    --gwf-shape-fill: #23272f;
+    --gwf-shape-stroke: #9be2f5;
+    --gwf-edge: #9be2f5;
+    --gwf-danger: #f87171;
+    --gwf-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
   }
+  .gwf-designer[data-gwf-theme='auto'] .djs-container {
+    background: var(--gwf-canvas-bg);
+  }
+  .gwf-designer[data-gwf-theme='auto'] .djs-visual > :nth-child(1),
+  .gwf-designer[data-gwf-theme='auto'] .djs-visual rect,
+  .gwf-designer[data-gwf-theme='auto'] .djs-visual circle,
+  .gwf-designer[data-gwf-theme='auto'] .djs-visual polygon {
+    fill: var(--gwf-shape-fill) !important;
+  }
+  .gwf-designer[data-gwf-theme='auto'] .djs-visual :is(path, rect, circle, polygon, polyline) {
+    stroke: var(--gwf-shape-stroke) !important;
+  }
+  .gwf-designer[data-gwf-theme='auto'] .djs-visual text,
+  .gwf-designer[data-gwf-theme='auto'] .djs-label {
+    fill: var(--gwf-text) !important;
+    stroke: none !important;
+  }
+}
 }
 
 /* ---------- bpmn-js 画布（暗色覆盖 diagram-js 内联视觉） ---------- */

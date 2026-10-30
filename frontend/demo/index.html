@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>go-wind-flow 设计器 Demo · Vue3</title>
+    <script>
+      window.__errs = [];
+      window.addEventListener("error", e => { window.__errs.push("ERR: " + String(e.message) + " @ " + String(e.filename || "").split("/").pop() + ":" + e.lineno); document.title = "ERR"; });
+      window.addEventListener("unhandledrejection", e => { window.__errs.push("REJ: " + String(e.reason).slice(0, 300)); document.title = "REJ"; });
+    </script>
   </head>
   <body>
     <div id="app"></div>
