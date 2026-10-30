@@ -116,8 +116,13 @@ func ValidateDefinition(def *Definition) error {
 				return fmt.Errorf("%w: errorEndEvent %s missing error code", ErrInvalidDefinition, id)
 			}
 		case NodeExclusiveGateway:
+			// 汇合模式：多入单出（审批树分支汇合；唯一出边应标记 IsDefault）。
+			if in >= 2 && len(out) == 1 {
+				continue
+			}
 			if len(out) < 2 {
-				return fmt.Errorf("%w: exclusiveGateway %s must have ≥2 out edges", ErrInvalidDefinition, id)
+				return fmt.Errorf("%w: exclusiveGateway %s must have ≥2 out edges (or be a merge gateway: ≥2 in / 1 out)",
+					ErrInvalidDefinition, id)
 			}
 			defaultCount := 0
 			for _, e := range out {
