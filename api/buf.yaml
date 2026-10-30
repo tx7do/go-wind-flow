@@ -6,7 +6,7 @@ modules:
 
 deps:
   - buf.build/googleapis/googleapis
-  - buf.build/tx7do/pagination
+  - buf.build/go-wind/pagination
 
 lint:
   use: [STANDARD]

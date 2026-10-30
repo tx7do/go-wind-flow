@@ -4,9 +4,9 @@ deps:
   - name: buf.build/gnostic/gnostic
     commit: 087bc8072ce44e339f213209e4d57bf0
     digest: b5:c4eebcd04bc2fdd5dd0b8d695eb419682a650b600cdb56ff2ed61208a24603e0eb1b8ae0d467925c69a24bde6d322f3c4112bd2b8efdd682d8c3128384cdac9a
+  - name: buf.build/go-wind/pagination
+    commit: 48988868e57d4928bd17680b99ad2747
+    digest: b5:f1affafbeb5564a0cb38bf25efe4af9af7c0da770fe7d860617dc2dfb6b8dd352de105cd3175c9ac86d9e7ea5c8f409ab94637431a9c6f48ca0fbfb32771b279
   - name: buf.build/googleapis/googleapis
     commit: 8ac61b9e502343289c8c42b17aa5b245
     digest: b5:0318e73c2dec49c5742f0c119642a5cb7fcd9e2d5200a2b478bc1efd93f7aaa06d5431f5e1e5713095101fc990b026a806fa429af80432ec8d1ceefbe07bb817
-  - name: buf.build/tx7do/pagination
-    commit: 7e34dd27013f4c67bb09025c73a73980
-    digest: b5:f1affafbeb5564a0cb38bf25efe4af9af7c0da770fe7d860617dc2dfb6b8dd352de105cd3175c9ac86d9e7ea5c8f409ab94637431a9c6f48ca0fbfb32771b279
