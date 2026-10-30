@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  请假审批示例：
+    提交申请 → 直属领导审批 → (days > 3 ? 总监审批 : 结束)
+  办理人通过 go-wind-flow 扩展元素 <flow:assignees> 携带 JSON 规格表达，
+  兼容 Activiti/Flowable 风格的 assignee/candidateUsers 属性作为兜底。
+-->
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flow="https://github.com/tx7do/go-wind-flow"
+             targetNamespace="https://github.com/tx7do/go-wind-flow">
+  <process id="leave_approval" name="请假审批" isExecutable="true">
+    <startEvent id="start" name="提交申请"/>
+    <userTask id="leader_review" name="直属领导审批">
+      <extensionElements>
+        <flow:assignees>{"approvers":[{"kind":"LEADER"}],"strategy":"ALL"}</flow:assignees>
+      </extensionElements>
+    </userTask>
+    <exclusiveGateway id="days_gateway" name="是否超过3天" default="gw_default"/>
+    <userTask id="director_review" name="总监审批">
+      <extensionElements>
+        <flow:assignees>{"approvers":[{"kind":"USER","value":"u_1001"}],"strategy":"ANY"}</flow:assignees>
+      </extensionElements>
+    </userTask>
+    <endEvent id="end" name="结束"/>
+    <sequenceFlow id="f1" sourceRef="start" targetRef="leader_review"/>
+    <sequenceFlow id="f2" sourceRef="leader_review" targetRef="days_gateway"/>
+    <sequenceFlow id="f_long" name="长假" sourceRef="days_gateway" targetRef="director_review">
+      <conditionExpression xsi:type="tFormalExpression">${days &gt; 3}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="gw_default" name="默认" sourceRef="days_gateway" targetRef="end"/>
+    <sequenceFlow id="f3" sourceRef="director_review" targetRef="end"/>
+  </process>
+</definitions>
