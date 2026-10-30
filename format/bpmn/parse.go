@@ -178,6 +178,7 @@ type extSpec struct {
 	Strategy   string              `json:"strategy,omitempty"`
 	RejectMode string              `json:"rejectMode,omitempty"`
 	Due        string              `json:"due,omitempty"`
+	Action     string              `json:"action,omitempty"` // 到期动作：auto_approve / auto_reject
 }
 
 var tagStripper = regexp.MustCompile(`<[^>]*>`)
@@ -228,7 +229,7 @@ func Parse(data []byte) (*flow.Definition, error) {
 		node.Approval = approvalFrom(spec, t.MultiInstance)
 		if spec.Due != "" {
 			if d, err := parseDuration(spec.Due); err == nil {
-				node.Timer = &flow.TimerSpec{Duration: flow.Duration(d)}
+				node.Timer = &flow.TimerSpec{Duration: flow.Duration(d), Action: flow.TimerAction(spec.Action)}
 			}
 		}
 		add(node)
@@ -413,11 +414,22 @@ func Write(def *flow.Definition) ([]byte, error) {
 		` xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"` +
 		` xmlns:flow="` + NsFlow + `" targetNamespace="` + NsFlow + `">`
 	defsTag, diBlock := harvestSourceExtras(def.Source)
+	closeTag := "</definitions>"
 	if defsTag != "" {
 		open = defsTag
+		// 子元素无前缀：缺默认命名空间时注入，使其归入 BPMN 命名空间。
+		if !strings.Contains(open, `xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"`) {
+			open = strings.Replace(open, ">",
+				` xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">`, 1)
+		}
 		if !strings.Contains(open, "xmlns:xsi") {
 			open = strings.Replace(open, ">",
 				` xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">`, 1)
+		}
+		if i := strings.Index(open, "<"); i >= 0 {
+			if j := strings.Index(open[i:], ":"); j >= 0 && j < strings.Index(open[i:], "definitions") {
+				closeTag = "</" + open[i+1:i+j] + ":definitions>"
+			}
 		}
 	}
 	b.WriteString(open + "\n")
@@ -455,6 +467,9 @@ func Write(def *flow.Definition) ([]byte, error) {
 				}
 				if n.Timer != nil {
 					spec["due"] = n.Timer.Duration.Std().String()
+					if n.Timer.Action != flow.TimerActionNone {
+						spec["action"] = string(n.Timer.Action)
+					}
 				}
 				payload, _ := json.Marshal(spec)
 				fmt.Fprintf(b, "        <flow:assignees>%s</flow:assignees>\n", string(payload))
@@ -564,7 +579,7 @@ func Write(def *flow.Definition) ([]byte, error) {
 	if diBlock != "" {
 		b.WriteString("  " + diBlock + "\n")
 	}
-	b.WriteString("</definitions>\n")
+	b.WriteString(closeTag + "\n")
 	return []byte(b.String()), nil
 }
 
@@ -579,30 +594,35 @@ func escDoc(s string) string {
 	return bb.String()
 }
 
-var defsTagRe = regexp.MustCompile(`(?is)<definitions[^>]*>`)
+var defsTagRe = regexp.MustCompile(`(?is)<(?:[A-Za-z0-9_.-]+:)?definitions[^>]*>`)
+var defsCloseRe = regexp.MustCompile(`(?is)</(?:[A-Za-z0-9_.-]+:)?definitions>`)
 
 // harvestSourceExtras 从原始 BPMN 源中回收图形信息（BPMNDiagram/DI）与
 // definitions 开标签（保留全部命名空间声明），供导出回填——往返对
-// bpmn-js / Camunda Modeler 视觉无损。
+// bpmn-js / Camunda Modeler 视觉无损。兼容带前缀（bpmn:definitions）与
+// 无前缀（definitions）两种根元素形态。
 func harvestSourceExtras(source []byte) (defsTag, diBlock string) {
 	if len(source) == 0 {
 		return "", ""
 	}
 	src := string(source)
-	hasDI := strings.Contains(src, "<bpmndi:BPMNDiagram") || strings.Contains(src, "<BPMNDiagram")
+	hasDI := strings.Contains(src, ":BPMNDiagram") || strings.Contains(src, "<BPMNDiagram")
 	if !hasDI {
 		return "", ""
 	}
 	if m := defsTagRe.FindString(src); m != "" {
 		defsTag = m
 	}
-	start := strings.Index(src, "<bpmndi:BPMNDiagram")
+	start := strings.Index(src, ":BPMNDiagram")
+	if start >= 0 {
+		start = strings.LastIndex(src[:start], "<")
+	}
 	if start < 0 {
 		start = strings.Index(src, "<BPMNDiagram")
 	}
-	end := strings.LastIndex(src, "</definitions>")
-	if start >= 0 && end > start {
-		diBlock = strings.TrimSpace(src[start:end])
+	closeLoc := defsCloseRe.FindStringIndex(src)
+	if start >= 0 && closeLoc != nil && closeLoc[0] > start {
+		diBlock = strings.TrimSpace(src[start:closeLoc[0]])
 	}
 	if diBlock == "" {
 		defsTag = ""

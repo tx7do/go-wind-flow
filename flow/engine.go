@@ -251,6 +251,9 @@ type CompleteTaskRequest struct {
 	LocalVariables Vars
 }
 
+// SystemActor 系统操作者标识（定时器自动动作等引擎自驱行为的历史署名）。
+const SystemActor = "flow:timer"
+
 // CompleteTask 办结用户任务。会签/或签语义由定义驱动；驳回按 RejectMode 处理。
 func (e *Engine) CompleteTask(ctx context.Context, req CompleteTaskRequest) error {
 	task, err := e.store.Tasks().Get(ctx, req.TaskID)
@@ -263,7 +266,12 @@ func (e *Engine) CompleteTask(ctx context.Context, req CompleteTaskRequest) erro
 	if req.ActorID == "" || req.ActorID != task.Assignee {
 		return fmt.Errorf("%w: actor %q is not assignee of task %s", ErrForbidden, req.ActorID, task.ID)
 	}
+	return e.completeTaskInternal(ctx, task, req.ActorID, req.Outcome, req.Comment, req.Variables, req.LocalVariables)
+}
 
+// completeTaskInternal 办结内核：CompleteTask 通过办理人鉴权后的实际执行体，
+// 亦被定时器自动动作（系统操作者 flow:timer）复用。
+func (e *Engine) completeTaskInternal(ctx context.Context, task *Task, actorID, outcome, comment string, variables, localVariables Vars) error {
 	inst, err := e.store.Instances().Get(ctx, task.InstanceID)
 	if err != nil {
 		return err
@@ -272,42 +280,42 @@ func (e *Engine) CompleteTask(ctx context.Context, req CompleteTaskRequest) erro
 		return fmt.Errorf("%w: instance %s is %s", ErrInvalidState, inst.ID, inst.Status)
 	}
 
-	outcome := strings.ToUpper(strings.TrimSpace(req.Outcome))
+	outcome = strings.ToUpper(strings.TrimSpace(outcome))
 	switch outcome {
 	case OutcomeApprove, OutcomeReject:
 	default:
-		return fmt.Errorf("%w: unknown outcome %q", ErrInvalidState, req.Outcome)
+		return fmt.Errorf("%w: unknown outcome %q", ErrInvalidState, outcome)
 	}
 
 	now := e.clock.Now()
 	task.Status = mapOutcome(outcome)
 	task.Outcome = outcome
-	task.Comment = req.Comment
+	task.Comment = comment
 	task.EndedAt = &now
 	if err := e.store.Tasks().Update(ctx, task); err != nil {
 		return err
 	}
 	_ = e.appendHistory(ctx, inst, &Event{
-		Type: EventTaskCompleted, NodeID: task.NodeID, TaskID: task.ID, ActorID: req.ActorID,
-	}, Vars{"outcome": outcome, "comment": req.Comment})
+		Type: EventTaskCompleted, NodeID: task.NodeID, TaskID: task.ID, ActorID: actorID,
+	}, Vars{"outcome": outcome, "comment": comment})
 
-	if len(req.Variables) > 0 {
-		inst.Variables.Merge(req.Variables)
+	if len(variables) > 0 {
+		inst.Variables.Merge(variables)
 		if err := e.store.Instances().Update(ctx, inst); err != nil {
 			return err
 		}
-		_ = e.appendHistory(ctx, inst, &Event{Type: EventVariableChanged}, req.Variables)
+		_ = e.appendHistory(ctx, inst, &Event{Type: EventVariableChanged}, variables)
 	}
 
 	tk, err := e.store.Tokens().Get(ctx, task.TokenID)
 	if err != nil {
 		return err
 	}
-	if len(req.LocalVariables) > 0 {
+	if len(localVariables) > 0 {
 		if tk.Locals == nil {
 			tk.Locals = Vars{}
 		}
-		tk.Locals.Merge(req.LocalVariables)
+		tk.Locals.Merge(localVariables)
 		if err := e.store.Tokens().Update(ctx, tk); err != nil {
 			return err
 		}
@@ -336,7 +344,7 @@ func (e *Engine) CompleteTask(ctx context.Context, req CompleteTaskRequest) erro
 			// 停留模式：任务已标 REJECTED，实例继续（由宿主监听器决定补救路径）。
 			return nil
 		}
-		return e.rejectInstance(ctx, inst, req.ActorID)
+		return e.rejectInstance(ctx, inst, actorID)
 	}
 
 	// 会签（ALL）：还有未办结的同令牌任务则继续等待。
@@ -686,6 +694,26 @@ func (e *Engine) CheckDueTasks(ctx context.Context, now time.Time) ([]*Task, err
 		_ = e.appendHistory(ctx, inst, &Event{
 			Type: EventTaskDue, NodeID: t.NodeID, TaskID: t.ID,
 		}, Vars{"dueAt": t.DueAt.Unix()})
+
+		// 节点声明了到期动作：引擎直接执行（系统操作者 flow:timer 署名）。
+		def, err := e.definitionOf(ctx, inst)
+		if err != nil {
+			return due, err
+		}
+		node := def.Nodes[t.NodeID]
+		if node == nil || node.Timer == nil {
+			continue
+		}
+		switch node.Timer.Action {
+		case TimerActionAutoApprove:
+			if err := e.completeTaskInternal(ctx, t, SystemActor, OutcomeApprove, "auto: timeout", nil, nil); err != nil {
+				return due, err
+			}
+		case TimerActionAutoReject:
+			if err := e.completeTaskInternal(ctx, t, SystemActor, OutcomeReject, "auto: timeout", nil, nil); err != nil {
+				return due, err
+			}
+		}
 	}
 	return due, nil
 }

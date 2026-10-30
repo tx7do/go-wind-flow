@@ -7,6 +7,15 @@
 
 ### Added
 
+- 引擎：**任务超时自动动作**——TimerSpec 新增 `action`：`auto_approve`（到期
+  自动通过，系统操作者 `flow:timer` 署名）与 `auto_reject`（到期自动驳回，
+  按节点 RejectMode 终结/停留）；缺省仍仅广播 task.due 由监听器自决。
+  CompleteTask 办结内核抽取为 completeTaskInternal 供系统动作复用。
+  BPMN/designer 经 `<flow:assignees>` 的 `action` 字段配置
+- BPMN：**Camunda Modeler 风格往返测试集**——带前缀根元素（`bpmn:definitions`）、
+  `incoming/outgoing` 子元素、`camunda:` 扩展属性、documentation、DI 图形的
+  完整解析 + 导出回填 + 回环再部署；带前缀根元素导出时自动注入默认命名空间
+  并匹配闭合标签
 - 引擎：**中间消息事件**（`intermediateCatchEvent` + `messageEventDefinition`）——
   令牌阻塞等外部投递，`SendMessage(实例, 消息名, payload)` 解锁并续走
   （payload 并入实例变量，广播 `message.received`）；v1 按实例+消息名关联、

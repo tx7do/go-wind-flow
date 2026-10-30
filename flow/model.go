@@ -67,10 +67,21 @@ type ApproverSpec struct {
 	Rules []ApproverRule `json:"rules,omitempty"`
 }
 
+// TimerAction 任务到期动作（缺省仅广播 task.due，由监听器自决）。
+type TimerAction string
+
+const (
+	TimerActionNone        TimerAction = ""
+	TimerActionAutoApprove TimerAction = "auto_approve" // 到期自动通过（系统操作者 flow:timer）
+	TimerActionAutoReject  TimerAction = "auto_reject"  // 到期自动驳回（按节点 RejectMode 终结/停留）
+)
+
 // TimerSpec 超时规格：任务创建后 DueAt = now + Duration。
-// 引擎只负责打标与 EventTaskDue 事件，调度由宿主 cron 驱动 CheckDueTasks。
+// 调度由宿主 cron 驱动 CheckDueTasks：Action 为空时仅广播 task.due 事件
+//（催办/升级由监听器承接），非空时引擎直接执行对应动作。
 type TimerSpec struct {
-	Duration Duration `json:"duration,omitempty"` // 如 "24h"、"30m"
+	Duration Duration     `json:"duration,omitempty"` // 如 "24h"、"30m"
+	Action   TimerAction  `json:"action,omitempty"`   // "" | auto_approve | auto_reject
 }
 
 // Duration 兼容 JSON 字符串（"24h"）与数值秒的时间跨度。
