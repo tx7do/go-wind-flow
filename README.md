@@ -219,8 +219,10 @@ await designer.loadXML(bpmnXml);
 const xml = await designer.getXML();       // → BFF → Deploy(format=bpmn-xml)
 ```
 
-bpmn-js 的三份样式与属性面板样式由宿主引入一次（`diagram-js.css`、`bpmn.css`、
-`bpmn-js.css`、`properties-panel.css`），详见各包 README。
+样式已随组件打包：宿主只需引入一次
+`import '@go-wind/flow-designer-vue/style.css'`（react 包同理），即包含
+bpmn-js 三份基础样式（`diagram-js.css` / `bpmn-js.css` / bpmn-font）与
+`properties-panel.css`。0.2.0 及更早版本需按各包 README 由宿主自行引入。
 
 ## 在 go-wind 家族中的位置
 

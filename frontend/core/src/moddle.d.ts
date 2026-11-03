@@ -48,6 +48,4 @@ declare module 'bpmn-js/lib/features/modeling/Modeling' {
 /** properties-panel 实例的最小面（_modeling 为上游内部字段）。 */
 export interface PropertiesPanelInstance {
   registerProvider(priority: number, provider: unknown): void;
-  _modeling?: unknown;
-  _eventBus?: { on(event: string, cb: (e: unknown) => void): void };
 }

@@ -11,7 +11,8 @@ Vue 3 bindings for [go-wind-flow](https://github.com/tx7do/go-wind-flow) designe
 npm i @go-wind/flow-designer-vue
 ```
 
-对等依赖：`vue ^3.4`。bpmn-js 样式由宿主引入一次（见下）。
+对等依赖：`vue ^3.4`。
+≥0.2.1 起样式已打包：宿主只需 `import '@go-wind/flow-designer-vue/style.css'`（包含下列 bpmn-js / properties-panel 基础样式）。0.2.0 需按下方由宿主引入。
 
 ## Usage
 

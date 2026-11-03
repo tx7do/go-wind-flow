@@ -1,6 +1,6 @@
 {
   "name": "@go-wind/flow-designer-vue",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "go-wind-flow 流程设计器 Vue3 适配器（<FlowDesigner>）",
   "type": "module",
   "main": "./dist/index.js",
@@ -22,7 +22,9 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@go-wind/flow-designer-core": "^0.2.0"
+    "@go-wind/flow-designer-core": "^0.2.1",
+    "bpmn-js": "^17.9.0",
+    "@bpmn-io/properties-panel": "^3.42.0"
   },
   "peerDependencies": {
     "vue": "^3.4.0"

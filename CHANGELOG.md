@@ -5,6 +5,19 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- 前端设计器（vue/react）：**属性面板「go-wind-flow 审批配置」组在
+  bpmn-js-properties-panel v5 下静默失效**——provider 读取
+  `propertiesPanel._modeling` 私有属性（v5 服务实例上不存在），永远走不进
+  渲染分支。改为经 diagram-js 注入器直接注入 `modeling` 服务（$inject），
+  失败时 warn 可见化
+- 前端设计器：**style.css 不含 bpmn-js / properties-panel 基础结构样式**，
+  宿主只引 style.css 时画布调色板无图标、属性面板裸 HTML。现在
+  `<FlowDesigner>` 组件内直接引入四份基础样式（diagram-js / bpmn-js /
+  bpmn-font / properties-panel），随 dist/style.css 一并发布；包依赖相应
+  声明 bpmn-js 与 @bpmn-io/properties-panel
+
 ### Added
 
 - 引擎：**候选组任务**——`ApproverKind.GROUP`（BPMN `candidateGroups` 属性直读）：

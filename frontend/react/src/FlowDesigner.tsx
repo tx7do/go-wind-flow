@@ -1,5 +1,9 @@
 import { useEffect, useImperativeHandle, useRef, forwardRef } from 'react';
 import { createDesigner, type DesignerDocument, type DesignerHandle, type Theme } from '@go-wind/flow-designer-core';
+import 'bpmn-js/dist/assets/diagram-js.css';
+import 'bpmn-js/dist/assets/bpmn-js.css';
+import 'bpmn-js/dist/assets/bpmn-font/css/bpmn.css';
+import '@bpmn-io/properties-panel/dist/assets/properties-panel.css';
 
 export interface FlowDesignerProps {
   /** BPMN XML 或 designer-json-v1 文档（自动嗅探：'<' 开头为 XML）。 */

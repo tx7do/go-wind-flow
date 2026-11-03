@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import 'bpmn-js/dist/assets/diagram-js.css';
+import 'bpmn-js/dist/assets/bpmn-js.css';
+import 'bpmn-js/dist/assets/bpmn-font/css/bpmn.css';
+import '@bpmn-io/properties-panel/dist/assets/properties-panel.css';
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { createDesigner, type DesignerDocument, type DesignerHandle, type Theme } from '@go-wind/flow-designer-core';
 
