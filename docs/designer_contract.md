@@ -97,3 +97,21 @@
 | `designer-json-v1`（本契约） | 设计器读写；领域字段 + UI 元数据 |
 | `wind-json-v2` | go-wind-oa/im 存量兼容（迁移用，不再扩展） |
 | `bpmn-xml` | 与 BPMN 生态互通（导入/导出） |
+
+
+## 6. 属性面板扩展须知（bpmn-js-properties-panel v5）
+
+第三方 provider 给面板追加分组时，两个硬约束（均为实际踩坑）：
+
+- **条目必须经官方工厂构建**：`TextFieldEntry` / `SelectEntry` /
+  `CheckboxEntry` 等（import 自 `@bpmn-io/properties-panel`）。v5 面板
+  只渲染带 `component` 的条目对象，裸 `{ id, label, getValue, setValue }`
+  会渲染成 `[object Object]`；
+- **modeling 服务经 DI 注入**：provider 构造器声明
+  `$inject = ['modeling', 'propertiesPanel', 'translate']` 由 diagram-js
+  注入器供给。不要读 `propertiesPanel._modeling`——v5 服务实例上不存在
+  该私有属性，恒为 undefined（症状：分组静默丢失、无任何报错）。
+
+分组形状：`getGroups(element)` 返回 updater 函数
+`(groups) => groups'`，将自定义分组插入数组头部即显示在最上（参考
+`core/src/panel.ts` 的实现）。

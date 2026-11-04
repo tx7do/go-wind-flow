@@ -7,6 +7,23 @@
 
 ### Fixed
 
+- 前端设计器（vue）：`document` prop 变更现在会重新加载画布（此前只有
+  `xml` 有 watch，动态切换 designer 文档必须手工调用 handle.loadDocument）
+- 前端设计器（core）：`documentToXML` 对空 `key` 前置抛出清晰错误
+  （此前生成 `process id=""` 的坏 XML，bpmn-js 导入时报莫名的
+  rootElement required）
+
+### 文档
+
+- 属性面板扩展契约补文档：v5 面板只渲染经 `@bpmn-io/properties-panel`
+  官方工厂（TextFieldEntry/SelectEntry 等）构建的条目；第三方 provider
+  获取 modeling 须经 DI 注入，读取 `propertiesPanel._modeling` 私有属性
+  在 v5 下恒为 undefined（会静默丢失分组）
+
+## [0.2.1]
+
+### Fixed
+
 - 前端设计器（vue/react）：**属性面板「go-wind-flow 审批配置」组在
   bpmn-js-properties-panel v5 下静默失效**——provider 读取
   `propertiesPanel._modeling` 私有属性（v5 服务实例上不存在），永远走不进
@@ -17,6 +34,8 @@
   `<FlowDesigner>` 组件内直接引入四份基础样式（diagram-js / bpmn-js /
   bpmn-font / properties-panel），随 dist/style.css 一并发布；包依赖相应
   声明 bpmn-js 与 @bpmn-io/properties-panel
+- 前端设计器：面板条目改用官方工厂（TextFieldEntry/SelectEntry）构建，
+  裸对象在 v5 面板下渲染为 [object Object]
 
 ### Added
 

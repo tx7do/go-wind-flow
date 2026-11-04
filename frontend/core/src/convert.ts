@@ -14,6 +14,11 @@ const BPMN_NS = 'http://www.omg.org/spec/BPMN/20100524/MODEL';
 // ============================================================
 
 export function documentToXML(doc: DesignerDocument): string {
+  // key 是 process id 与 BPMNDI/BPMNPlane 的引用锚点：为空时生成的 XML
+  // 无法被 bpmn-js 导入（报 rootElement required 这类间接错误），这里前置校验。
+  if (!doc.key || !doc.key.trim()) {
+    throw new Error('documentToXML: document.key must be a non-empty string');
+  }
   const esc = (s: string) =>
     s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const attr = (name: string, v: string | undefined) => (v !== undefined && v !== '' ? ` ${name}="${esc(String(v))}"` : '');

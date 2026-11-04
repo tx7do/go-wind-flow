@@ -64,6 +64,20 @@ watch(
     if (xml && handle) {
       try {
         await handle.loadXML(xml);
+        handle.zoom('fit-viewport');
+      } catch (err) {
+        emit('error', err);
+      }
+    }
+  },
+);
+watch(
+  () => props.document,
+  async (doc) => {
+    if (doc && handle) {
+      try {
+        await handle.loadDocument(doc);
+        handle.zoom('fit-viewport');
       } catch (err) {
         emit('error', err);
       }
